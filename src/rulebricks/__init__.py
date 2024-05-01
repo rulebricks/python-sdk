@@ -57,7 +57,7 @@ class AsyncAPI:
 # Top-level module interface
 class Rulebricks:
     def __init__(self):
-        self.async = AsyncAPI()
+        self.asynchronous = AsyncAPI()
 
     def __getattr__(self, item):
         return getattr(SyncAPI(), item)

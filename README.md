@@ -1,4 +1,4 @@
-# Rulebricks Python Library
+# Rulebricks – Python SDK
 
 ## Documentation
 
@@ -49,7 +49,7 @@ import asyncio
 rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
 async def main():
-    async_result = await rb.async.solve(
+    async_result = await rb.asynchronous.solve(
         slug="tJOCd8XXXX",
         request={
             "customer_id": "anc39as3",
