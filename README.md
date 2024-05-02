@@ -1,6 +1,6 @@
 # Rulebricks – Python SDK
 
-[![pypi](https://img.shields.io/pypi/v/flatfile.svg)](https://pypi.python.org/pypi/rulebricks)
+[![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
 
 ## Documentation
 
