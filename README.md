@@ -1,6 +1,6 @@
 # Rulebricks – Python SDK
-[![pypi](https://img.shields.io/pypi/v/flatfile.svg)](https://pypi.python.org/pypi/rulebricks)
 
+[![pypi](https://img.shields.io/pypi/v/flatfile.svg)](https://pypi.python.org/pypi/rulebricks)
 
 ## Documentation
 
@@ -39,7 +39,7 @@ import rulebricks as rb
 # Set the API key
 rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-result = rb.rules.solve(
+result = rb.sync_api.rules.solve(
     slug="tJOCd8XXXX",
     request={
         "customer_id": "anc39as3",
