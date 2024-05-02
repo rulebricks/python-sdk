@@ -33,9 +33,9 @@ rb.configure(
 
 ## Basic Usage
 
-Use the SDK to interact with the Rulebricks API in a synchronous manner is incredibly simple.
+Using the SDK to interact with the Rulebricks API in a synchronous manner is simple.
 
-Here's an example of how to use the SDK to solve a rule:
+Here's an example of how to use our Python SDK to solve a rule:
 
 ```python
 import rulebricks as rb
@@ -91,9 +91,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Beta status
-
-This SDK is in beta, and there may be breaking changes between versions without a major version update. Therefore, we recommend pinning the package version to a specific version in your pyproject.toml file. This way, you can install the same version each time without breaking changes unless you are intentionally looking for the latest version.
+Using a combination of `solve`, `bulk_solve`, `parallel_solve` and `flows` in synchronous or asynchronous modes gives you high flexibility to interact with the Rulebricks API in a way that best suits your application's needs.
 
 ## Feedback and Contributions
 
