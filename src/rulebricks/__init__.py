@@ -51,8 +51,12 @@ def set_instance_url(base_url: str) -> None:
     else:
         raise ValueError("You must set the API key using set_api_key first.")
 
-flows = sync_api.flows
-rules = sync_api.rules
+flows = None
+rules = None
+
+if sync_api is not None:
+    flows = sync_api.flows
+    rules = sync_api.rules
 
 __all__ = [
     "BadRequestError",
