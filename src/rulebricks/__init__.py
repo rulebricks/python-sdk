@@ -12,7 +12,7 @@ from .resources.rules.client import RulesClient, AsyncRulesClient
 from .resources.flows.client import FlowsClient, AsyncFlowsClient
 
 class Config:
-    api_key: Optional[str] = None
+    api_key: str = ""
     base_url: str = "https://rulebricks.com"
     timeout: float = 10
 
@@ -23,7 +23,7 @@ async_api = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key,
 rules = sync_api.rules
 flows = sync_api.flows
 
-def configure(api_key: str, base_url: str = "https://rulebricks.com", timeout: float = 10.0):
+def configure(api_key: str = "", base_url: str = "https://rulebricks.com", timeout: float = 10.0):
     """Configure your Rulebricks API client. This needs to be called before using other Rulebricks methods."""
     Config.api_key = api_key
     Config.base_url = base_url
