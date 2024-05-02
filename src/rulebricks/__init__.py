@@ -28,47 +28,43 @@ def set_timeout(timeout: float) -> None:
     Config.timeout = timeout
     APIManager.reset_instances()
 
+class LazyAPIManager:
+    def __init__(self, client_type):
+        self.client_type = client_type
+        self._client = None
+
+    def __get__(self, instance, owner):
+        if self._client is None or APIManager.needs_reset:
+            if self.client_type == 'rules':
+                self._client = APIManager.get_api().rules
+            elif self.client_type == 'flows':
+                self._client = APIManager.get_api().flows
+        return self._client
+
+# Signal to reset the API clients when configuration changes
 class APIManager:
-    _instance: Optional[RulebricksApi] = None
-    _async_instance: Optional[AsyncRulebricksApi] = None
+    _needs_reset = True
 
     @staticmethod
     def reset_instances():
-        APIManager._instance = None
-        APIManager._async_instance = None
+        APIManager._needs_reset = True
 
     @staticmethod
     def get_api() -> RulebricksApi:
-        if APIManager._instance is None:
+        if APIManager._needs_reset:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
-            APIManager._instance = RulebricksApi(
-                base_url=Config.base_url,
-                api_key=Config.api_key,
-                timeout=Config.timeout
-            )
-        return APIManager._instance
-
-    @staticmethod
-    def get_async_api() -> AsyncRulebricksApi:
-        if APIManager._async_instance is None:
-            if Config.api_key is None:
-                raise ValueError("API key not set. Please set the API key first.")
-            APIManager._async_instance = AsyncRulebricksApi(
-                base_url=Config.base_url,
-                api_key=Config.api_key,
-                timeout=Config.timeout
-            )
-        return APIManager._async_instance
-
-class SyncAPI:
-    @property
-    def rules(self) -> RulesClient:
-        return APIManager.get_api().rules
+            # Instantiate your RulebricksApi here
+            APIManager._api = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
+            APIManager._needs_reset = False
+        return APIManager._api
 
     @property
-    def flows(self) -> FlowsClient:
-        return APIManager.get_api().flows
+    def needs_reset(self):
+        return APIManager._needs_reset
+
+rules: RulesClient = LazyAPIManager('rules')
+flows: FlowsClient = LazyAPIManager('flows')
         
 class AsyncAPI:
     @property
@@ -78,12 +74,6 @@ class AsyncAPI:
     @property
     def flows(self) -> AsyncFlowsClient:
         return APIManager.get_async_api().flows
-
-_sync_api_access = SyncAPI()
-
-# Module-level sync clients access using class instance
-rules = property(lambda: _sync_api_access.rules)
-flows = property(lambda: _sync_api_access.flows)
 
 __all__ = [
     "BadRequestError",
