@@ -10,6 +10,7 @@ from .resources import (
     rules,
 )
 
+# Configuration to store API key and URL
 class Config:
     api_key = None
     base_url = "https://rulebricks.com"
@@ -20,51 +21,39 @@ def set_api_key(api_key):
 def set_instance_url(base_url):
     Config.base_url = base_url
 
-# Wrapper class to access synchronous API methods
-class SyncAPI:
-    _api_instance = None
+# Synchronous API access setup
+_api_instance = None
+def get_api_instance():
+    global _api_instance
+    if _api_instance is None:
+        if Config.api_key is None:
+            raise ValueError("API key not set. Use set_api_key() to initialize.")
+        _api_instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+    return _api_instance
 
-    @classmethod
-    def get_instance(cls):
-        if cls._api_instance is None:
-            if Config.api_key is None:
-                raise ValueError("API key not set. Use set_api_key() to initialize.")
-            cls._api_instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-        return cls._api_instance
+def __getattr__(name):
+    return getattr(get_api_instance(), name)
 
-    def __getattr__(self, name):
-        return getattr(self.get_instance(), name)
+# Asynchronous API access setup
+_async_api_instance = None
+async def get_async_api_instance():
+    global _async_api_instance
+    if _async_api_instance is None:
+        if Config.api_key is None:
+            raise ValueError("API key not set. Use set_api_key() to initialize.")
+        _async_api_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+    return _async_api_instance
 
-# Wrapper class to access asynchronous API methods
 class AsyncAPI:
-    _api_instance = None
-
-    @classmethod
-    async def get_instance(cls):
-        if cls._api_instance is None:
-            if Config.api_key is None:
-                raise ValueError("API key not set. Use set_api_key() to initialize.")
-            cls._api_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-        return cls._api_instance
-
     def __getattr__(self, name):
         async def async_method(*args, **kwargs):
-            instance = await self.get_instance()
+            instance = await get_async_api_instance()
             func = getattr(instance, name)
             return await func(*args, **kwargs)
         return async_method
 
-# Top-level module interface
-class Rulebricks:
-    def __init__(self):
-        self.asynchronous = AsyncAPI()
-
-    def __getattr__(self, item):
-        return getattr(SyncAPI(), item)
-
-# Replacing the module with an instance of Rulebricks
-import sys
-sys.modules[__name__] = Rulebricks()
+# Create a single instance for async access
+async_api = AsyncAPI()
 
 __all__ = [
     "BadRequestError",
@@ -75,4 +64,7 @@ __all__ = [
     "UsageResponse",
     "flows",
     "rules",
+    "set_api_key",
+    "set_instance_url",
+    "async_api",
 ]
