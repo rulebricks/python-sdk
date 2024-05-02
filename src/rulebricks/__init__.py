@@ -6,9 +6,7 @@ from .resources import (
     ListResponseItem,
     ListResponseItemRequestSchemaItem,
     ListResponseItemResponseSchemaItem,
-    UsageResponse,
-    flows,
-    rules,
+    UsageResponse
 )
 
 class Config:
@@ -50,8 +48,11 @@ class AsyncAPI:
             return await func(*args, **kwargs)
         return async_method
 
+sync_api = APIManager.get_api()
 async_api = AsyncAPI()
 
+flows = sync_api.flows
+rules = sync_api.rules
 
 __all__ = [
     "BadRequestError",
