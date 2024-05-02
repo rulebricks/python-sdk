@@ -39,7 +39,7 @@ class RulesClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.rules.solve(
+        rb.sync_api.rules.solve(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
@@ -79,7 +79,7 @@ class RulesClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.rules.bulk_solve(
+        rb.sync_api.rules.bulk_solve(
             slug="slug",
             request=[
                 {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
@@ -118,7 +118,7 @@ class RulesClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.rules.parallel_solve(
+        rb.sync_api.rules.parallel_solve(
             request={
                 "eligibility": {
                     "rule": "1ef03ms",
@@ -164,7 +164,7 @@ class RulesClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.rules.list()
+        rb.sync_api.rules.list()
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",
@@ -190,7 +190,7 @@ class RulesClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.rules.usage()
+        rb.sync_api.rules.usage()
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",

@@ -52,7 +52,7 @@ class APIManager:
         return APIManager._instance
 
     @staticmethod
-    async def get_async_api() -> AsyncRulebricksApi:
+    def get_async_api() -> AsyncRulebricksApi:
         if APIManager._async_instance is None:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
@@ -78,12 +78,12 @@ sync_api = SyncAPI()
 # Asynchronous API with type hints and lazy loading
 class AsyncAPI:
     @property
-    async def rules(self) -> AsyncRulesClient:
-        return (await APIManager.get_async_api()).rules
+    def rules(self) -> AsyncRulesClient:
+        return APIManager.get_async_api().rules
 
     @property
-    async def flows(self) -> AsyncFlowsClient:
-        return (await APIManager.get_async_api()).flows
+    def flows(self) -> AsyncFlowsClient:
+        return APIManager.get_async_api().flows
 
 async_api = AsyncAPI()
 

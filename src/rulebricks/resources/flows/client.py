@@ -37,7 +37,7 @@ class FlowsClient:
         # Set the API key
         rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
-        rb.flows.execute(
+        rb.sync_api.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
