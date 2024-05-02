@@ -61,11 +61,8 @@ class APIManager:
             )
         return APIManager._async_instance
 
-def rules(self) -> RulesClient:
-        return APIManager.get_api().rules
-
-def flows(self) -> FlowsClient:
-    return APIManager.get_api().flows
+rules = property(lambda self: APIManager.get_api().rules)
+flows = property(lambda self: APIManager.get_api().flows)
 
 # Asynchronous API with type hints and lazy loading
 class AsyncAPI:
