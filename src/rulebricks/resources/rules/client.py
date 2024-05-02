@@ -34,13 +34,12 @@ class RulesClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.rules.solve(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
@@ -75,13 +74,12 @@ class RulesClient:
 
             - request: typing.List[typing.Dict[str, typing.Any]].
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.bulk_solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.rules.bulk_solve(
             slug="slug",
             request=[
                 {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
@@ -115,13 +113,12 @@ class RulesClient:
         Parameters:
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.parallel_solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.rules.parallel_solve(
             request={
                 "eligibility": {
                     "rule": "1ef03ms",
@@ -162,13 +159,12 @@ class RulesClient:
         List all rules in the organization.
 
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.list()
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.rules.list()
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",
@@ -189,13 +185,12 @@ class RulesClient:
         Get the rule execution usage of your organization.
 
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.usage()
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.rules.usage()
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",
@@ -225,13 +220,12 @@ class AsyncRulesClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.rules.solve(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
@@ -266,13 +260,12 @@ class AsyncRulesClient:
 
             - request: typing.List[typing.Dict[str, typing.Any]].
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.bulk_solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.rules.bulk_solve(
             slug="slug",
             request=[
                 {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
@@ -306,13 +299,12 @@ class AsyncRulesClient:
         Parameters:
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.parallel_solve(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.rules.parallel_solve(
             request={
                 "eligibility": {
                     "rule": "1ef03ms",
@@ -353,13 +345,12 @@ class AsyncRulesClient:
         List all rules in the organization.
 
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.list()
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.rules.list()
         """
         _response = await self._client_wrapper.httpx_client.request(
             "GET",
@@ -380,13 +371,12 @@ class AsyncRulesClient:
         Get the rule execution usage of your organization.
 
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.usage()
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.rules.usage()
         """
         _response = await self._client_wrapper.httpx_client.request(
             "GET",

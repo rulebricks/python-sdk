@@ -32,13 +32,12 @@ class FlowsClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import RulebricksApi
+        import rulebricks as rb
 
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.flows.execute(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        rb.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
@@ -76,13 +75,12 @@ class AsyncFlowsClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        from rulebricks.client import AsyncRulebricksApi
+        import rulebricks as rb
 
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.flows.execute(
+        # Set the API key
+        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+
+        await rb.async_api.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
