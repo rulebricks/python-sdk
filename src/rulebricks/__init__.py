@@ -13,12 +13,6 @@ class Config:
     api_key: Optional[str] = None
     base_url: str = "https://rulebricks.com"
 
-def set_api_key(api_key: str) -> None:
-    Config.api_key = api_key
-
-def set_instance_url(base_url: str) -> None:
-    Config.base_url = base_url
-
 class APIManager:
     _instance: Optional[RulebricksApi] = None
     _async_instance: Optional[AsyncRulebricksApi] = None
@@ -49,7 +43,17 @@ class AsyncAPI:
         return async_method
 
 sync_api = APIManager.get_api()
-async_api = AsyncAPI()
+async_api = APIManager.get_async_api()
+
+def set_api_key(api_key: str) -> None:
+    Config.api_key = api_key
+    APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+    APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+
+def set_instance_url(base_url: str) -> None:
+    Config.base_url = base_url
+    APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+    APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
 
 flows = sync_api.flows
 rules = sync_api.rules
