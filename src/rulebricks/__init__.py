@@ -6,9 +6,7 @@ from .resources import (
     ListResponseItem,
     ListResponseItemRequestSchemaItem,
     ListResponseItemResponseSchemaItem,
-    UsageResponse,
-    flows,
-    rules,
+    UsageResponse
 )
 from .resources.rules.client import RulesClient, AsyncRulesClient
 from .resources.flows.client import FlowsClient, AsyncFlowsClient
@@ -63,15 +61,11 @@ class APIManager:
             )
         return APIManager._async_instance
 
-# Synchronous API with lazy loading
-class SyncAPI:
-    @property
-    def rules(self) -> RulesClient:
+def rules(self) -> RulesClient:
         return APIManager.get_api().rules
 
-    @property
-    def flows(self) -> FlowsClient:
-        return APIManager.get_api().flows
+def flows(self) -> FlowsClient:
+    return APIManager.get_api().flows
 
 sync_api = SyncAPI()
 
@@ -90,23 +84,14 @@ async_api = AsyncAPI()
 __all__ = [
     "BadRequestError",
     "InternalServerError",
-    "async_api",
-    "set_api_key",
-    "set_instance_url",
-    "set_timeout",
-    "sync_api",  # Exporting sync_api
-]
-
-__all__ = [
-    "BadRequestError",
-    "InternalServerError",
     "ListResponseItem",
     "ListResponseItemRequestSchemaItem",
     "ListResponseItemResponseSchemaItem",
     "UsageResponse",
-    "flows",
-    "rules",
     "set_api_key",
     "set_instance_url",
+    "set_timeout",
+    "rules",
+    "flows"
     "async_api",
 ]
