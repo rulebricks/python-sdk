@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Awaitable
+from typing import Optional
 from .client import RulebricksApi, AsyncRulebricksApi
 from .errors import BadRequestError, InternalServerError
 from .resources import (
@@ -42,13 +42,26 @@ def set_instance_url(base_url: str) -> None:
     APIManager._instance = None
     APIManager._async_instance = None
 
-flows: Callable[[], RulebricksApi.FlowsClient] = property(lambda: APIManager.get_api().flows)
-rules: Callable[[], RulebricksApi.RulesClient] = property(lambda: APIManager.get_api().rules)
+class Flows:
+    def __getattr__(self, name):
+        api = APIManager.get_api()
+        return getattr(api.flows, name)
 
-async def get_async_api() -> AsyncRulebricksApi:
-    return await APIManager.get_async_api()
+class Rules:
+    def __getattr__(self, name):
+        api = APIManager.get_api()
+        return getattr(api.rules, name)
 
-async_api: Callable[[], Awaitable[AsyncRulebricksApi]] = property(get_async_api)
+class AsyncAPI:
+    def __getattr__(self, name):
+        async def wrapper(*args, **kwargs):
+            api = await APIManager.get_async_api()
+            return await getattr(api, name)(*args, **kwargs)
+        return wrapper
+
+flows = Flows()
+rules = Rules()
+async_api = AsyncAPI()
 
 __all__ = [
     "BadRequestError",
