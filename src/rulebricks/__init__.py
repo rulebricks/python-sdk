@@ -67,8 +67,6 @@ def rules(self) -> RulesClient:
 def flows(self) -> FlowsClient:
     return APIManager.get_api().flows
 
-sync_api = SyncAPI()
-
 # Asynchronous API with type hints and lazy loading
 class AsyncAPI:
     @property
