@@ -65,7 +65,7 @@ import asyncio
 rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
 
 async def main():
-    async_result = await rb.async_api.solve(
+    async_result = await rb.async_api.rules.solve(
         slug="tJOCd8XXXX",
         request={
             "customer_id": "anc39as3",
