@@ -18,17 +18,15 @@ class APIManager:
 
     @staticmethod
     def get_api() -> RulebricksApi:
-        if APIManager._instance is None:
-            if Config.api_key is None:
-                raise ValueError("API key not set. Please set the API key first.")
+        if Config.api_key is None:
+            raise ValueError("API key not set. Please set the API key first.")
             APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
         return APIManager._instance
 
     @staticmethod
     async def get_async_api() -> AsyncRulebricksApi:
-        if APIManager._async_instance is None:
-            if Config.api_key is None:
-                raise ValueError("API key not set. Please set the API key first.")
+        if Config.api_key is None:
+            raise ValueError("API key not set. Please set the API key first.")
             APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
         return APIManager._async_instance
 
