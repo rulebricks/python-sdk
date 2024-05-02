@@ -17,7 +17,7 @@ class APIManager:
     _async_instance: Optional[AsyncRulebricksApi] = None
 
     @staticmethod
-    def get_api() -> Optional[RulebricksApi]:
+    def get_api() -> RulebricksApi:
         if APIManager._instance is None:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
@@ -25,38 +25,30 @@ class APIManager:
         return APIManager._instance
 
     @staticmethod
-    async def get_async_api() -> Optional[AsyncRulebricksApi]:
+    async def get_async_api() -> AsyncRulebricksApi:
         if APIManager._async_instance is None:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
             APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
         return APIManager._async_instance
 
-sync_api = APIManager.get_api()
-async_api = APIManager.get_async_api()
-
 def set_api_key(api_key: str) -> None:
     Config.api_key = api_key
-    if Config.api_key is not None:
-        APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-        APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-    else:
-        raise ValueError("An API key must be provided.")
+    APIManager._instance = None
+    APIManager._async_instance = None
 
 def set_instance_url(base_url: str) -> None:
     Config.base_url = base_url
-    if Config.api_key is not None:
-        APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-        APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-    else:
-        raise ValueError("You must set the API key using set_api_key first.")
+    APIManager._instance = None
+    APIManager._async_instance = None
 
-flows = None
-rules = None
+flows = property(lambda: APIManager.get_api().flows)
+rules = property(lambda: APIManager.get_api().rules)
 
-if sync_api is not None:
-    flows = sync_api.flows
-    rules = sync_api.rules
+async def get_async_api():
+    return await APIManager.get_async_api()
+
+async_api = property(get_async_api)
 
 __all__ = [
     "BadRequestError",
@@ -67,7 +59,7 @@ __all__ = [
     "UsageResponse",
     "flows",
     "rules",
+    "async_api",
     "set_api_key",
     "set_instance_url",
-    "async_api",
 ]
