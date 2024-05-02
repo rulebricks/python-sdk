@@ -24,7 +24,11 @@ Before using the SDK, configure your API key. You can find your API key in your 
 import rulebricks as rb
 
 # Replace 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX' with your actual API key
-rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+rb.configure(
+    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    # base_url="https://rulebricks.com" # Optional: Use this to override the default base URL for private cloud deployments
+    # timeout=10 # Optional: Use this to override the default timeout in seconds
+)
 ```
 
 ## Basic Usage
@@ -37,7 +41,9 @@ Here's an example of how to use the SDK to solve a rule:
 import rulebricks as rb
 
 # Set the API key
-rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+rb.configure(
+    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+)
 
 result = rb.rules.solve(
     slug="tJOCd8XXXX",
@@ -64,7 +70,9 @@ import rulebricks as rb
 import asyncio
 
 # Set the API key
-rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+rb.configure(
+    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+)
 
 async def main():
     async_result = await rb.async_api.rules.solve(
