@@ -61,10 +61,15 @@ class APIManager:
             )
         return APIManager._async_instance
 
-rules = property(lambda self: APIManager.get_api().rules)
-flows = property(lambda self: APIManager.get_api().flows)
+class SyncAPI:
+    @property
+    def rules(self) -> RulesClient:
+        return APIManager.get_api().rules
 
-# Asynchronous API with type hints and lazy loading
+    @property
+    def flows(self) -> FlowsClient:
+        return APIManager.get_api().flows
+        
 class AsyncAPI:
     @property
     def rules(self) -> AsyncRulesClient:
@@ -74,7 +79,11 @@ class AsyncAPI:
     def flows(self) -> AsyncFlowsClient:
         return APIManager.get_async_api().flows
 
-async_api = AsyncAPI()
+_sync_api_access = SyncAPI()
+
+# Module-level sync clients access using class instance
+rules = property(lambda: _sync_api_access.rules)
+flows = property(lambda: _sync_api_access.flows)
 
 __all__ = [
     "BadRequestError",
