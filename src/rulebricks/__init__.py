@@ -10,36 +10,55 @@ from .resources import (
     rules,
 )
 
-# Configuration to store API key and URL
 class Config:
     api_key = None
     base_url = "https://rulebricks.com"
 
-def set_api_key(api_key):
+def set_api_key(api_key: str):
     Config.api_key = api_key
 
-def set_instance_url(base_url):
+def set_instance_url(base_url: str):
     Config.base_url = base_url
 
-# Instantiate the APIs directly
-api_instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
-async_api_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+# Singleton pattern to manage API client instances
+class APIManager:
+    _instance = None
+    _async_instance = None
 
-# Import modules directly for easier access
-from .resources import *
+    @staticmethod
+    def get_api():
+        if APIManager._instance is None:
+            if Config.api_key is None:
+                raise ValueError("API key not set. Please set the API key first.")
+            APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+        return APIManager._instance
 
-# Simplify access to the asynchronous API via a dedicated namespace
-class AsyncNamespace:
-    def __init__(self, async_client):
-        self._client = async_client
+    @staticmethod
+    async def get_async_api():
+        if APIManager._async_instance is None:
+            if Config.api_key is None:
+                raise ValueError("API key not set. Please set the API key first.")
+            APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+        return APIManager._async_instance
 
-    def __getattr__(self, item):
+# Handling for direct attribute access on the module for API client methods
+def __getattr__(name):
+    api = APIManager.get_api()
+    # Handle submodules specifically
+    if name in ['rules', 'flows']:
+        return getattr(api, name)
+    raise AttributeError(f"module 'rulebricks' has no attribute '{name}'")
+
+# Asynchronous API access
+class AsyncAPI:
+    def __getattr__(self, name):
         async def async_method(*args, **kwargs):
-            func = getattr(self._client, item)
+            api = await APIManager.get_async_api()
+            func = getattr(api, name)
             return await func(*args, **kwargs)
         return async_method
 
-async_api = AsyncNamespace(async_api_instance)
+async_api = AsyncAPI()
 
 __all__ = [
     "BadRequestError",
