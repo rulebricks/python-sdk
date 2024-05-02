@@ -8,20 +8,52 @@ from .resources import (
     UsageResponse
 )
 
-class Config:
-    api_key: Optional[str] = None
-    base_url: str = "https://rulebricks.com"
+# rulebricks/__init__.py
 
+import typing
+from .client import RulebricksApi, AsyncRulebricksApi
+from .resources.rules.client import RulesClient, AsyncRulesClient
+from .resources.flows.client import FlowsClient, AsyncFlowsClient
+
+# Configuration to hold API details
+class Config:
+    api_key: typing.Optional[str] = None
+    base_url: str = "https://rulebricks.com"
+    timeout: float = 60
+
+def set_api_key(api_key: str) -> None:
+    Config.api_key = api_key
+    APIManager.reset_instances()
+
+def set_instance_url(base_url: str) -> None:
+    Config.base_url = base_url
+    APIManager.reset_instances()
+
+def set_timeout(timeout: float) -> None:
+    Config.timeout = timeout
+    APIManager.reset_instances()
+
+# API Manager for handling API instances
 class APIManager:
-    _instance: Optional[RulebricksApi] = None
-    _async_instance: Optional[AsyncRulebricksApi] = None
+    _instance: typing.Optional[RulebricksApi] = None
+    _async_instance: typing.Optional[AsyncRulebricksApi] = None
+
+    @staticmethod
+    def reset_instances():
+        APIManager._instance = None
+        APIManager._async_instance = None
 
     @staticmethod
     def get_api() -> RulebricksApi:
         if APIManager._instance is None:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
-            APIManager._instance = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+            APIManager._instance = RulebricksApi(
+                base_url=Config.base_url,
+                api_key=Config.api_key,
+                timeout=Config.timeout
+            )
+        assert APIManager._instance is not None, "Instance of RulebricksApi should not be None"
         return APIManager._instance
 
     @staticmethod
@@ -29,38 +61,32 @@ class APIManager:
         if APIManager._async_instance is None:
             if Config.api_key is None:
                 raise ValueError("API key not set. Please set the API key first.")
-            APIManager._async_instance = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key)
+            APIManager._async_instance = AsyncRulebricksApi(
+                base_url=Config.base_url,
+                api_key=Config.api_key,
+                timeout=Config.timeout
+            )
+        assert APIManager._async_instance is not None, "Instance of AsyncRulebricksApi should not be None"
         return APIManager._async_instance
 
-def set_api_key(api_key: str) -> None:
-    Config.api_key = api_key
-    APIManager._instance = None
-    APIManager._async_instance = None
+# Default API access through the root of the module
+def __getattr__(name: str):
+    api = APIManager.get_api()
+    if hasattr(api, name):
+        return getattr(api, name)
+    raise AttributeError(f"'RulebricksApi' object has no attribute '{name}'")
 
-def set_instance_url(base_url: str) -> None:
-    Config.base_url = base_url
-    APIManager._instance = None
-    APIManager._async_instance = None
-
-class Flows:
-    def __getattr__(self, name):
-        api = APIManager.get_api()
-        return getattr(api.flows, name)
-
-class Rules:
-    def __getattr__(self, name):
-        api = APIManager.get_api()
-        return getattr(api.rules, name)
-
+# Asynchronous API access
 class AsyncAPI:
-    def __getattr__(self, name):
-        async def wrapper(*args, **kwargs):
+    def __getattr__(self, name: str):
+        async def async_method(*args, **kwargs):
             api = await APIManager.get_async_api()
-            return await getattr(api, name)(*args, **kwargs)
-        return wrapper
+            if hasattr(api, name):
+                func = getattr(api, name)
+                return await func(*args, **kwargs)
+            raise AttributeError(f"'AsyncRulebricksApi' object has no attribute '{name}'")
+        return async_method
 
-flows = Flows()
-rules = Rules()
 async_api = AsyncAPI()
 
 __all__ = [
@@ -70,8 +96,6 @@ __all__ = [
     "ListResponseItemRequestSchemaItem",
     "ListResponseItemResponseSchemaItem",
     "UsageResponse",
-    "flows",
-    "rules",
     "async_api",
     "set_api_key",
     "set_instance_url",
