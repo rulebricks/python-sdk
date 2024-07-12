@@ -208,7 +208,7 @@ class RuleBuilder:
             (field_type == RuleType.LIST and isinstance(operator, ListOperator))
         )
 
-    def _get_python_type(self, rule_type: RuleType) -> Union[Type, Tuple[Type, ...]]:
+    def _get_python_type(self, rule_type: RuleType) -> Any:
         """
         Get the corresponding Python type for a RuleType.
 
