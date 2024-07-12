@@ -10,6 +10,7 @@ from .resources import (
 )
 from .resources.rules.client import RulesClient, AsyncRulesClient
 from .resources.flows.client import FlowsClient, AsyncFlowsClient
+from .forge import RuleBuilder, RuleType
 
 class Config:
     api_key: str = ""
@@ -52,4 +53,7 @@ __all__ = [
     "rules",
     "flows"
     "async_api",
+    "RuleBuilder",
+    "RuleType",
+    "configure"
 ]
