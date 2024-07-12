@@ -1,10 +1,12 @@
 from .schema import RuleType, SchemaField, Rule, Condition
 from .operators import BooleanOperator, NumberOperator, StringOperator, DateOperator, ListOperator
 from .utils import generate_slug
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Type, Tuple
 from datetime import datetime
 import json
 import uuid
+import string
+import random
 import os
 import re
 from tabulate import tabulate
@@ -206,7 +208,7 @@ class RuleBuilder:
             (field_type == RuleType.LIST and isinstance(operator, ListOperator))
         )
 
-    def _get_python_type(self, rule_type: RuleType) -> type:
+    def _get_python_type(self, rule_type: RuleType) -> Union[Type, Tuple[Type, ...]]:
         """
         Get the corresponding Python type for a RuleType.
 

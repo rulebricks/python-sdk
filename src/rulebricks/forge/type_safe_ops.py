@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, List, Union
+from typing import Callable, Tuple, List, Union, Any
 from datetime import datetime
 from .operators import BooleanOperator, NumberOperator, StringOperator, DateOperator, ListOperator
 

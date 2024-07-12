@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rulebricks"
-version = "0.1.7"
+version = "0.2.0"
 description = "Python SDK for the Rulebricks API"
 readme = "README.md"
 authors = []
@@ -13,6 +13,8 @@ python = "^3.8"
 httpx = ">=0.21.2"
 pydantic = ">= 1.9.2"
 typing_extensions = ">= 4.0.0"
+tabulate = "^0.8.9"  # Replace with the version you're using
+types-tabulate = "^0.8.9"  # Match this version with your tabulate version
 
 [tool.poetry.dev-dependencies]
 mypy = "^1.8.0"
