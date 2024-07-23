@@ -35,6 +35,115 @@ class RuleBuilder:
         self.updated_at = self.created_at
         self.updated_by = "Forge SDK"
 
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> 'RuleBuilder':
+        """
+        Create a RuleBuilder instance from a JSON object (dictionary) representation of a rule.
+
+        Args:
+            data (Dict[str, Any]): A dictionary representation of a rule.
+
+        Returns:
+            RuleBuilder: A new RuleBuilder instance populated with the data from the JSON object.
+
+        Raises:
+            ValueError: If the JSON object is missing required fields or contains invalid data.
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Input must be a dictionary (JSON object)")
+
+        rule_builder = cls()
+
+        # Set basic attributes
+        rule_builder.id = data.get('id', str(uuid.uuid4()))
+        rule_builder.name = data.get('name', 'Untitled Rule')
+        rule_builder.description = data.get('description', '')
+        rule_builder.slug = data.get('slug', rule_builder._generate_slug())
+        rule_builder.created_at = data.get('createdAt', datetime.utcnow().isoformat() + "Z")
+        rule_builder.updated_at = data.get('updatedAt', rule_builder.created_at)
+        rule_builder.updated_by = data.get('updatedBy', 'Forge SDK')
+
+        # Set sample request and response
+        rule_builder.sample_request = data.get('sampleRequest', {})
+        rule_builder.sample_response = data.get('sampleResponse', {})
+
+        # Set request schema
+        for field in data.get('requestSchema', []):
+            try:
+                rule_builder.add_request_field(
+                    key=field['key'],
+                    name=field['name'],
+                    field_type=RuleType(field['type']),
+                    description=field.get('description', ''),
+                    default_value=field.get('defaultValue')
+                )
+            except KeyError as e:
+                raise ValueError(f"Missing required field in requestSchema: {str(e)}")
+
+        # Set response schema
+        for field in data.get('responseSchema', []):
+            try:
+                rule_builder.add_response_field(
+                    key=field['key'],
+                    name=field['name'],
+                    field_type=RuleType(field['type']),
+                    description=field.get('description', ''),
+                    default_value=field.get('defaultValue')
+                )
+            except KeyError as e:
+                raise ValueError(f"Missing required field in responseSchema: {str(e)}")
+
+        # Set conditions
+        for condition_data in data.get('conditions', []):
+            condition = rule_builder.add_condition()
+
+            # Set request rules
+            for key, rule_data in condition_data.get('request', {}).items():
+                try:
+                    operator_class = cls._get_operator_class(rule_builder.request_schema[key].type)
+                    operator = operator_class[rule_data['op']]
+                    rule_builder.update_condition(condition, key, operator, rule_data['args'])
+                except KeyError as e:
+                    raise ValueError(f"Missing required field in condition request: {str(e)}")
+
+            # Set response values
+            for key, response_data in condition_data.get('response', {}).items():
+                try:
+                    rule_builder.set_condition_response(condition, key, response_data['value'])
+                except KeyError as e:
+                    raise ValueError(f"Missing required field in condition response: {str(e)}")
+
+            # Set condition settings
+            condition.settings = condition_data.get('settings', {})
+
+        return rule_builder
+
+    @staticmethod
+    def _get_operator_class(rule_type: RuleType) -> Type[Union[BooleanOperator, NumberOperator, StringOperator, DateOperator, ListOperator]]:
+        """
+        Get the appropriate operator class for a given RuleType.
+
+        Args:
+            rule_type (RuleType): The type of the rule.
+
+        Returns:
+            Type[Union[BooleanOperator, NumberOperator, StringOperator, DateOperator, ListOperator]]:
+            The operator class corresponding to the rule type.
+
+        Raises:
+            ValueError: If an unsupported RuleType is provided.
+        """
+        operator_map = {
+            RuleType.BOOLEAN: BooleanOperator,
+            RuleType.NUMBER: NumberOperator,
+            RuleType.STRING: StringOperator,
+            RuleType.DATE: DateOperator,
+            RuleType.LIST: ListOperator
+        }
+        if rule_type not in operator_map:
+            raise ValueError(f"Unsupported RuleType: {rule_type}")
+        return operator_map[rule_type]
+
     def _generate_slug(self, length=10):
         """
         Generate a random alphanumeric slug.
