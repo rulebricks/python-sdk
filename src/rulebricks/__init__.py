@@ -10,7 +10,7 @@ from .resources import (
 )
 from .resources.rules.client import RulesClient, AsyncRulesClient
 from .resources.flows.client import FlowsClient, AsyncFlowsClient
-from .forge import RuleBuilder, RuleType
+from .forge import Rule, Condition
 
 class Config:
     api_key: str = ""
