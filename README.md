@@ -156,6 +156,9 @@ rule.export()
 
 ### Field Types
 
+These operators match the ones available to you when defining conditions in the Rulebricks decision table editor.
+We are always adding more operators, so the lists below likely will not be exhaustive.
+
 #### Boolean Fields
 
 Boolean fields support these operations:

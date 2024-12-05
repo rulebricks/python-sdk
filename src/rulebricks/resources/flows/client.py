@@ -32,19 +32,20 @@ class FlowsClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        import rulebricks as rb
+        from rulebricks.client import RulebricksApi
 
-        # Set the API key
-        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
-
-        rb.flows.execute(
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
         _response = self._client_wrapper.httpx_client.request(
             "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/flow/{slug}"),
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/flows/{slug}"),
             json=jsonable_encoder(request),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
@@ -75,19 +76,20 @@ class AsyncFlowsClient:
 
             - request: typing.Dict[str, typing.Any].
         ---
-        import rulebricks as rb
+        from rulebricks.client import AsyncRulebricksApi
 
-        # Set the API key
-        rb.set_api_key("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
-
-        await rb.async_api.flows.execute(
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
         _response = await self._client_wrapper.httpx_client.request(
             "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/flow/{slug}"),
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/flows/{slug}"),
             json=jsonable_encoder(request),
             headers=self._client_wrapper.get_headers(),
             timeout=60,

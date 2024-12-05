@@ -4,8 +4,6 @@ import datetime as dt
 import typing
 
 from ....core.datetime_utils import serialize_datetime
-from .list_response_item_request_schema_item import ListResponseItemRequestSchemaItem
-from .list_response_item_response_schema_item import ListResponseItemResponseSchemaItem
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -17,10 +15,9 @@ class ListResponseItem(pydantic.BaseModel):
     id: typing.Optional[str] = pydantic.Field(description="The unique identifier for the rule.")
     name: typing.Optional[str] = pydantic.Field(description="The name of the rule.")
     description: typing.Optional[str] = pydantic.Field(description="The description of the rule.")
-    created_at: typing.Optional[str] = pydantic.Field(description="The creation date of the rule.")
+    published: typing.Optional[bool] = pydantic.Field(description="Whether the rule is published.")
     slug: typing.Optional[str] = pydantic.Field(description="The unique slug for the rule used in API requests.")
-    request_schema: typing.Optional[typing.List[ListResponseItemRequestSchemaItem]]
-    response_schema: typing.Optional[typing.List[ListResponseItemResponseSchemaItem]]
+    updated_at: typing.Optional[str] = pydantic.Field(description="The date this rule was last updated.")
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

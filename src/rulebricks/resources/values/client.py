@@ -7,8 +7,14 @@ from json.decoder import JSONDecodeError
 from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
+from ...core.remove_none_from_dict import remove_none_from_dict
 from ...errors.bad_request_error import BadRequestError
 from ...errors.internal_server_error import InternalServerError
+from ...errors.not_found_error import NotFoundError
+from .types.delete_dynamic_value_response import DeleteDynamicValueResponse
+from .types.list_dynamic_values_response_item import ListDynamicValuesResponseItem
+from .types.update_request_value import UpdateRequestValue
+from .types.update_response_item import UpdateResponseItem
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -19,18 +25,16 @@ except ImportError:
 OMIT = typing.cast(typing.Any, ...)
 
 
-class RulesClient:
+class ValuesClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def solve(self, slug: str, *, request: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+    def list_dynamic_values(self, *, name: typing.Optional[str] = None) -> typing.List[ListDynamicValuesResponseItem]:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Retrieve all dynamic values for the authenticated user.
 
         Parameters:
-            - slug: str. The unique identifier for the rule.
-
-            - request: typing.Dict[str, typing.Any].
+            - name: typing.Optional[str]. Name of a specific dynamic value to retrieve data for
         ---
         from rulebricks.client import RulebricksApi
 
@@ -38,20 +42,51 @@ class RulesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.rules.solve(
-            slug="slug",
-            request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
+        client.values.list_dynamic_values()
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
+            params=remove_none_from_dict({"name": name}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListDynamicValuesResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def update(self, *, request: typing.Dict[str, UpdateRequestValue]) -> typing.List[UpdateResponseItem]:
+        """
+        Update existing dynamic values or add new ones for the authenticated user.
+
+        Parameters:
+            - request: typing.Dict[str, UpdateRequestValue].
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.values.update(
+            request={},
         )
         """
         _response = self._client_wrapper.httpx_client.request(
             "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/solve/{slug}"),
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
             json=jsonable_encoder(request),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.Dict[str, typing.Any], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[UpdateResponseItem], _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
@@ -62,16 +97,12 @@ class RulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def bulk_solve(
-        self, slug: str, *, request: typing.List[typing.Dict[str, typing.Any]]
-    ) -> typing.List[typing.Dict[str, typing.Any]]:
+    def delete_dynamic_value(self, *, id: str) -> DeleteDynamicValueResponse:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Delete a specific dynamic value for the authenticated user by its ID.
 
         Parameters:
-            - slug: str. The unique identifier of the rule to execute against all payloads.
-
-            - request: typing.List[typing.Dict[str, typing.Any]].
+            - id: str. ID of the dynamic value to delete
         ---
         from rulebricks.client import RulebricksApi
 
@@ -79,74 +110,23 @@ class RulesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.rules.bulk_solve(
-            slug="slug",
-            request=[
-                {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
-                {"name": "Jane Doe", "age": 28, "email": "jane@example.com"},
-            ],
+        client.values.delete_dynamic_value(
+            id="id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/bulk-solve/{slug}"),
-            json=jsonable_encoder(request),
+            "DELETE",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
+            params=remove_none_from_dict({"id": id}),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[typing.Dict[str, typing.Any]], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(DeleteDynamicValueResponse, _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
-        if _response.status_code == 500:
-            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def parallel_solve(self, *, request: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
-        """
-        Executes multiple rules or flows in parallel based on a provided mapping of rule/flow slugs to payloads.
-
-        Parameters:
-            - request: typing.Dict[str, typing.Any].
-        ---
-        from rulebricks.client import RulebricksApi
-
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.rules.parallel_solve(
-            request={
-                "eligibility": {
-                    "rule": "1ef03ms",
-                    "name": "John Doe",
-                    "age": 30,
-                    "email": "jdoe@acme.co",
-                },
-                "offers": {
-                    "flow": "OvmsYwn",
-                    "customer_id": "12345",
-                    "last_purchase_days_ago": 30,
-                    "selected_plan": "premium",
-                },
-            },
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/parallel-solve"),
-            json=jsonable_encoder(request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.Dict[str, typing.Any], _response.json())  # type: ignore
-        if _response.status_code == 400:
-            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
             raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:
@@ -156,18 +136,18 @@ class RulesClient:
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
-class AsyncRulesClient:
+class AsyncValuesClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def solve(self, slug: str, *, request: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+    async def list_dynamic_values(
+        self, *, name: typing.Optional[str] = None
+    ) -> typing.List[ListDynamicValuesResponseItem]:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Retrieve all dynamic values for the authenticated user.
 
         Parameters:
-            - slug: str. The unique identifier for the rule.
-
-            - request: typing.Dict[str, typing.Any].
+            - name: typing.Optional[str]. Name of a specific dynamic value to retrieve data for
         ---
         from rulebricks.client import AsyncRulebricksApi
 
@@ -175,20 +155,51 @@ class AsyncRulesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        await client.rules.solve(
-            slug="slug",
-            request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
+        await client.values.list_dynamic_values()
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
+            params=remove_none_from_dict({"name": name}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListDynamicValuesResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def update(self, *, request: typing.Dict[str, UpdateRequestValue]) -> typing.List[UpdateResponseItem]:
+        """
+        Update existing dynamic values or add new ones for the authenticated user.
+
+        Parameters:
+            - request: typing.Dict[str, UpdateRequestValue].
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.values.update(
+            request={},
         )
         """
         _response = await self._client_wrapper.httpx_client.request(
             "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/solve/{slug}"),
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
             json=jsonable_encoder(request),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.Dict[str, typing.Any], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[UpdateResponseItem], _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
@@ -199,16 +210,12 @@ class AsyncRulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def bulk_solve(
-        self, slug: str, *, request: typing.List[typing.Dict[str, typing.Any]]
-    ) -> typing.List[typing.Dict[str, typing.Any]]:
+    async def delete_dynamic_value(self, *, id: str) -> DeleteDynamicValueResponse:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Delete a specific dynamic value for the authenticated user by its ID.
 
         Parameters:
-            - slug: str. The unique identifier of the rule to execute against all payloads.
-
-            - request: typing.List[typing.Dict[str, typing.Any]].
+            - id: str. ID of the dynamic value to delete
         ---
         from rulebricks.client import AsyncRulebricksApi
 
@@ -216,74 +223,23 @@ class AsyncRulesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        await client.rules.bulk_solve(
-            slug="slug",
-            request=[
-                {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
-                {"name": "Jane Doe", "age": 28, "email": "jane@example.com"},
-            ],
+        await client.values.delete_dynamic_value(
+            id="id",
         )
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/bulk-solve/{slug}"),
-            json=jsonable_encoder(request),
+            "DELETE",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/values"),
+            params=remove_none_from_dict({"id": id}),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[typing.Dict[str, typing.Any]], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(DeleteDynamicValueResponse, _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
-        if _response.status_code == 500:
-            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def parallel_solve(self, *, request: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
-        """
-        Executes multiple rules or flows in parallel based on a provided mapping of rule/flow slugs to payloads.
-
-        Parameters:
-            - request: typing.Dict[str, typing.Any].
-        ---
-        from rulebricks.client import AsyncRulebricksApi
-
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        await client.rules.parallel_solve(
-            request={
-                "eligibility": {
-                    "rule": "1ef03ms",
-                    "name": "John Doe",
-                    "age": 30,
-                    "email": "jdoe@acme.co",
-                },
-                "offers": {
-                    "flow": "OvmsYwn",
-                    "customer_id": "12345",
-                    "last_purchase_days_ago": 30,
-                    "selected_plan": "premium",
-                },
-            },
-        )
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "POST",
-            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/parallel-solve"),
-            json=jsonable_encoder(request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.Dict[str, typing.Any], _response.json())  # type: ignore
-        if _response.status_code == 400:
-            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
             raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:

@@ -5,8 +5,13 @@ import typing
 import httpx
 
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
+from .resources.assets.client import AssetsClient, AsyncAssetsClient
+from .resources.decisions.client import AsyncDecisionsClient, DecisionsClient
 from .resources.flows.client import AsyncFlowsClient, FlowsClient
 from .resources.rules.client import AsyncRulesClient, RulesClient
+from .resources.tests.client import AsyncTestsClient, TestsClient
+from .resources.users.client import AsyncUsersClient, UsersClient
+from .resources.values.client import AsyncValuesClient, ValuesClient
 
 
 class RulebricksApi:
@@ -25,6 +30,11 @@ class RulebricksApi:
         )
         self.rules = RulesClient(client_wrapper=self._client_wrapper)
         self.flows = FlowsClient(client_wrapper=self._client_wrapper)
+        self.decisions = DecisionsClient(client_wrapper=self._client_wrapper)
+        self.assets = AssetsClient(client_wrapper=self._client_wrapper)
+        self.users = UsersClient(client_wrapper=self._client_wrapper)
+        self.tests = TestsClient(client_wrapper=self._client_wrapper)
+        self.values = ValuesClient(client_wrapper=self._client_wrapper)
 
 
 class AsyncRulebricksApi:
@@ -43,3 +53,8 @@ class AsyncRulebricksApi:
         )
         self.rules = AsyncRulesClient(client_wrapper=self._client_wrapper)
         self.flows = AsyncFlowsClient(client_wrapper=self._client_wrapper)
+        self.decisions = AsyncDecisionsClient(client_wrapper=self._client_wrapper)
+        self.assets = AsyncAssetsClient(client_wrapper=self._client_wrapper)
+        self.users = AsyncUsersClient(client_wrapper=self._client_wrapper)
+        self.tests = AsyncTestsClient(client_wrapper=self._client_wrapper)
+        self.values = AsyncValuesClient(client_wrapper=self._client_wrapper)

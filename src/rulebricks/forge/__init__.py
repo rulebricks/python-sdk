@@ -196,6 +196,24 @@ class Rule:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the rule to a dictionary representation"""
+        # Use request fields and response fields to generate sampleRequest and sampleResponse json
+        sampleRequest = {}
+        sampleResponse = {}
+
+        for name, field in self.request_fields.items():
+            parts = name.split('.')
+            current = sampleRequest
+            for part in parts[:-1]:
+                current = current.setdefault(part, {})
+            current[parts[-1]] = field.default
+
+        for name, field in self.response_fields.items():
+            parts = name.split('.')
+            current = sampleResponse
+            for part in parts[:-1]:
+                current = current.setdefault(part, {})
+            current[parts[-1]] = field.default
+
         return {
             "id": self.id,
             "name": self.name,
@@ -206,6 +224,9 @@ class Rule:
             "updatedBy": self.updated_by,
             "published": False,
             "publishedAt": None,
+            "sampleRequest": sampleRequest,
+            "sampleResponse": sampleResponse,
+            "testRequest": sampleRequest,
             "requestSchema": [
                 {
                     "key": name,
@@ -316,7 +337,7 @@ class Condition:
         self.rule = rule
         self.conditions = conditions
         self.responses = {}
-        self.settings = {"enabled": True, "groupId": None, "priority": 0}
+        self.settings = {"enabled": True, "groupId": None, "priority": 0, "schedule": []}
         self.settings.update(settings)
 
     def then(self, **responses) -> Rule:
