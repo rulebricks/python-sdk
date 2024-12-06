@@ -4,3 +4,4 @@ __pycache__/
 poetry.toml
 .DS_Store
 **/.DS_Store
+src/.DS_Store

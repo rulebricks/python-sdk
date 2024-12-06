@@ -1,4 +1,5 @@
 from rulebricks.forge import Rule
+from rulebricks import RulebricksApi
 
 def create_health_insurance_selector():
     # Initialize the rule
@@ -74,3 +75,9 @@ if __name__ == "__main__":
     print(rule.to_table())
     # Export the rule to a .rbx file that can be imported into Rulebricks
     rule.export()
+    # Or upload the rule directly to Rulebricks
+    client = RulebricksApi(
+        base_url="https://rulebricks.com",
+        api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    )
+    client.assets.import_rule(rule=rule)
