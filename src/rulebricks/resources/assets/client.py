@@ -44,7 +44,7 @@ class AssetsClient:
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         client.assets.delete_rule()
         """
@@ -83,7 +83,7 @@ class AssetsClient:
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         client.assets.export_rule(
             id="id",
@@ -127,7 +127,7 @@ class AssetsClient:
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
 
         rule = Rule()
@@ -170,7 +170,7 @@ class AssetsClient:
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         client.assets.list()
         """
@@ -197,7 +197,7 @@ class AssetsClient:
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         client.assets.usage()
         """
@@ -231,7 +231,7 @@ class AsyncAssetsClient:
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         await client.assets.delete_rule()
         """
@@ -270,7 +270,7 @@ class AsyncAssetsClient:
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         await client.assets.export_rule(
             id="id",
@@ -353,7 +353,7 @@ class AsyncAssetsClient:
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         await client.assets.import_rule(
             id="id",
@@ -423,7 +423,7 @@ class AsyncAssetsClient:
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         await client.assets.list()
         """
@@ -450,7 +450,7 @@ class AsyncAssetsClient:
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
+            base_url="https://yourhost.com",
         )
         await client.assets.usage()
         """
