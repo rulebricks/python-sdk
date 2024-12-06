@@ -18,6 +18,8 @@ from .types.delete_rule_response import DeleteRuleResponse
 from .types.import_rule_response import ImportRuleResponse
 from .types.usage_response import UsageResponse
 
+from ...forge import Rule
+
 try:
     import pydantic.v1 as pydantic  # type: ignore
 except ImportError:
@@ -110,103 +112,37 @@ class AssetsClient:
 
     def import_rule(
         self,
-        *,
-        id: str,
-        created_at: dt.datetime,
-        slug: str,
-        updated_at: dt.datetime,
-        test_request: typing.Dict[str, typing.Any],
-        name: str,
-        description: str,
-        request_schema: typing.List[typing.Any],
-        response_schema: typing.List[typing.Any],
-        sample_request: typing.Dict[str, typing.Any],
-        sample_response: typing.Dict[str, typing.Any],
-        conditions: typing.List[typing.Any],
-        published: bool,
-        history: typing.List[typing.Any],
+        rule: typing.Union[Rule, typing.Dict[str, typing.Any]],
     ) -> ImportRuleResponse:
         """
         Import a rule into the user's account.
 
         Parameters:
-            - id: str.
-
-            - created_at: dt.datetime.
-
-            - slug: str.
-
-            - updated_at: dt.datetime.
-
-            - test_request: typing.Dict[str, typing.Any].
-
-            - name: str.
-
-            - description: str.
-
-            - request_schema: typing.List[typing.Any].
-
-            - response_schema: typing.List[typing.Any].
-
-            - sample_request: typing.Dict[str, typing.Any].
-
-            - sample_response: typing.Dict[str, typing.Any].
-
-            - conditions: typing.List[typing.Any].
-
-            - published: bool.
-
-            - history: typing.List[typing.Any].
+            - rule: typing.Union[Rule, typing.Dict[str, typing.Any]].
         ---
         import datetime
 
         from rulebricks.client import RulebricksApi
+        from rulebricks.forge import Rule
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.assets.import_rule(
-            id="id",
-            created_at=datetime.datetime.fromisoformat(
-                "2024-01-15 09:30:00+00:00",
-            ),
-            slug="slug",
-            updated_at=datetime.datetime.fromisoformat(
-                "2024-01-15 09:30:00+00:00",
-            ),
-            test_request={"key": "value"},
-            name="name",
-            description="description",
-            request_schema=[],
-            response_schema=[],
-            sample_request={"key": "value"},
-            sample_response={"key": "value"},
-            conditions=[],
-            published=True,
-            history=[],
-        )
+
+        rule = Rule()
+        # Define your rule...
+
+        client.assets.import_rule(rule)
         """
+        if isinstance(rule, Rule):
+            rule = rule.to_dict()
+
         _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/import"),
             json=jsonable_encoder(
-                {
-                    "id": id,
-                    "createdAt": created_at,
-                    "slug": slug,
-                    "updatedAt": updated_at,
-                    "testRequest": test_request,
-                    "name": name,
-                    "description": description,
-                    "requestSchema": request_schema,
-                    "responseSchema": response_schema,
-                    "sampleRequest": sample_request,
-                    "sampleResponse": sample_response,
-                    "conditions": conditions,
-                    "published": published,
-                    "history": history,
-                }
+                rule
             ),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
