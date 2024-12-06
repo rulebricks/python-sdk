@@ -48,6 +48,11 @@ async_api = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key,
 
 rules = sync_api.rules
 flows = sync_api.flows
+assets = sync_api.assets
+decisions = sync_api.decisions
+tests = sync_api.tests
+users = sync_api.users
+values = sync_api.values
 
 def configure(api_key: str = "", base_url: str = "https://rulebricks.com", timeout: float = 10.0):
     """Configure your Rulebricks API client. This needs to be called before using other Rulebricks methods."""
@@ -60,9 +65,14 @@ def configure(api_key: str = "", base_url: str = "https://rulebricks.com", timeo
     sync_api = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
     async_api = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
 
-    global rules, flows
+    global rules, flows, assets, decisions, tests, users, values
     rules = sync_api.rules
     flows = sync_api.flows
+    assets = sync_api.assets
+    decisions = sync_api.decisions
+    tests = sync_api.tests
+    users = sync_api.users
+    values = sync_api.values
 
 __all__ = [
     "BadRequestError",
