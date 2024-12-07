@@ -14,6 +14,7 @@ from ...errors.forbidden_error import ForbiddenError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
 from ...types.forbidden_error_body import ForbiddenErrorBody
+from .types.list_response_item import ListResponseItem
 from .types.delete_rule_response import DeleteRuleResponse
 from .types.import_rule_response import ImportRuleResponse
 from .types.usage_response import UsageResponse
@@ -112,7 +113,9 @@ class AssetsClient:
 
     def import_rule(
         self,
-        rule: typing.Union[Rule, typing.Dict[str, typing.Any]],
+        *,
+        rule: Rule,
+        publish: typing.Optional[bool] = False,
     ) -> ImportRuleResponse:
         """
         Import a rule into the user's account.
@@ -135,15 +138,31 @@ class AssetsClient:
 
         client.assets.import_rule(rule)
         """
-        if isinstance(rule, Rule):
-            rule = rule.to_dict()
+        rule_dict = rule.to_dict()
 
         _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/import"),
-            json=jsonable_encoder(
-                rule
-            ),
+            json=jsonable_encoder({
+                "id": rule_dict["id"],
+                "createdAt": rule_dict["createdAt"],
+                "slug": rule_dict["slug"],
+                "updatedAt": rule_dict["updatedAt"],
+                "testRequest": rule_dict["testRequest"],
+                "name": rule_dict["name"],
+                "description": rule_dict["description"],
+                "requestSchema": rule_dict["requestSchema"],
+                "responseSchema": rule_dict["responseSchema"],
+                "sampleRequest": rule_dict["sampleRequest"],
+                "sampleResponse": rule_dict["sampleResponse"],
+                "conditions": rule_dict["conditions"],
+                "published": publish,
+                "history": rule_dict["history"],
+                "groups": rule_dict["groups"],
+                "settings": rule_dict["settings"],
+                "testSuite": rule_dict["testSuite"],
+                "no_conditions": rule_dict["no_conditions"],
+            }),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
@@ -161,7 +180,34 @@ class AssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def list(self) -> None:
+    def list_rules(self) -> typing.List[ListResponseItem]:
+        """
+        List all rules in the organization.
+
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com",
+        )
+        print(client.assets.list_rules())
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/list"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list_flows(self) -> typing.List[ListResponseItem]:
         """
         List all flows in the organization.
 
@@ -172,7 +218,7 @@ class AssetsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com",
         )
-        client.assets.list()
+        print(client.assets.list_flows())
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",
@@ -181,7 +227,7 @@ class AssetsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return
+            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:
@@ -300,106 +346,59 @@ class AsyncAssetsClient:
     async def import_rule(
         self,
         *,
-        id: str,
-        created_at: dt.datetime,
-        slug: str,
-        updated_at: dt.datetime,
-        test_request: typing.Dict[str, typing.Any],
-        name: str,
-        description: str,
-        request_schema: typing.List[typing.Any],
-        response_schema: typing.List[typing.Any],
-        sample_request: typing.Dict[str, typing.Any],
-        sample_response: typing.Dict[str, typing.Any],
-        conditions: typing.List[typing.Any],
-        published: bool,
-        history: typing.List[typing.Any],
+        rule: Rule,
+        publish: typing.Optional[bool] = False,
     ) -> ImportRuleResponse:
         """
         Import a rule into the user's account.
 
         Parameters:
-            - id: str.
-
-            - created_at: dt.datetime.
-
-            - slug: str.
-
-            - updated_at: dt.datetime.
-
-            - test_request: typing.Dict[str, typing.Any].
-
-            - name: str.
-
-            - description: str.
-
-            - request_schema: typing.List[typing.Any].
-
-            - response_schema: typing.List[typing.Any].
-
-            - sample_request: typing.Dict[str, typing.Any].
-
-            - sample_response: typing.Dict[str, typing.Any].
-
-            - conditions: typing.List[typing.Any].
-
-            - published: bool.
-
-            - history: typing.List[typing.Any].
+            - rule: typing.Union[Rule, typing.Dict[str, typing.Any]].
         ---
         import datetime
 
-        from rulebricks.client import AsyncRulebricksApi
+        from rulebricks.client import RulebricksApi
+        from rulebricks.forge import Rule
 
-        client = AsyncRulebricksApi(
+        client = RulebricksApi(
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com",
         )
-        await client.assets.import_rule(
-            id="id",
-            created_at=datetime.datetime.fromisoformat(
-                "2024-01-15 09:30:00+00:00",
-            ),
-            slug="slug",
-            updated_at=datetime.datetime.fromisoformat(
-                "2024-01-15 09:30:00+00:00",
-            ),
-            test_request={"key": "value"},
-            name="name",
-            description="description",
-            request_schema=[],
-            response_schema=[],
-            sample_request={"key": "value"},
-            sample_response={"key": "value"},
-            conditions=[],
-            published=True,
-            history=[],
-        )
+
+        rule = Rule()
+        # Define your rule...
+
+        await client.assets.import_rule(rule)
         """
+        rule_dict = rule.to_dict()
+
         _response = await self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/import"),
-            json=jsonable_encoder(
-                {
-                    "id": id,
-                    "createdAt": created_at,
-                    "slug": slug,
-                    "updatedAt": updated_at,
-                    "testRequest": test_request,
-                    "name": name,
-                    "description": description,
-                    "requestSchema": request_schema,
-                    "responseSchema": response_schema,
-                    "sampleRequest": sample_request,
-                    "sampleResponse": sample_response,
-                    "conditions": conditions,
-                    "published": published,
-                    "history": history,
-                }
-            ),
+            json=jsonable_encoder({
+                "id": rule_dict["id"],
+                "createdAt": rule_dict["createdAt"],
+                "slug": rule_dict["slug"],
+                "updatedAt": rule_dict["updatedAt"],
+                "testRequest": rule_dict["testRequest"],
+                "name": rule_dict["name"],
+                "description": rule_dict["description"],
+                "requestSchema": rule_dict["requestSchema"],
+                "responseSchema": rule_dict["responseSchema"],
+                "sampleRequest": rule_dict["sampleRequest"],
+                "sampleResponse": rule_dict["sampleResponse"],
+                "conditions": rule_dict["conditions"],
+                "published": publish,
+                "history": rule_dict["history"],
+                "groups": rule_dict["groups"],
+                "settings": rule_dict["settings"],
+                "testSuite": rule_dict["testSuite"],
+                "no_conditions": rule_dict["no_conditions"],
+            }),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
+
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(ImportRuleResponse, _response.json())  # type: ignore
         if _response.status_code == 400:
@@ -414,7 +413,34 @@ class AsyncAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def list(self) -> None:
+    async def list_rules(self) -> typing.List[ListResponseItem]:
+        """
+        List all rules in the organization.
+
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com",
+        )
+        await client.assets.list_rules()
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/list"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list_flows(self) -> typing.List[ListResponseItem]:
         """
         List all flows in the organization.
 
@@ -425,7 +451,7 @@ class AsyncAssetsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com",
         )
-        await client.assets.list()
+        await client.assets.list_flows()
         """
         _response = await self._client_wrapper.httpx_client.request(
             "GET",
@@ -434,7 +460,7 @@ class AsyncAssetsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return
+            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:

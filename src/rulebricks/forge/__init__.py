@@ -230,7 +230,7 @@ class Rule:
             "requestSchema": [
                 {
                     "key": name,
-                    "name": field.name,
+                    "name": field.name.replace('_', ' ').title(),
                     "type": self._get_field_type(field).value,
                     "description": field.description,
                     "defaultValue": field.default,
@@ -241,7 +241,7 @@ class Rule:
             "responseSchema": [
                 {
                     "key": name,
-                    "name": field.name,
+                    "name": field.name.replace('_', ' ').title(),
                     "type": self._get_field_type(field).value,
                     "description": field.description,
                     "defaultValue": field.default,
@@ -329,6 +329,10 @@ class Rule:
             json.dump(self.to_dict(), f, indent=2, default=str)
 
         return filename
+
+    def get_editor_url(self, base_url = "https://rulebricks.com") -> str:
+        """Get the editor URL to edit this in the Rulebricks web app (if imported)"""
+        return f"{base_url}/dashboard/{self.id}"
 
 class Condition:
     """Helper class for building conditions using the fluent interface"""

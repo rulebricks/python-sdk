@@ -1,5 +1,9 @@
+# For development, use
+# PYTHONPATH=$PYTHONPATH:$(pwd)/src python3 src/rulebricks/forge/examples/health_insurance_selector.py
+
 from rulebricks.forge import Rule
 from rulebricks import RulebricksApi
+import rulebricks as rb
 
 def create_health_insurance_selector():
     # Initialize the rule
@@ -73,11 +77,48 @@ if __name__ == "__main__":
     # Create and preview the rule's conditions...
     rule = create_health_insurance_selector()
     print(rule.to_table())
-    # Export the rule to a .rbx file that can be imported into Rulebricks
-    rule.export()
-    # Or upload the rule directly to Rulebricks
-    client = RulebricksApi(
-        base_url="https://rulebricks.com",
-        api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+    # Export the rule to a .rbx file that can be imported into Rulebricks manually
+    # rule.export()
+
+    # Or, import the rule directly into your Rulebricks workspace
+    rb.configure(
+        api_key="XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
     )
-    client.assets.import_rule(rule=rule)
+
+    # Import the rule, but don't immediately publish it...
+    created_rule = rb.assets.import_rule(rule=rule, publish=False)
+
+    # The new rule should appear in your Rulebricks workspace if we list all rules
+    print(rb.assets.list_rules())
+
+    # The URL to edit the rule in the Rulebricks web app should work!
+    print(rule.get_editor_url())
+
+    # We can retrieve the rule data we just created using its returned ID
+    rule_json = rb.assets.export_rule(id=created_rule.id)
+
+    # Create a Rule object to represent it
+    # This is useful if you want to modify the rule using the SDK
+    located_rule = Rule.from_json(rule_json)
+
+    # Update the rule– but let's publish it this time
+    updated_rule = rb.assets.import_rule(rule=located_rule, publish=True)
+
+    # Let's try solving the rule with some test data!
+    test_data = {
+        "age": 25,
+        "income": 60000,
+        "chronic_conditions": True,
+        "deductible_preference": 750,
+        "medical_service_frequency": "monthly"
+    }
+    print(updated_rule)
+    test_data_solution = rb.rules.solve(
+        slug=updated_rule.slug,
+        request=test_data
+    )
+    print(test_data_solution)
+
+    # Delete the rule
+    # rb.assets.delete_rule(id=updated_rule.id)
