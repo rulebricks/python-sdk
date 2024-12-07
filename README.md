@@ -33,6 +33,12 @@ rb.configure(
 )
 ```
 
+## Full SDK Example
+
+A particularly comprehensive example of using the Rulebricks Python SDK can be found in the [src/rulebricks/forge/examples/health_insurance_selector.py](src/rulebricks/forge/examples/health_insurance_selector.py) file.
+
+This example programmatically constructs a rule, visualizes it locally, syncs it with a Rulebricks workspace, and solves the rule with a sample request.
+
 ## Basic Usage
 
 Using the SDK to interact with the Rulebricks API in a synchronous manner is simple.
