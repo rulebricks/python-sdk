@@ -12,9 +12,9 @@ except ImportError:
 
 
 class ImportRuleResponse(pydantic.BaseModel):
-    name: typing.Optional[str]
-    id: typing.Optional[str]
-    slug: typing.Optional[str]
+    name: str
+    id: str
+    slug: str
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
