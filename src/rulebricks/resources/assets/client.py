@@ -15,8 +15,12 @@ from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
 from ...types.forbidden_error_body import ForbiddenErrorBody
 from .types.list_response_item import ListResponseItem
+from .types.delete_folder_response import DeleteFolderResponse
 from .types.delete_rule_response import DeleteRuleResponse
 from .types.import_rule_response import ImportRuleResponse
+from .types.list_folders_response_item import ListFoldersResponseItem
+from .types.list_rules_response_item import ListRulesResponseItem
+from .types.upsert_folder_response import UpsertFolderResponse
 from .types.usage_response import UsageResponse
 
 from ...forge import Rule
@@ -180,27 +184,34 @@ class AssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def list_rules(self) -> typing.List[ListResponseItem]:
+    def list_rules(self, *, folder: typing.Optional[str] = None) -> typing.List[ListRulesResponseItem]:
         """
-        List all rules in the organization.
+        List all rules in the organization. Optionally filter by folder name or ID.
 
+        Parameters:
+            - folder: typing.Optional[str]. Filter rules by folder name or folder ID
         ---
         from rulebricks.client import RulebricksApi
 
         client = RulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com",
+            base_url="https://yourhost.com/path/to/api",
         )
-        print(client.assets.list_rules())
+        client.assets.list_rules()
         """
         _response = self._client_wrapper.httpx_client.request(
             "GET",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/list"),
+            params=remove_none_from_dict({"folder": folder}),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[ListRulesResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:
@@ -255,6 +266,121 @@ class AssetsClient:
         )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(UsageResponse, _response.json())  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list_folders(self) -> typing.List[ListFoldersResponseItem]:
+        """
+        Retrieve all rule folders for the authenticated user.
+
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.assets.list_folders()
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListFoldersResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def upsert_folder(
+        self, *, id: typing.Optional[str] = OMIT, name: str, description: typing.Optional[str] = OMIT
+    ) -> UpsertFolderResponse:
+        """
+        Create a new rule folder or update an existing one for the authenticated user.
+
+        Parameters:
+            - id: typing.Optional[str]. Folder ID (required for updates, omit for creation)
+
+            - name: str. Name of the folder
+
+            - description: typing.Optional[str]. Description of the folder
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.assets.upsert_folder(
+            name="Marketing Rules",
+            description="Rules for marketing automation workflows",
+        )
+        """
+        _request: typing.Dict[str, typing.Any] = {"name": name}
+        if id is not OMIT:
+            _request["id"] = id
+        if description is not OMIT:
+            _request["description"] = description
+        _response = self._client_wrapper.httpx_client.request(
+            "POST",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            json=jsonable_encoder(_request),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(UpsertFolderResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def delete_folder(self, *, id: str) -> DeleteFolderResponse:
+        """
+        Delete a specific rule folder for the authenticated user. This does not delete the rules within the folder.
+
+        Parameters:
+            - id: str. ID of the folder to delete
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.assets.delete_folder(
+            id="abc123",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "DELETE",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            json=jsonable_encoder({"id": id}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(DeleteFolderResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:
@@ -413,27 +539,34 @@ class AsyncAssetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def list_rules(self) -> typing.List[ListResponseItem]:
+    async def list_rules(self, *, folder: typing.Optional[str] = None) -> typing.List[ListRulesResponseItem]:
         """
-        List all rules in the organization.
+        List all rules in the organization. Optionally filter by folder name or ID.
 
+        Parameters:
+            - folder: typing.Optional[str]. Filter rules by folder name or folder ID
         ---
         from rulebricks.client import AsyncRulebricksApi
 
         client = AsyncRulebricksApi(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com",
+            base_url="https://yourhost.com/path/to/api",
         )
         await client.assets.list_rules()
         """
         _response = await self._client_wrapper.httpx_client.request(
             "GET",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/rules/list"),
+            params=remove_none_from_dict({"folder": folder}),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[ListResponseItem], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[ListRulesResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:
@@ -488,6 +621,121 @@ class AsyncAssetsClient:
         )
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(UsageResponse, _response.json())  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list_folders(self) -> typing.List[ListFoldersResponseItem]:
+        """
+        Retrieve all rule folders for the authenticated user.
+
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.assets.list_folders()
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListFoldersResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def upsert_folder(
+        self, *, id: typing.Optional[str] = OMIT, name: str, description: typing.Optional[str] = OMIT
+    ) -> UpsertFolderResponse:
+        """
+        Create a new rule folder or update an existing one for the authenticated user.
+
+        Parameters:
+            - id: typing.Optional[str]. Folder ID (required for updates, omit for creation)
+
+            - name: str. Name of the folder
+
+            - description: typing.Optional[str]. Description of the folder
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.assets.upsert_folder(
+            name="Marketing Rules",
+            description="Rules for marketing automation workflows",
+        )
+        """
+        _request: typing.Dict[str, typing.Any] = {"name": name}
+        if id is not OMIT:
+            _request["id"] = id
+        if description is not OMIT:
+            _request["description"] = description
+        _response = await self._client_wrapper.httpx_client.request(
+            "POST",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            json=jsonable_encoder(_request),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(UpsertFolderResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def delete_folder(self, *, id: str) -> DeleteFolderResponse:
+        """
+        Delete a specific rule folder for the authenticated user. This does not delete the rules within the folder.
+
+        Parameters:
+            - id: str. ID of the folder to delete
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.assets.delete_folder(
+            id="abc123",
+        )
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "DELETE",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "api/v1/admin/folders"),
+            json=jsonable_encoder({"id": id}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(DeleteFolderResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         try:
             _response_json = _response.json()
         except JSONDecodeError:
