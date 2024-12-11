@@ -19,10 +19,10 @@ class ListRulesResponseItem(pydantic.BaseModel):
     description: typing.Optional[str] = pydantic.Field(description="The description of the rule.")
     slug: typing.Optional[str] = pydantic.Field(description="The unique slug for the rule used in API requests.")
     folder: typing.Optional[ListRulesResponseItemFolder] = pydantic.Field(description="The folder containing this rule")
-    request_schema: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(
+    request_schema: typing.Optional[typing.List[typing.Any]] = pydantic.Field(
         description="The published request schema for the rule."
     )
-    response_schema: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(
+    response_schema: typing.Optional[typing.List[typing.Any]] = pydantic.Field(
         description="The published response schema for the rule."
     )
 

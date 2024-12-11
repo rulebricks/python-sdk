@@ -2,7 +2,7 @@
 # PYTHONPATH=$PYTHONPATH:$(pwd)/src python3 src/rulebricks/forge/examples/health_insurance_selector.py
 
 from rulebricks.forge import Rule
-from rulebricks import RulebricksApi
+
 import rulebricks as rb
 
 def create_health_insurance_selector():
