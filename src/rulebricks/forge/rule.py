@@ -286,7 +286,7 @@ class Rule:
         self.published_response_schema = []
         self.published_groups = {}
 
-    def set_workspace(self, rulebricks_client: 'RulebricksApi') -> None:
+    def set_workspace(self, rulebricks_client: Any) -> None:
         """Supply the rule with a connection to a Rulebricks workspace"""
         self.workspace = rulebricks_client
         return
