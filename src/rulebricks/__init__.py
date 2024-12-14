@@ -44,7 +44,7 @@ from .resources import (
 
 from .resources.rules.client import RulesClient, AsyncRulesClient
 from .resources.flows.client import FlowsClient, AsyncFlowsClient
-from .forge import Rule, Condition
+from .forge import Rule, Condition, DynamicValue, DynamicValues
 
 class Config:
     api_key: str = ""

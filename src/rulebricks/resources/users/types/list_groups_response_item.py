@@ -25,6 +25,9 @@ class ListGroupsResponseItem(pydantic.BaseModel):
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
         return super().dict(**kwargs_with_defaults)
 
+    def __repr__(self) -> str:
+        return f"\n{self.__class__.__name__}(id: {self.id!r}, name: {self.name!r}, description: {self.description!r}, members: {self.members!r})"
+
     class Config:
         frozen = True
         smart_union = True

@@ -121,4 +121,4 @@ if __name__ == "__main__":
     print(test_data_solution)
 
     # Delete the rule
-    # rb.assets.delete_rule(id=updated_rule.id)
+    rb.assets.delete_rule(id=updated_rule.id)
