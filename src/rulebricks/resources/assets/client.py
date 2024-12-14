@@ -120,7 +120,7 @@ class AssetsClient:
         *,
         rule: Rule,
         publish: typing.Optional[bool] = False,
-    ) -> ImportRuleResponse:
+    ) -> Rule:
         """
         Import a rule into the user's account.
 
@@ -166,12 +166,19 @@ class AssetsClient:
                 "settings": rule_dict["settings"],
                 "testSuite": rule_dict["testSuite"],
                 "no_conditions": rule_dict["no_conditions"],
+                "tag": rule_dict["tag"],
+                "accessGroups": rule_dict["accessGroups"],
+                "published_conditions": rule_dict["published_conditions"],
+                "published_groups": rule_dict["published_groups"],
+                "published_requestSchema": rule_dict["published_requestSchema"],
+                "published_responseSchema": rule_dict["published_responseSchema"],
             }),
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(ImportRuleResponse, _response.json())  # type: ignore
+            response_json = _response.json()
+            return Rule.from_json(self.export_rule(id=response_json["id"]))
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 403:
@@ -474,7 +481,7 @@ class AsyncAssetsClient:
         *,
         rule: Rule,
         publish: typing.Optional[bool] = False,
-    ) -> ImportRuleResponse:
+    ) -> Rule:
         """
         Import a rule into the user's account.
 
@@ -526,7 +533,8 @@ class AsyncAssetsClient:
         )
 
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(ImportRuleResponse, _response.json())  # type: ignore
+            response_json = _response.json()
+            return Rule.from_json(await self.export_rule(id=response_json["id"]))
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 403:

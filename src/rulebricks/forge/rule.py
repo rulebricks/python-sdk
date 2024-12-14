@@ -1,5 +1,5 @@
 from .types.operators import RuleType
-from .operators import BooleanField, NumberField, StringField, DateField, ListField
+from .operators import BooleanField, NumberField, StringField, DateField, ListField, Argument
 from .values import DynamicValue
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from datetime import datetime
@@ -17,6 +17,8 @@ def process_dynamic_values(arg: Any) -> Any:
     """Process any argument into the correct format for conditions"""
     if isinstance(arg, DynamicValue):
         return arg.to_dict()
+    elif isinstance(arg, Argument):
+        return arg.value if not isinstance(arg.value, DynamicValue) else arg.value.to_dict()
     elif isinstance(arg, list):
         return [process_dynamic_values(item) for item in arg]
     elif isinstance(arg, dict):
@@ -117,6 +119,51 @@ class Condition:
         """Remove this condition from the rule"""
         if self.index is not None:
             self.rule.conditions.pop(self.index)
+
+    def __repr__(self) -> str:
+        if self.index is not None:
+            return f"<Condition: Row {self.index}>"
+        return "<Condition: New>"
+
+    def to_table(self) -> str:
+        from tabulate import tabulate
+
+        # Get all field names for headers
+        headers = list(self.rule.request_fields.keys()) + list(self.rule.response_fields.keys())
+        table_data = []
+
+        condition = None
+        if self.index is not None:
+            condition = self.rule.conditions[self.index]
+        else:
+            condition = {
+                "request": self.conditions,
+                "response": self.responses
+            }
+
+        row = []
+
+        # Add request field values
+        for field_name in self.rule.request_fields.keys():
+            if field_name in condition["request"]:
+                rule = condition["request"][field_name]
+                op_name = rule["op"]
+                args_str = ", ".join(map(str, rule["args"]))
+                row.append(f"{op_name}\n({args_str})")
+            else:
+                row.append("-")
+
+        # Add response field values
+        for field_name in self.rule.response_fields.keys():
+            if field_name in condition["response"]:
+                row.append(condition["response"][field_name]["value"])
+            else:
+                row.append("-")
+
+        table_data.append(row)
+
+        return tabulate(table_data, headers=headers, tablefmt="grid")
+
 
 class RuleTest:
     """
@@ -234,6 +281,10 @@ class Rule:
         self.published_at = None
         self.test_suite = []
         self.access_groups = []
+        self.published_conditions = []
+        self.published_request_schema = []
+        self.published_response_schema = []
+        self.published_groups = {}
 
     def set_workspace(self, rulebricks_client: 'RulebricksApi') -> None:
         """Supply the rule with a connection to a Rulebricks workspace"""
@@ -290,6 +341,11 @@ class Rule:
         rule.test_suite = [RuleTest.from_json(test) for test in rule.test_suite]
         rule.access_groups = data.get('accessGroups', [])
         rule.test_request = data.get('testRequest', {})
+        rule.folder_id = data.get('tag', None)
+        rule.published_conditions = data.get('publishedConditions', [])
+        rule.published_request_schema = data.get('publishedRequestSchema', [])
+        rule.published_response_schema = data.get('publishedResponseSchema', [])
+        rule.published_groups = data.get('publishedGroups', {})
 
         # Process request schema
         for field in data.get('requestSchema', []):
@@ -383,15 +439,13 @@ class Rule:
             raise ValueError("A Rulebricks client is required to set an alias, check the Rule constructor")
         if len(alias) < 3:
             raise ValueError("Alias must be at least 3 characters long")
-        if not alias.isalnum():
-            raise ValueError("Alias must be alphanumeric")
         if '/' in alias or '\\' in alias or ' ' in alias:
             raise ValueError("Alias cannot contain slashes or spaces")
         rules = self.workspace.assets.list_rules()
         if any(r.slug == alias for r in rules):
             raise ValueError("Alias conflicts with an existing rule in your workspace. Aliases must be unique.")
 
-        if not all(c in string.ascii_letters + string.digits for c in alias):
+        if not all(c in string.ascii_letters + string.digits + '-' for c in alias):
             raise ValueError("Alias cannot contain special characters of any kind")
 
         self.slug = alias
@@ -561,12 +615,6 @@ class Rule:
     def find_conditions(self, **kwargs) -> List[Condition]:
         """
         Find conditions matching certain criteria using field operators
-
-        Example:
-            conditions = rule.find_conditions(
-                age=rule.get_field("age").between(18, 35),
-                status=rule.get_field("status").equals("active")
-            )
         """
         results = []
         for i, condition in enumerate(self.conditions):
@@ -582,7 +630,10 @@ class Rule:
                 # Compare args (ignoring DynamicValues)
                 if any(isinstance(a, DynamicValue) for a in args):
                     continue
-                if request["args"] != args:
+                # Convert both sets of args to strings for comparison
+                existing_args = [str(arg) for arg in request["args"]]
+                search_args = [str(arg) for arg in args]
+                if existing_args != search_args:
                     matches = False
                     break
             if matches:
@@ -592,6 +643,7 @@ class Rule:
                     index=i,
                     settings=condition.get("settings", {})
                 ))
+
         return results
 
     def to_dict(self) -> Dict[str, Any]:
@@ -628,6 +680,10 @@ class Rule:
             "sampleRequest": sampleRequest,
             "sampleResponse": sampleResponse,
             "testRequest": self.test_request or sampleRequest,
+            "published_requestSchema": self.published_request_schema,
+            "published_responseSchema": self.published_response_schema,
+            "published_conditions": self.published_conditions,
+            "published_groups": self.published_groups,
             "requestSchema": [
                 {
                     "key": name,

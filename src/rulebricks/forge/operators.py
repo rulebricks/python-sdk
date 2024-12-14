@@ -31,9 +31,10 @@ class Argument(Generic[T]):
                 )
 
     def to_dict(self) -> Any:
+        """Return the primitive value or dynamic value dict"""
         if isinstance(self.value, DynamicValue):
             return self.value.to_dict()
-        return self.value
+        return self.value  # Return the primitive value directly
 
     @classmethod
     def process(cls, arg: Any, expected_type: DynamicValueType) -> Any:
@@ -57,22 +58,17 @@ class Argument(Generic[T]):
 class BooleanField(Field):
     """Valid boolean comparisons/operations in Rulebricks"""
     def __init__(self, name: str, description: str = "", default: bool = False):
-        super().__init__(name, description, default)
-        self.operators = {
-            "any": OperatorDef("any", [], "Match any boolean value", skip_typecheck=True),
-            "is_true": OperatorDef("is true", [], "Check if value is true"),
-            "is_false": OperatorDef("is false", [], "Check if value is false")
-        }
+            super().__init__(name, description, default)
+            self.operators = {
+                "any": OperatorDef("any", [], "Match any boolean value", skip_typecheck=True),
+                "is_true": OperatorDef("is true", [], "Check if value is true"),
+                "is_false": OperatorDef("is false", [], "Check if value is false")
+            }
 
     def equals(self, value: Union[bool, DynamicValue]) -> tuple:
         """Check if value equals the given boolean"""
-        arg = Argument(value, DynamicValueType.BOOLEAN)
         op_name = "is true" if value else "is false"
-        return (op_name, [arg])
-
-    def any(self) -> tuple:
-        """Match any boolean value"""
-        return ("any", [])
+        return (op_name, [])
 
 class NumberField(Field):
     """Valid number comparisons/operations in Rulebricks"""
