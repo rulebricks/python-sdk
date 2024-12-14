@@ -518,21 +518,45 @@ class Rule:
             settings=self.conditions[index].get("settings", {})
         )
 
-    def get_field(self, name: str) -> Union[BooleanField, NumberField, StringField, DateField, ListField]:
-            """
-            Get a field from the rule by name. Works for both request and response fields.
+    def get_boolean_field(self, name: str) -> BooleanField:
+        """Get a boolean field from the rule by name"""
+        if name not in self.request_fields:
+            raise ValueError(f"Field '{name}' not found in request schema")
+        elif not isinstance(self.request_fields[name], BooleanField):
+            raise ValueError(f"Field '{name}' is not a boolean field")
+        return self.request_fields[name] # type: ignore
 
-            Example:
-                age = rule.get_field("age")  # Returns NumberField
-                status = rule.get_field("status")  # Returns StringField
+    def get_number_field(self, name: str) -> NumberField:
+        """Get a number field from the rule by name"""
+        if name not in self.request_fields:
+            raise ValueError(f"Field '{name}' not found in request schema")
+        elif not isinstance(self.request_fields[name], NumberField):
+            raise ValueError(f"Field '{name}' is not a number field")
+        return self.request_fields[name] # type: ignore
 
-            Returns the field with its proper type or raises ValueError if field not found
-            """
-            if name in self.request_fields:
-                return self.request_fields[name]
-            elif name in self.response_fields:
-                return self.response_fields[name]
-            raise ValueError(f"Field '{name}' not found in rule schema")
+    def get_string_field(self, name: str) -> StringField:
+        """Get a string field from the rule by name"""
+        if name not in self.request_fields:
+            raise ValueError(f"Field '{name}' not found in request schema")
+        elif not isinstance(self.request_fields[name], StringField):
+            raise ValueError(f"Field '{name}' is not a string field")
+        return self.request_fields[name] # type: ignore
+
+    def get_date_field(self, name: str) -> DateField:
+        """Get a date field from the rule by name"""
+        if name not in self.request_fields:
+            raise ValueError(f"Field '{name}' not found in request schema")
+        elif not isinstance(self.request_fields[name], DateField):
+            raise ValueError(f"Field '{name}' is not a date field")
+        return self.request_fields[name] # type: ignore
+
+    def get_list_field(self, name: str) -> ListField:
+        """Get a list field from the rule by name"""
+        if name not in self.request_fields:
+            raise ValueError(f"Field '{name}' not found in request schema")
+        elif not isinstance(self.request_fields[name], ListField):
+            raise ValueError(f"Field '{name}' is not a list field")
+        return self.request_fields[name] # type: ignore
 
     def find_conditions(self, **kwargs) -> List[Condition]:
         """
