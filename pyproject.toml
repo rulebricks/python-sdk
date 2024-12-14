@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rulebricks"
-version = "0.4.0"
+version = "0.4.1"
 description = "Python SDK for the Rulebricks API"
 readme = "README.md"
 authors = ["Sid Garimella <sid@rulebricks.com>"]

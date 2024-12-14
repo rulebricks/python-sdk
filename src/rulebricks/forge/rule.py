@@ -209,7 +209,6 @@ class RuleTest:
 
         return test
 
-
 class Rule:
     """Main class for building and managing rules"""
 
@@ -235,6 +234,14 @@ class Rule:
         self.published_at = None
         self.test_suite = []
         self.access_groups = []
+
+    def set_workspace(self, rulebricks_client: 'RulebricksApi') -> None:
+        """Supply the rule with a connection to a Rulebricks workspace"""
+        self.workspace = rulebricks_client
+        return
+
+    def __repr__(self) -> str:
+        return f"<Rule: {self.name}>"
 
     @classmethod
     def from_json(cls, json_str: Union[str, Dict[str, Any]]) -> 'Rule':
@@ -511,16 +518,47 @@ class Rule:
             settings=self.conditions[index].get("settings", {})
         )
 
+    def get_field(self, name: str) -> Union[BooleanField, NumberField, StringField, DateField, ListField]:
+            """
+            Get a field from the rule by name. Works for both request and response fields.
+
+            Example:
+                age = rule.get_field("age")  # Returns NumberField
+                status = rule.get_field("status")  # Returns StringField
+
+            Returns the field with its proper type or raises ValueError if field not found
+            """
+            if name in self.request_fields:
+                return self.request_fields[name]
+            elif name in self.response_fields:
+                return self.response_fields[name]
+            raise ValueError(f"Field '{name}' not found in rule schema")
+
     def find_conditions(self, **kwargs) -> List[Condition]:
-        """Find conditions matching certain criteria"""
+        """
+        Find conditions matching certain criteria using field operators
+
+        Example:
+            conditions = rule.find_conditions(
+                age=rule.get_field("age").between(18, 35),
+                status=rule.get_field("status").equals("active")
+            )
+        """
         results = []
         for i, condition in enumerate(self.conditions):
             matches = True
-            for field, value in kwargs.items():
+            for field, (operator, args) in kwargs.items():
                 if field not in condition["request"]:
                     matches = False
                     break
-                if condition["request"][field]["op"] != value:
+                request = condition["request"][field]
+                if request["op"] != operator:
+                    matches = False
+                    break
+                # Compare args (ignoring DynamicValues)
+                if any(isinstance(a, DynamicValue) for a in args):
+                    continue
+                if request["args"] != args:
                     matches = False
                     break
             if matches:
