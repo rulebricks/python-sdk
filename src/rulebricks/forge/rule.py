@@ -164,7 +164,6 @@ class Condition:
 
         return tabulate(table_data, headers=headers, tablefmt="grid")
 
-
 class RuleTest:
     """
     Rule tests allow users to define test cases for a rule to ensure it behaves as expected.
@@ -742,7 +741,13 @@ class Rule:
                 if field_name in condition["request"]:
                     rule = condition["request"][field_name]
                     op_name = rule["op"]
-                    args_str = ", ".join(map(str, rule["args"]))
+                    arguments_repr = []
+                    for arg in rule["args"]:
+                        if isinstance(arg, Dict) and "$rb" in arg:
+                            arguments_repr.append(arg["name"].upper())
+                        else:
+                            arguments_repr.append(str(arg))
+                    args_str = ", ".join(arguments_repr)
                     row.append(f"{op_name}\n({args_str})")
                 else:
                     row.append("-")
@@ -791,3 +796,29 @@ class Rule:
     def get_editor_url(self, base_url = "https://rulebricks.com") -> str:
         """Get the editor URL to edit this in the Rulebricks web app (if imported)"""
         return f"{base_url}/dashboard/{self.id}"
+
+    def find_test_by_name(self, name: str) -> Optional[RuleTest]:
+        """Find a test by name"""
+        return next((t for t in self.test_suite if t.name == name), None)
+
+    def find_test_by_id(self, test_id: str) -> Optional[RuleTest]:
+        """Find a test by ID"""
+        return next((t for t in self.test_suite if t.id == test_id), None)
+
+    def add_test(self, test: RuleTest) -> 'Rule':
+        """Add a test to the rule or update an existing one"""
+        existing_test = self.find_test_by_id(test.id)
+        if existing_test:
+            existing_test.name = test.name
+            existing_test.request = test.request
+            existing_test.response = test.response
+            existing_test.critical = test.critical
+        else:
+            self.test_suite.append(test)
+        return self
+
+    def remove_test(self, test_id: str) -> None:
+        """Remove a test by ID"""
+        test = self.find_test_by_id(test_id)
+        if test:
+            self.test_suite.remove(test)

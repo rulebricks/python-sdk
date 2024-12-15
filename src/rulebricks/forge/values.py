@@ -30,6 +30,9 @@ class DynamicValue:
         }
         return type_mapping[value_type]
 
+    def __repr__(self) -> str:
+        return f"<{self.name.upper()}>"
+
 class DynamicValues:
     """Static accessor for dynamic values"""
     _workspace = None
