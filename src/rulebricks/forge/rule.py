@@ -14,7 +14,25 @@ if TYPE_CHECKING:
     from ..client import RulebricksApi
 
 def process_dynamic_values(arg: Any) -> Any:
-    """Process any argument into the correct format for conditions"""
+    """
+    Process any argument into the correct format for conditions.
+
+    This function recursively processes arguments to handle DynamicValue instances,
+    Argument instances, lists, and dictionaries, converting them into the appropriate
+    format for use in rule conditions.
+
+    Args:
+        arg (Any): The argument to process. Can be a DynamicValue, Argument, list,
+                  dictionary, or any other type.
+
+    Returns:
+        Any: The processed argument in the correct format for conditions.
+              - For DynamicValue instances: Returns the dictionary representation
+              - For Argument instances: Returns the processed value
+              - For lists: Returns a list with all items processed
+              - For dictionaries: Returns a dict with all values processed
+              - For other types: Returns the original value unchanged
+    """
     if isinstance(arg, DynamicValue):
         return arg.to_dict()
     elif isinstance(arg, Argument):
@@ -26,7 +44,20 @@ def process_dynamic_values(arg: Any) -> Any:
     return arg
 
 class Condition:
-    """Class for building and modifying conditions"""
+    """
+    A class for building and modifying rule conditions.
+
+    The Condition class represents a single condition within a rule, containing both
+    the conditions that trigger it and the responses that should occur when those
+    conditions are met.
+
+    Attributes:
+        rule (Rule): The parent rule this condition belongs to.
+        conditions (Dict): Dictionary of field conditions.
+        index (Optional[int]): Index of this condition in the parent rule's condition list.
+        responses (Dict): Dictionary of response values.
+        settings (Dict): Condition settings including enabled state, group ID, priority, and schedule.
+    """
 
     def __init__(
             self,
@@ -35,16 +66,41 @@ class Condition:
             index: Optional[int] = None,
             settings: Optional[Dict] = None
         ):
-            self.rule = rule
-            self.conditions = conditions if conditions is not None else {}
-            self.index = index  # None for new conditions, index for editing existing
-            self.responses = {}
-            self.settings = {"enabled": True, "groupId": None, "priority": 0, "schedule": []}
-            if settings is not None:
-                self.settings.update(settings)
+        """
+        Initialize a new Condition instance.
+
+        Args:
+            rule (Rule): The parent rule this condition belongs to.
+            conditions (Optional[Dict]): Initial conditions dictionary. Defaults to empty dict.
+            index (Optional[int]): Index of this condition in the parent rule's condition list.
+                                 None for new conditions.
+            settings (Optional[Dict]): Initial settings dictionary. Defaults to None.
+        """
+        self.rule = rule
+        self.conditions = conditions if conditions is not None else {}
+        self.index = index  # None for new conditions, index for editing existing
+        self.responses = {}
+        self.settings = {"enabled": True, "groupId": None, "priority": 0, "schedule": []}
+        if settings is not None:
+            self.settings.update(settings)
 
     def when(self, **conditions) -> 'Condition':
-        """Set or update conditions"""
+        """
+        Set or update conditions for this rule condition.
+
+        Args:
+            **conditions: Keyword arguments where each key is a field name and each value
+                        is a tuple of (operator, arguments) defining the condition.
+
+        Returns:
+            Condition: The current condition instance for method chaining.
+
+        Raises:
+            ValueError: If a field name is not defined in the request schema.
+
+        Example:
+            >>> condition.when(age=('greater_than', [18]))
+        """
         for field_name, (operator, args) in conditions.items():
             if field_name not in self.rule.request_fields:
                 raise ValueError(f"Field '{field_name}' is not defined in request schema")
@@ -58,7 +114,23 @@ class Condition:
         return self
 
     def then(self, **responses) -> Union['Rule', 'Condition']:
-        """Set or update responses"""
+        """
+        Set or update responses for this condition.
+
+        Args:
+            **responses: Keyword arguments where each key is a field name and each value
+                       is the response value to set when the condition is met.
+
+        Returns:
+            Union[Rule, Condition]: The parent Rule instance for new conditions, or the
+                                  current Condition instance for existing conditions.
+
+        Raises:
+            ValueError: If a field name is not defined in the response schema.
+
+        Example:
+            >>> condition.then(approved=True, message="Access granted")
+        """
         for field_name, value in responses.items():
             if field_name not in self.rule.response_fields:
                 raise ValueError(f"Field '{field_name}' is not defined in response schema")
@@ -95,37 +167,72 @@ class Condition:
             return self.rule
 
     def set_priority(self, priority: int) -> 'Condition':
-        """Set the condition priority"""
+        """
+        Set the priority level for this condition.
+
+        Args:
+            priority (int): The priority level to set. Higher numbers indicate higher priority.
+
+        Returns:
+            Condition: The current condition instance for method chaining.
+        """
         self.settings["priority"] = priority
         if self.index is not None:
             self.rule.conditions[self.index]["settings"]["priority"] = priority
         return self
 
     def enable(self) -> 'Condition':
-        """Enable the condition"""
+        """
+        Enable this condition.
+
+        Returns:
+            Condition: The current condition instance for method chaining.
+        """
         self.settings["enabled"] = True
         if self.index is not None:
             self.rule.conditions[self.index]["settings"]["enabled"] = True
         return self
 
     def disable(self) -> 'Condition':
-        """Disable the condition"""
+        """
+        Disable this condition.
+
+        Returns:
+            Condition: The current condition instance for method chaining.
+        """
         self.settings["enabled"] = False
         if self.index is not None:
             self.rule.conditions[self.index]["settings"]["enabled"] = False
         return self
 
     def delete(self) -> None:
-        """Remove this condition from the rule"""
+        """
+        Remove this condition from its parent rule.
+
+        Raises:
+            IndexError: If the condition's index is invalid.
+        """
         if self.index is not None:
             self.rule.conditions.pop(self.index)
 
     def __repr__(self) -> str:
+        """
+        Get a string representation of this condition.
+
+        Returns:
+            str: A string representation indicating whether this is a new or existing condition.
+        """
         if self.index is not None:
             return f"<Condition: Row {self.index}>"
         return "<Condition: New>"
 
     def to_table(self) -> str:
+        """
+        Generate a tabular representation of this condition.
+
+        Returns:
+            str: A formatted string containing the condition's fields and values in a grid layout.
+        """
         from tabulate import tabulate
 
         # Get all field names for headers
@@ -166,10 +273,25 @@ class Condition:
 
 class RuleTest:
     """
-    Rule tests allow users to define test cases for a rule to ensure it behaves as expected.
+    A class for defining and managing test cases for rules.
+
+    RuleTest allows users to define test cases that verify a rule's behavior by
+    specifying input requests and expected responses.
+
+    Attributes:
+        id (str): Unique identifier for the test.
+        name (str): Human-readable name for the test.
+        request (Dict): Test input request payload.
+        response (Dict): Expected response payload.
+        critical (bool): Whether this test is critical for rule validation.
+        last_executed (Optional[datetime]): When the test was last run.
+        test_state (Optional[str]): Current state of the test.
+        error (Optional[str]): Error message if test failed.
+        success (Optional[bool]): Whether the test passed or failed.
     """
 
     def __init__(self):
+        """Initialize a new RuleTest instance with default values."""
         self.id = self._generate_id()
         self.name = "Untitled Test"
         self.request = {}
@@ -181,26 +303,62 @@ class RuleTest:
         self.success = None
 
     def _generate_id(self) -> str:
+        """
+        Generate a random unique identifier for the test.
+
+        Returns:
+            str: A 21-character random string of letters and numbers.
+        """
         return ''.join(random.choices(string.ascii_letters + string.digits, k=21))
 
     def set_name(self, name: str) -> 'RuleTest':
-        """Set the name of the test"""
+        """
+        Set the name of the test.
+
+        Args:
+            name (str): The new name for the test.
+
+        Returns:
+            RuleTest: The current test instance for method chaining.
+        """
         self.name = name
         return self
 
     def expect(self, request: Dict[str, Any], response: Dict[str, Any]) -> 'RuleTest':
-        """Set the request and associated expected response payload for this test"""
+        """
+        Set the test request and expected response payloads.
+
+        Args:
+            request (Dict[str, Any]): The input request payload for the test.
+            response (Dict[str, Any]): The expected response payload.
+
+        Returns:
+            RuleTest: The current test instance for method chaining.
+        """
         self.request = request
         self.response = response
         return self
 
     def is_critical(self, critical: bool = True) -> 'RuleTest':
-        """Set the test as critical or not"""
+        """
+        Set whether this test is critical for rule validation.
+
+        Args:
+            critical (bool): Whether the test is critical. Defaults to True.
+
+        Returns:
+            RuleTest: The current test instance for method chaining.
+        """
         self.critical = critical
         return self
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert the test to a dictionary representation"""
+        """
+        Convert the test to a dictionary representation.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing all test attributes.
+        """
         return {
             "id": self.id,
             "name": self.name,
@@ -216,16 +374,17 @@ class RuleTest:
     @classmethod
     def from_json(cls, json_str: Union[str, Dict[str, Any]]) -> 'RuleTest':
         """
-        Create a RuleTest instance from a JSON string or dictionary.
+        Create a RuleTest instance from JSON data.
 
         Args:
-            json_str: Either a JSON string or a dictionary containing test data
+            json_str (Union[str, Dict[str, Any]]): Either a JSON string or dictionary
+                                                  containing test data.
 
         Returns:
-            A new RuleTest instance populated with the data
+            RuleTest: A new RuleTest instance populated with the data.
 
         Raises:
-            ValueError: If the JSON data is invalid or missing required fields
+            ValueError: If the JSON data is invalid or missing required fields.
         """
         # Convert string to dict if necessary
         if isinstance(json_str, str):
@@ -256,23 +415,62 @@ class RuleTest:
         return test
 
 class Rule:
-    """Main class for building and managing rules"""
+    """
+    Main class for building and managing business rules.
+
+    The Rule class provides a comprehensive interface for defining, modifying, and
+    managing business rules including their conditions, fields, tests, and metadata.
+
+    Attributes:
+        workspace (Optional[RulebricksApi]): Connected Rulebricks workspace client.
+        request_fields (Dict): Dictionary of input fields for the rule.
+        response_fields (Dict): Dictionary of output fields for the rule.
+        test_request (Optional[Dict]): Sample request for testing.
+        conditions (List[Dict]): List of rule conditions.
+        groups (Dict): Rule groups configuration.
+        name (str): Name of the rule.
+        description (str): Description of the rule.
+        id (str): Unique identifier for the rule.
+        created_at (str): ISO timestamp of creation.
+        updated_at (str): ISO timestamp of last update.
+        updated_by (str): Identity of last updater.
+        slug (str): URL-friendly identifier.
+        folder_id (Optional[str]): ID of containing folder.
+        settings (Dict): Rule settings.
+        form (Dict): Form configuration.
+        history (List): Change history.
+        published (bool): Whether the rule is published.
+        published_at (Optional[str]): ISO timestamp of last publish.
+        test_suite (List[RuleTest]): List of test cases.
+        access_groups (List[str]): List of groups with access.
+        published_conditions (List): Published version of conditions.
+        published_request_schema (List): Published version of request schema.
+        published_response_schema (List): Published version of response schema.
+        published_groups (Dict): Published version of groups.
+    """
 
     def __init__(self, rulebricks_client: Optional['RulebricksApi'] = None):
+        """
+        Initialize a new Rule instance.
+
+        Args:
+            rulebricks_client (Optional[RulebricksApi]): A connected Rulebricks workspace client.
+                                                        Defaults to None.
+        """
         self.workspace = rulebricks_client
-        self.request_fields: Dict[str, Union[BooleanField, NumberField, StringField, DateField, ListField]] = {}
-        self.response_fields: Dict[str, Union[BooleanField, NumberField, StringField, DateField, ListField]] = {}
+        self.request_fields = {}
+        self.response_fields = {}
         self.test_request = None
-        self.conditions: List[Dict] = []
-        self.groups: Dict[str, Any] = {}
-        self.name: str = "Untitled Rule"
-        self.description: str = ""
-        self.id: str = str(uuid.uuid4())
-        self.created_at: str = datetime.utcnow().isoformat() + "Z"
-        self.updated_at: str = self.created_at
-        self.updated_by: str = "Rulebricks Forge SDK"
-        self.slug: str = self._generate_slug()
-        self.folder_id: Optional[str] = None
+        self.conditions = []
+        self.groups = {}
+        self.name = "Untitled Rule"
+        self.description = ""
+        self.id = str(uuid.uuid4())
+        self.created_at = datetime.utcnow().isoformat() + "Z"
+        self.updated_at = self.created_at
+        self.updated_by = "Rulebricks Forge SDK"
+        self.slug = self._generate_slug()
+        self.folder_id = None
         self.settings = {}
         self.form = {}
         self.history = []
@@ -286,26 +484,44 @@ class Rule:
         self.published_groups = {}
 
     def set_workspace(self, rulebricks_client: Any) -> None:
-        """Supply the rule with a connection to a Rulebricks workspace"""
+        """
+        Supply the rule with a connection to a Rulebricks workspace.
+
+        Args:
+            rulebricks_client (Any): The Rulebricks workspace client to connect.
+
+        Returns:
+            None
+        """
         self.workspace = rulebricks_client
         return
 
     def __repr__(self) -> str:
+        """
+        Get a string representation of this rule.
+
+        Returns:
+            str: A string showing the rule's name.
+        """
         return f"<Rule: {self.name}>"
 
     @classmethod
     def from_json(cls, json_str: Union[str, Dict[str, Any]]) -> 'Rule':
         """
-        Create a Rule instance from a JSON string or dictionary.
+        Create a Rule instance from JSON data.
 
         Args:
-            json_str: Either a JSON string or a dictionary containing rule data
+            json_str (Union[str, Dict[str, Any]]): Either a JSON string or dictionary
+                                                  containing rule data.
 
         Returns:
-            A new Rule instance populated with the data
+            Rule: A new Rule instance populated with the data.
 
         Raises:
-            ValueError: If the JSON data is invalid or missing required fields
+            ValueError: If the JSON data is invalid or missing required fields.
+
+        Example:
+            >>> rule = Rule.from_json('{"name": "My Rule", "conditions": []}')
         """
         # Convert string to dict if necessary
         if isinstance(json_str, str):
@@ -385,13 +601,84 @@ class Rule:
 
         return rule
 
+    def from_workspace(self, rule_id: str) -> 'Rule':
+        """
+        Load a rule from the connected workspace by ID.
+
+        Args:
+            rule_id (str): The unique identifier of the rule to load.
+
+        Returns:
+            Rule: The loaded rule instance.
+
+        Raises:
+            ValueError: If the workspace client is missing or the rule cannot be found.
+        """
+        if not self.workspace:
+            raise ValueError("A Rulebricks client is required to load a rule from the workspace")
+        rule_data = self.workspace.assets.export_rule(id=rule_id)
+        return Rule.from_json(rule_data)
+
+    def update(self) -> 'Rule':
+        """
+        Push local changes to this rule to the connected workspace.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+
+        Raises:
+            ValueError: If the workspace client is missing or the rule cannot be pushed.
+        """
+        if not self.workspace:
+            raise ValueError("A Rulebricks client is required to push a rule to the workspace. See Rule.set_workspace()")
+        self.workspace.assets.import_rule(rule=self.to_dict())
+        self = self.from_workspace(rule_id=self.id)
+        return self
+
+    def publish(self) -> 'Rule':
+        """
+        Publish a new version of this rule in the connected workspace.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+
+        Raises:
+            ValueError: If the workspace client is missing or the rule cannot be published.
+        """
+        if not self.workspace:
+            raise ValueError("A Rulebricks client is required to publish a rule. See Rule.set_workspace()")
+        rule_dict = self.to_dict()
+        # Flag the rule to publish a *new* version
+        # Note this is different from self.published
+        rule_dict["_publish"] = True
+        self.workspace.assets.import_rule(rule=rule_dict)
+        self = self.from_workspace(rule_id=self.id)
+        return self
+
     def _generate_slug(self, length: int = 10) -> str:
-        """Generate a random alphanumeric slug"""
+        """
+        Generate a random alphanumeric slug for the rule.
+
+        Args:
+            length (int): Length of the slug to generate. Defaults to 10.
+
+        Returns:
+            str: A random string of alphanumeric characters.
+        """
         characters = string.ascii_letters + string.digits
         return ''.join(random.choice(characters) for _ in range(length))
 
     def _get_field_type(self, field: Union[BooleanField, NumberField, StringField, DateField, ListField]) -> RuleType:
-        """Get the RuleType for a field"""
+        """
+        Get the RuleType enum value for a field.
+
+        Args:
+            field (Union[BooleanField, NumberField, StringField, DateField, ListField]):
+                The field to get the type for.
+
+        Returns:
+            RuleType: The corresponding RuleType enum value.
+        """
         type_mapping = {
             BooleanField: RuleType.BOOLEAN,
             NumberField: RuleType.NUMBER,
@@ -402,166 +689,487 @@ class Rule:
         return type_mapping[field.__class__]
 
     def set_name(self, name: str) -> 'Rule':
-        """Set the rule name"""
+        """
+        Set the rule name.
+
+        Args:
+            name (str): The new name for the rule.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.name = name
         return self
 
     def set_description(self, description: str) -> 'Rule':
-        """Set the rule description"""
+        """
+        Set the rule description.
+
+        Args:
+            description (str): The new description for the rule.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.description = description
         return self
 
     def set_folder(self, folder_name: str, create_if_missing: Optional[bool] = False) -> 'Rule':
-        """Move this rule into a folder by a folder name"""
+        """
+        Move this rule into a folder by folder name.
+
+        Args:
+            folder_name (str): Name of the target folder.
+            create_if_missing (Optional[bool]): Whether to create the folder if it doesn't exist.
+                                              Defaults to False.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+
+        Raises:
+            ValueError: If workspace client is missing or folder conflicts exist.
+        """
         if not self.workspace:
-            raise ValueError("A Rulebricks client is required to set a folder by name, check the Rule constructor")
+            raise ValueError("A Rulebricks client is required to set a folder by name")
         folders = self.workspace.assets.list_folders()
         folder = next((f for f in folders if f.name == folder_name), None)
         if not folder and create_if_missing:
-            raise ValueError(f"Folder '{folder_name}' not found in your Rulebricks workspace, and create_if_missing is False")
-        if not folder:
-            # Ensure folder name is unique
             if any(f.name == folder_name for f in folders):
-                raise ValueError("Folder name conflicts with an existing folder in your workspace. Folder names must be unique.")
-            folder = self.workspace.assets.upsert_folder(name=folder_name, description="Created by Rulebricks Forge SDK")
+                raise ValueError("Folder name conflicts with an existing folder")
+            folder = self.workspace.assets.upsert_folder(name=folder_name)
+        if not folder:
+            raise ValueError(f"Folder '{folder_name}' not found and create_if_missing is False")
         self.folder_id = folder.id
         return self
 
     def set_folder_id(self, folder_id: str) -> 'Rule':
-        """Move this rule into a folder by a folder ID"""
+        """
+        Move this rule into a folder by folder ID.
+
+        Args:
+            folder_id (str): ID of the target folder.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.folder_id = folder_id
         return self
 
     def set_alias(self, alias: str) -> 'Rule':
-        """Override the generated API slug for this rule with a custom alias"""
+        """
+        Override the generated API slug with a custom alias.
+
+        Args:
+            alias (str): The custom alias to use.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+
+        Raises:
+            ValueError: If the alias is invalid or conflicts with existing rules.
+        """
         if not self.workspace:
-            raise ValueError("A Rulebricks client is required to set an alias, check the Rule constructor")
+            raise ValueError("A Rulebricks client is required to set an alias")
         if len(alias) < 3:
             raise ValueError("Alias must be at least 3 characters long")
         if '/' in alias or '\\' in alias or ' ' in alias:
             raise ValueError("Alias cannot contain slashes or spaces")
+        if not all(c in string.ascii_letters + string.digits + '-' for c in alias):
+            raise ValueError("Alias cannot contain special characters")
+
         rules = self.workspace.assets.list_rules()
         if any(r.slug == alias for r in rules):
-            raise ValueError("Alias conflicts with an existing rule in your workspace. Aliases must be unique.")
-
-        if not all(c in string.ascii_letters + string.digits + '-' for c in alias):
-            raise ValueError("Alias cannot contain special characters of any kind")
+            raise ValueError("Alias conflicts with an existing rule")
 
         self.slug = alias
         return self
 
     def add_access_group(self, group_name: str, create_if_missing: Optional[bool] = False) -> 'Rule':
-        """Adds a user group to this rule that can be used to control who can access it"""
+        """
+        Add a user group that can access this rule.
+
+        Args:
+            group_name (str): Name of the group to add.
+            create_if_missing (Optional[bool]): Whether to create the group if it doesn't exist.
+                                              Defaults to False.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+
+        Raises:
+            ValueError: If workspace client is missing or group operations fail.
+        """
         if not self.workspace:
-            raise ValueError("A Rulebricks client is required to add access groups, check the Rule constructor")
+            raise ValueError("A Rulebricks client is required to add access groups")
         existing_access_groups = self.workspace.users.list_groups()
         group = next((g for g in existing_access_groups if g.name == group_name), None)
         if group:
             self.access_groups.append(group.name)
         if not group and not create_if_missing:
-            raise ValueError(f"User group '{group_name}' not found in your Rulebricks workspace, and create_if_missing is False")
+            raise ValueError(f"User group '{group_name}' not found and create_if_missing is False")
         if not group and create_if_missing:
-            created_group = self.workspace.users.create_group(name=group_name, description="Created by Rulebricks Forge SDK")
+            created_group = self.workspace.users.create_group(name=group_name)
             self.access_groups.append(created_group.name)
-
         return self
 
     def remove_access_group(self, group_name: str) -> 'Rule':
-        """Removes a user group from this rule"""
+        """
+        Remove a user group's access to this rule.
+
+        Args:
+            group_name (str): Name of the group to remove.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         if group_name in self.access_groups:
             self.access_groups.remove(group_name)
         return self
 
     def enable_continous_testing(self, enabled: bool = True) -> 'Rule':
-        """Require all critical tests to pass before publishing new versions of this rule"""
+        """
+        Configure whether critical tests must pass before publishing.
+
+        Args:
+            enabled (bool): Whether to enable continuous testing. Defaults to True.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.settings["testing"] = enabled
         return self
 
     def enable_schema_validation(self, enabled: bool = True) -> 'Rule':
-        """Enforce type validation on request data submitted to this rule before solving rules"""
+        """
+        Configure whether to validate request data against the schema.
+
+        Args:
+            enabled (bool): Whether to enable schema validation. Defaults to True.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.settings["schemaValidation"] = enabled
         return self
 
     def require_all_properties(self, enabled: bool = True) -> 'Rule':
-        """Require all properties defined in the request schema to be present in the request before solving rules"""
+        """
+        Configure whether all schema properties must be present in requests.
+
+        Args:
+            enabled (bool): Whether to require all properties. Defaults to True.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.settings["allProperties"] = enabled
         return self
 
     def lock_schema(self, enabled: bool = True) -> 'Rule':
-        """Disable altering the request and response schemas in the visual editor to prevent unintentional changes"""
+        """
+        Configure whether the schema can be modified in the visual editor.
+
+        Args:
+            enabled (bool): Whether to lock the schema. Defaults to True.
+
+        Returns:
+            Rule: The current rule instance for method chaining.
+        """
         self.settings["lockSchema"] = enabled
         return self
 
     def add_boolean_field(self, name: str, description: str = "", default: bool = False) -> BooleanField:
-        """Add a boolean request field"""
+        """
+        Add a boolean request field to the rule.
+
+        Args:
+            name (str): Name/key of the field.
+            description (str): Description of the field. Defaults to empty string.
+            default (bool): Default value for the field. Defaults to False.
+
+        Returns:
+            BooleanField: The created field instance.
+
+        Example:
+            >>> rule.add_boolean_field('is_active', 'Whether the account is active', True)
+        """
         field = BooleanField(name, description, default)
         self.request_fields[name] = field
         return field
 
     def add_number_field(self, name: str, description: str = "", default: Union[int, float] = 0) -> NumberField:
-        """Add a number request field"""
+        """
+        Add a number request field to the rule.
+
+        Args:
+            name (str): Name/key of the field.
+            description (str): Description of the field. Defaults to empty string.
+            default (Union[int, float]): Default value for the field. Defaults to 0.
+
+        Returns:
+            NumberField: The created field instance.
+
+        Example:
+            >>> rule.add_number_field('age', 'Age in years', 18)
+        """
         field = NumberField(name, description, default)
         self.request_fields[name] = field
         return field
 
     def add_string_field(self, name: str, description: str = "", default: str = "") -> StringField:
-        """Add a string request field"""
+        """
+        Add a string field to the rule's request schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in request payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (str): Default value for the field if none is provided in the request.
+                            Defaults to empty string.
+
+        Returns:
+            StringField: The created string field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_string_field("username", "User's login name", "guest")
+        """
         field = StringField(name, description, default)
         self.request_fields[name] = field
         return field
 
     def add_date_field(self, name: str, description: str = "", default: Optional[datetime] = None) -> DateField:
-        """Add a date request field"""
+        """
+        Add a date field to the rule's request schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in request payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (Optional[datetime]): Default value for the field if none is provided
+                                        in the request. Defaults to None.
+
+        Returns:
+            DateField: The created date field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> from datetime import datetime
+            >>> rule.add_date_field("created_at", "Record creation date", datetime.now())
+        """
         field = DateField(name, description, default)
         self.request_fields[name] = field
         return field
 
     def add_list_field(self, name: str, description: str = "", default: Optional[List] = None) -> ListField:
-        """Add a list request field"""
+        """
+        Add a list field to the rule's request schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in request payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (Optional[List]): Default value for the field if none is provided
+                                    in the request. Defaults to None, which will be
+                                    converted to an empty list.
+
+        Returns:
+            ListField: The created list field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_list_field("tags", "Item categories", ["default", "basic"])
+        """
         field = ListField(name, description, default or [])
         self.request_fields[name] = field
         return field
 
     def add_boolean_response(self, name: str, description: str = "", default: bool = False) -> BooleanField:
-        """Add a boolean response field"""
+        """
+        Add a boolean field to the rule's response schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in response payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (bool): Default value for the field if none is set by conditions.
+                            Defaults to False.
+
+        Returns:
+            BooleanField: The created boolean field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_boolean_response("is_approved", "Whether the request was approved", False)
+        """
         field = BooleanField(name, description, default)
         self.response_fields[name] = field
         return field
 
     def add_number_response(self, name: str, description: str = "", default: Union[int, float] = 0) -> NumberField:
-        """Add a number response field"""
+        """
+        Add a number field to the rule's response schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in response payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (Union[int, float]): Default value for the field if none is set by conditions.
+                                        Defaults to 0.
+
+        Returns:
+            NumberField: The created number field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_number_response("total_amount", "Calculated total", 0.0)
+        """
         field = NumberField(name, description, default)
         self.response_fields[name] = field
         return field
 
     def add_string_response(self, name: str, description: str = "", default: str = "") -> StringField:
-        """Add a string response field"""
+        """
+        Add a string field to the rule's response schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in response payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (str): Default value for the field if none is set by conditions.
+                            Defaults to empty string.
+
+        Returns:
+            StringField: The created string field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_string_response("message", "Response message to user", "Success")
+        """
         field = StringField(name, description, default)
         self.response_fields[name] = field
         return field
 
     def add_date_response(self, name: str, description: str = "", default: Optional[datetime] = None) -> DateField:
-        """Add a date response field"""
+        """
+        Add a date field to the rule's response schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in response payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (Optional[datetime]): Default value for the field if none is set by conditions.
+                                        Defaults to None.
+
+        Returns:
+            DateField: The created date field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_date_response("processed_at", "Time of processing")
+        """
         field = DateField(name, description, default)
         self.response_fields[name] = field
         return field
 
     def add_list_response(self, name: str, description: str = "", default: Optional[List] = None) -> ListField:
-        """Add a list response field"""
+        """
+        Add a list field to the rule's response schema.
+
+        Args:
+            name (str): The name/identifier for the field. This will be used as the key
+                        in response payloads.
+            description (str): Optional description of the field's purpose or usage.
+                                Defaults to empty string.
+            default (Optional[List]): Default value for the field if none is set by conditions.
+                                    Defaults to None, which will be converted to an empty list.
+
+        Returns:
+            ListField: The created list field instance.
+
+        Raises:
+            ValueError: If a field with the same name already exists.
+
+        Example:
+            >>> rule.add_list_response("errors", "List of validation errors", [])
+        """
         field = ListField(name, description, default or [])
         self.response_fields[name] = field
         return field
 
     def when(self, **conditions) -> Condition:
-        """Start defining a new condition"""
+        """
+        Start defining a new condition for the rule.
+
+        Args:
+            **conditions: Keyword arguments defining initial conditions. Each key should be
+                        a field name and each value should be a tuple of (operator, arguments).
+
+        Returns:
+            Condition: A new condition instance for building the complete condition.
+
+        Example:
+            >>> rule.when(age=('greater_than', [21]), status=('equals', ['active']))
+        """
         return Condition(self, conditions=conditions)
 
     def any(self, **conditions) -> Condition:
-        """Start defining a new condition with an OR operator"""
+        """
+        Start defining a new condition with an OR operator.
+
+        Similar to when(), but creates a condition that will be evaluated with OR logic
+        instead of the default AND logic.
+
+        Args:
+            **conditions: Keyword arguments defining initial conditions. Each key should be
+                        a field name and each value should be a tuple of (operator, arguments).
+
+        Returns:
+            Condition: A new condition instance configured for OR logic.
+
+        Example:
+            >>> rule.any(status=('equals', ['pending']), priority=('equals', ['high']))
+        """
         return Condition(self, conditions=conditions, settings={"or": True})
 
     def get_condition(self, index: int) -> Condition:
-        """Get a condition by index for modification"""
+        """
+        Get an existing condition by its index for modification.
+
+        Args:
+            index (int): The zero-based index of the condition to retrieve.
+
+        Returns:
+            Condition: The condition instance at the specified index.
+
+        Raises:
+            ValueError: If the index is out of range.
+
+        Example:
+            >>> condition = rule.get_condition(0)
+            >>> condition.disable()
+        """
         if index < 0 or index >= len(self.conditions):
             raise ValueError(f"Condition index {index} out of range")
         return Condition(
@@ -572,7 +1180,22 @@ class Rule:
         )
 
     def get_boolean_field(self, name: str) -> BooleanField:
-        """Get a boolean field from the rule by name"""
+        """
+        Get a boolean field from the rule's request schema by name.
+
+        Args:
+            name (str): The name of the field to retrieve.
+
+        Returns:
+            BooleanField: The requested boolean field.
+
+        Raises:
+            ValueError: If the field doesn't exist or isn't a boolean field.
+
+        Example:
+            >>> is_active = rule.get_boolean_field("is_active")
+            >>> matched_conditions = rule.find_conditions(is_active=is_active.equals(True))
+        """
         if name not in self.request_fields:
             raise ValueError(f"Field '{name}' not found in request schema")
         elif not isinstance(self.request_fields[name], BooleanField):
@@ -580,7 +1203,22 @@ class Rule:
         return self.request_fields[name] # type: ignore
 
     def get_number_field(self, name: str) -> NumberField:
-        """Get a number field from the rule by name"""
+        """
+        Get a number field from the rule's request schema by name.
+
+        Args:
+            name (str): The name of the field to retrieve.
+
+        Returns:
+            NumberField: The requested number field.
+
+        Raises:
+            ValueError: If the field doesn't exist or isn't a number field.
+
+        Example:
+            >>> amount = rule.get_number_field("amount")
+            >>> matched_conditions = rule.find_conditions(amount=amount.greater_than(1000))
+        """
         if name not in self.request_fields:
             raise ValueError(f"Field '{name}' not found in request schema")
         elif not isinstance(self.request_fields[name], NumberField):
@@ -588,7 +1226,22 @@ class Rule:
         return self.request_fields[name] # type: ignore
 
     def get_string_field(self, name: str) -> StringField:
-        """Get a string field from the rule by name"""
+        """
+        Get a string field from the rule's request schema by name.
+
+        Args:
+            name (str): The name of the field to retrieve.
+
+        Returns:
+            StringField: The requested string field.
+
+        Raises:
+            ValueError: If the field doesn't exist or isn't a string field.
+
+        Example:
+            >>> status = rule.get_string_field("status")
+            >>> matched_condtions = rule.find_conditions(status=status.equals("active"))
+        """
         if name not in self.request_fields:
             raise ValueError(f"Field '{name}' not found in request schema")
         elif not isinstance(self.request_fields[name], StringField):
@@ -596,7 +1249,24 @@ class Rule:
         return self.request_fields[name] # type: ignore
 
     def get_date_field(self, name: str) -> DateField:
-        """Get a date field from the rule by name"""
+        """
+        Get a date field from the rule's request schema by name.
+
+        Args:
+            name (str): The name of the field to retrieve.
+
+        Returns:
+            DateField: The requested date field.
+
+        Raises:
+            ValueError: If the field doesn't exist or isn't a date field.
+
+        Example:
+            >>> created_at = rule.get_date_field("created_at")
+            >>> matched_conditions = rule.find_conditions(created_at=created_at.before(
+            ...     datetime(2021, 1, 1)
+            ... ))
+        """
         if name not in self.request_fields:
             raise ValueError(f"Field '{name}' not found in request schema")
         elif not isinstance(self.request_fields[name], DateField):
@@ -604,7 +1274,22 @@ class Rule:
         return self.request_fields[name] # type: ignore
 
     def get_list_field(self, name: str) -> ListField:
-        """Get a list field from the rule by name"""
+        """
+        Get a list field from the rule's request schema by name.
+
+        Args:
+            name (str): The name of the field to retrieve.
+
+        Returns:
+            ListField: The requested list field.
+
+        Raises:
+            ValueError: If the field doesn't exist or isn't a list field.
+
+        Example:
+            >>> tags = rule.get_list_field("tags")
+            >>> matched_conditions = rule.find_conditions(tags=tags.contains("important"))
+        """
         if name not in self.request_fields:
             raise ValueError(f"Field '{name}' not found in request schema")
         elif not isinstance(self.request_fields[name], ListField):
@@ -613,7 +1298,27 @@ class Rule:
 
     def find_conditions(self, **kwargs) -> List[Condition]:
         """
-        Find conditions matching certain criteria using field operators
+        Find conditions matching specified criteria using field operators.
+
+        This method searches through existing conditions and returns those that match
+        all the specified criteria.
+
+        Args:
+            **kwargs: Keyword arguments where each key is a field name and each value
+                        is a tuple of (operator, arguments) to match against.
+
+        Returns:
+            List[Condition]: List of matching condition instances.
+
+        Example:
+            >>> # Find all conditions where age > 18 and status = "active"
+            >>> matched_conditions = created_rule.find_conditions(
+            ...     age=created_rule.get_number_field("age").greater_than(18),
+            ...     status=created_rule.get_string_field("status").equals("active")
+            ... )
+            >>> matched_conditions[0].then(
+            ...     estimated_premium=3000
+            ... )
         """
         results = []
         for i, condition in enumerate(self.conditions):
@@ -646,7 +1351,20 @@ class Rule:
         return results
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert the rule to a dictionary representation"""
+        """
+        Convert the rule to a dictionary representation.
+
+        This method generates a complete dictionary representation of the rule,
+        including all fields, conditions, settings, and metadata. This format
+        is suitable for serialization and API communication.
+
+        Returns:
+            Dict[str, Any]: Complete dictionary representation of the rule.
+
+        Example:
+            >>> rule_dict = rule.to_dict()
+            >>> print(rule_dict['name'], rule_dict['conditions'])
+        """
         # Use request fields and response fields to generate sampleRequest and sampleResponse json
         sampleRequest = {}
         sampleResponse = {}
@@ -716,16 +1434,40 @@ class Rule:
         }
 
     def to_json(self) -> str:
-        """Convert the rule to a JSON string"""
+        """
+        Convert the rule to a JSON string representation.
+
+        This method serializes the complete rule into a formatted JSON string,
+        suitable for file storage or API transmission.
+
+        Returns:
+            str: JSON string representation of the rule.
+
+        Example:
+            >>> json_str = rule.to_json()
+            >>> with open('rule.json', 'w') as f:
+            ...     f.write(json_str)
+        """
         return json.dumps(self.to_dict(), indent=2, default=str)
 
     def to_table(self) -> str:
         """
-        Generate a tabular representation of the rule conditions.
-        Uses the tabulate library to create a formatted grid view.
+        Generate a tabular representation of all rule conditions.
+
+        Creates a formatted grid view showing all conditions and their
+        corresponding responses, suitable for console output or logging.
 
         Returns:
-            str: A string containing the tabular representation of the rule
+            str: A string containing the tabular representation of the rule.
+
+        Example:
+            >>> print(rule.to_table())
+            +----------------+----------------+----------------+
+            | age           | status         | approved       |
+            +================+================+================+
+            | greater_than  | equals         | True          |
+            | (18)          | ("active")     |               |
+            +----------------+----------------+----------------+
         """
         from tabulate import tabulate
 
@@ -765,13 +1507,22 @@ class Rule:
 
     def export(self, directory: Optional[str] = None) -> str:
         """
-        Export the rule to a file
+        Export the rule to a file in the specified directory.
+
+        Creates a JSON file containing the complete rule definition. The filename
+        is automatically generated based on the rule name with a unique suffix if
+        needed to avoid conflicts.
 
         Args:
-            directory: Optional directory to save the file in
+            directory (Optional[str]): Directory where the file should be saved.
+                                        If None, uses the current directory.
 
         Returns:
-            The path to the exported file
+            str: The path to the exported file.
+
+        Example:
+            >>> file_name = rule.export()
+            >>> print(f"Rule exported to {file_name}")
         """
         base_name = re.sub(r'[^\w\-_\. ]', '_', self.name)
         base_name = base_name.replace(' ', '_')
@@ -794,19 +1545,74 @@ class Rule:
         return filename
 
     def get_editor_url(self, base_url = "https://rulebricks.com") -> str:
-        """Get the editor URL to edit this in the Rulebricks web app (if imported)"""
+        """
+        Get the URL for editing this rule in the Rulebricks web app.
+
+        Args:
+            base_url (str): Base URL for the Rulebricks application.
+                            Defaults to "https://rulebricks.com".
+
+        Returns:
+            str: Complete URL for editing the rule.
+
+        Example:
+            >>> url = rule.get_editor_url()
+            >>> print(f"Edit rule at: {url}")
+        """
         return f"{base_url}/dashboard/{self.id}"
 
     def find_test_by_name(self, name: str) -> Optional[RuleTest]:
-        """Find a test by name"""
+        """
+        Find a test case by its name.
+
+        Args:
+            name (str): The name of the test to find.
+
+        Returns:
+            Optional[RuleTest]: The matching test case, or None if not found.
+
+        Example:
+            >>> test = rule.find_test_by_name("Check age validation")
+            >>> if test:
+            ...     print(f"Test found: {test.name}")
+        """
         return next((t for t in self.test_suite if t.name == name), None)
 
     def find_test_by_id(self, test_id: str) -> Optional[RuleTest]:
-        """Find a test by ID"""
+        """
+        Find a test case by its ID.
+
+        Args:
+            test_id (str): The ID of the test to find.
+
+        Returns:
+            Optional[RuleTest]: The matching test case, or None if not found.
+
+        Example:
+            >>> test = rule.find_test_by_id("abc123")
+            >>> if test:
+            ...     print(f"Test found: {test.name}")
+        """
         return next((t for t in self.test_suite if t.id == test_id), None)
 
     def add_test(self, test: RuleTest) -> 'Rule':
-        """Add a test to the rule or update an existing one"""
+        """
+        Add a test case to the rule's test suite or update an existing one.
+
+        If a test with the same ID already exists, it will be updated with
+        the new test's values. Otherwise, the new test will be added to
+        the suite.
+
+        Args:
+            test (RuleTest): The test case to add or update.
+
+        Returns:
+            Rule: The rule instance for method chaining.
+
+        Example:
+            >>> new_test = RuleTest().set_name("Adult check")
+            >>> rule.add_test(new_test)
+        """
         existing_test = self.find_test_by_id(test.id)
         if existing_test:
             existing_test.name = test.name
@@ -818,7 +1624,15 @@ class Rule:
         return self
 
     def remove_test(self, test_id: str) -> None:
-        """Remove a test by ID"""
+        """
+        Remove a test case from the rule's test suite.
+
+        Args:
+            test_id (str): The ID of the test to remove.
+
+        Example:
+            >>> rule.remove_test("abc123")
+        """
         test = self.find_test_by_id(test_id)
         if test:
             self.test_suite.remove(test)

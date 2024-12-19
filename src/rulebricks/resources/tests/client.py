@@ -10,9 +10,12 @@ from ...core.jsonable_encoder import jsonable_encoder
 from ...errors.bad_request_error import BadRequestError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
-from .types.create_test_response import CreateTestResponse
-from .types.delete_test_response import DeleteTestResponse
-from .types.list_tests_response_item import ListTestsResponseItem
+from .types.create_flow_test_response import CreateFlowTestResponse
+from .types.create_rule_test_response import CreateRuleTestResponse
+from .types.delete_flow_test_response import DeleteFlowTestResponse
+from .types.delete_rule_test_response import DeleteRuleTestResponse
+from .types.list_flow_tests_response_item import ListFlowTestsResponseItem
+from .types.list_rule_tests_response_item import ListRuleTestsResponseItem
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -27,7 +30,140 @@ class TestsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list_tests(self, slug: str) -> typing.List[ListTestsResponseItem]:
+    def list_rule_tests(self, slug: str) -> typing.List[ListRuleTestsResponseItem]:
+        """
+        Retrieves a list of tests associated with the rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule whose tests are to be retrieved.
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.tests.list_rule_tests(
+            slug="slug",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListRuleTestsResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def create_rule_test(
+        self,
+        slug: str,
+        *,
+        name: str,
+        request: typing.Dict[str, typing.Any],
+        response: typing.Dict[str, typing.Any],
+        critical: bool,
+    ) -> CreateRuleTestResponse:
+        """
+        Adds a new test to the test suite of a rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule to which the test will be added.
+
+            - name: str. The name of the test.
+
+            - request: typing.Dict[str, typing.Any]. The request object for the test.
+
+            - response: typing.Dict[str, typing.Any]. The expected response object for the test.
+
+            - critical: bool. Indicates whether the test is critical.
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.tests.create_rule_test(
+            slug="slug",
+            name="Test 3",
+            request={"param1": "value1"},
+            response={"status": "success"},
+            critical=True,
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "POST",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests"),
+            json=jsonable_encoder({"name": name, "request": request, "response": response, "critical": critical}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(CreateRuleTestResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def delete_rule_test(self, slug: str, test_id: str) -> DeleteRuleTestResponse:
+        """
+        Deletes a test from the test suite of a rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule from which the test will be deleted.
+
+            - test_id: str. The ID of the test to delete.
+        ---
+        from rulebricks.client import RulebricksApi
+
+        client = RulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.tests.delete_rule_test(
+            slug="slug",
+            test_id="testId",
+        )
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "DELETE",
+            urllib.parse.urljoin(
+                f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests/{test_id}"
+            ),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(DeleteRuleTestResponse, _response.json())  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    def list_flow_tests(self, slug: str) -> typing.List[ListFlowTestsResponseItem]:
         """
         Retrieves a list of tests associated with the flow identified by the slug.
 
@@ -40,7 +176,7 @@ class TestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.tests.list_tests(
+        client.tests.list_flow_tests(
             slug="slug",
         )
         """
@@ -51,7 +187,7 @@ class TestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[ListTestsResponseItem], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[ListFlowTestsResponseItem], _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
@@ -62,7 +198,7 @@ class TestsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def create_test(
+    def create_flow_test(
         self,
         slug: str,
         *,
@@ -70,7 +206,7 @@ class TestsClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
-    ) -> CreateTestResponse:
+    ) -> CreateFlowTestResponse:
         """
         Adds a new test to the test suite of a flow identified by the slug.
 
@@ -91,7 +227,7 @@ class TestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.tests.create_test(
+        client.tests.create_flow_test(
             slug="slug",
             name="Test 3",
             request={"param1": "value1"},
@@ -107,7 +243,7 @@ class TestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(CreateTestResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(CreateFlowTestResponse, _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 404:
@@ -120,7 +256,7 @@ class TestsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete_test(self, slug: str, test_id: str) -> DeleteTestResponse:
+    def delete_flow_test(self, slug: str, test_id: str) -> DeleteFlowTestResponse:
         """
         Deletes a test from the test suite of a flow identified by the slug.
 
@@ -135,7 +271,7 @@ class TestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.tests.delete_test(
+        client.tests.delete_flow_test(
             slug="slug",
             test_id="testId",
         )
@@ -149,7 +285,7 @@ class TestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(DeleteTestResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(DeleteFlowTestResponse, _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
@@ -165,7 +301,140 @@ class AsyncTestsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def list_tests(self, slug: str) -> typing.List[ListTestsResponseItem]:
+    async def list_rule_tests(self, slug: str) -> typing.List[ListRuleTestsResponseItem]:
+        """
+        Retrieves a list of tests associated with the rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule whose tests are to be retrieved.
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.tests.list_rule_tests(
+            slug="slug",
+        )
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "GET",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests"),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(typing.List[ListRuleTestsResponseItem], _response.json())  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def create_rule_test(
+        self,
+        slug: str,
+        *,
+        name: str,
+        request: typing.Dict[str, typing.Any],
+        response: typing.Dict[str, typing.Any],
+        critical: bool,
+    ) -> CreateRuleTestResponse:
+        """
+        Adds a new test to the test suite of a rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule to which the test will be added.
+
+            - name: str. The name of the test.
+
+            - request: typing.Dict[str, typing.Any]. The request object for the test.
+
+            - response: typing.Dict[str, typing.Any]. The expected response object for the test.
+
+            - critical: bool. Indicates whether the test is critical.
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.tests.create_rule_test(
+            slug="slug",
+            name="Test 3",
+            request={"param1": "value1"},
+            response={"status": "success"},
+            critical=True,
+        )
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "POST",
+            urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests"),
+            json=jsonable_encoder({"name": name, "request": request, "response": response, "critical": critical}),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(CreateRuleTestResponse, _response.json())  # type: ignore
+        if _response.status_code == 400:
+            raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def delete_rule_test(self, slug: str, test_id: str) -> DeleteRuleTestResponse:
+        """
+        Deletes a test from the test suite of a rule identified by the slug.
+
+        Parameters:
+            - slug: str. The slug of the rule from which the test will be deleted.
+
+            - test_id: str. The ID of the test to delete.
+        ---
+        from rulebricks.client import AsyncRulebricksApi
+
+        client = AsyncRulebricksApi(
+            api_key="YOUR_API_KEY",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        await client.tests.delete_rule_test(
+            slug="slug",
+            test_id="testId",
+        )
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "DELETE",
+            urllib.parse.urljoin(
+                f"{self._client_wrapper.get_base_url()}/", f"api/v1/admin/rules/{slug}/tests/{test_id}"
+            ),
+            headers=self._client_wrapper.get_headers(),
+            timeout=60,
+        )
+        if 200 <= _response.status_code < 300:
+            return pydantic.parse_obj_as(DeleteRuleTestResponse, _response.json())  # type: ignore
+        if _response.status_code == 404:
+            raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        if _response.status_code == 500:
+            raise InternalServerError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
+        try:
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, body=_response.text)
+        raise ApiError(status_code=_response.status_code, body=_response_json)
+
+    async def list_flow_tests(self, slug: str) -> typing.List[ListFlowTestsResponseItem]:
         """
         Retrieves a list of tests associated with the flow identified by the slug.
 
@@ -178,7 +447,7 @@ class AsyncTestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        await client.tests.list_tests(
+        await client.tests.list_flow_tests(
             slug="slug",
         )
         """
@@ -189,7 +458,7 @@ class AsyncTestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(typing.List[ListTestsResponseItem], _response.json())  # type: ignore
+            return pydantic.parse_obj_as(typing.List[ListFlowTestsResponseItem], _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:
@@ -200,7 +469,7 @@ class AsyncTestsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def create_test(
+    async def create_flow_test(
         self,
         slug: str,
         *,
@@ -208,7 +477,7 @@ class AsyncTestsClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
-    ) -> CreateTestResponse:
+    ) -> CreateFlowTestResponse:
         """
         Adds a new test to the test suite of a flow identified by the slug.
 
@@ -229,7 +498,7 @@ class AsyncTestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        await client.tests.create_test(
+        await client.tests.create_flow_test(
             slug="slug",
             name="Test 3",
             request={"param1": "value1"},
@@ -245,7 +514,7 @@ class AsyncTestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(CreateTestResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(CreateFlowTestResponse, _response.json())  # type: ignore
         if _response.status_code == 400:
             raise BadRequestError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 404:
@@ -258,7 +527,7 @@ class AsyncTestsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete_test(self, slug: str, test_id: str) -> DeleteTestResponse:
+    async def delete_flow_test(self, slug: str, test_id: str) -> DeleteFlowTestResponse:
         """
         Deletes a test from the test suite of a flow identified by the slug.
 
@@ -273,7 +542,7 @@ class AsyncTestsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        await client.tests.delete_test(
+        await client.tests.delete_flow_test(
             slug="slug",
             test_id="testId",
         )
@@ -287,7 +556,7 @@ class AsyncTestsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(DeleteTestResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(DeleteFlowTestResponse, _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 500:

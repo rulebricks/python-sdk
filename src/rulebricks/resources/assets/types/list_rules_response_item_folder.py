@@ -31,9 +31,6 @@ class ListRulesResponseItemFolder(pydantic.BaseModel):
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
         return super().dict(**kwargs_with_defaults)
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(id: {self.id!r}, name: {self.name!r})"
-
     class Config:
         frozen = True
         smart_union = True

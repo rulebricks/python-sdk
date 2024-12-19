@@ -58,6 +58,11 @@ class DynamicValues:
         Raises:
             DynamicValueNotFoundError: If the value doesn't exist
             ValueError: If DynamicValues hasn't been configured
+
+        Example:
+            >>> max_deductible = DynamicValues.get("max_deductible")
+            >>> print(max_deductible)
+            <MAX_DEDUCTIBLE>
         """
         if not cls._workspace:
             raise ValueError("DynamicValues not configured. Call DynamicValues.configure(workspace) first")
@@ -91,6 +96,18 @@ class DynamicValues:
 
         Args:
             values: A dictionary of dynamic values to set containing name-value pairs
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If DynamicValues hasn't been configured
+
+        Example:
+            >>> DynamicValues.set({
+            ...     "max_deductible": 2000,
+            ...     "min_deductible": 500
+            ... })
         """
         if not cls._workspace:
             raise ValueError("DynamicValues not configured. Call DynamicValues.configure(workspace) first")

@@ -11,10 +11,13 @@ except ImportError:
     import pydantic  # type: ignore
 
 
-class ImportRuleResponse(pydantic.BaseModel):
-    name: str
-    id: str
-    slug: str
+class ListFlowsResponseItem(pydantic.BaseModel):
+    id: typing.Optional[str] = pydantic.Field(description="The unique identifier for the flow.")
+    name: typing.Optional[str] = pydantic.Field(description="The name of the flow.")
+    description: typing.Optional[str] = pydantic.Field(description="The description of the flow.")
+    published: typing.Optional[bool] = pydantic.Field(description="Whether the flow is published.")
+    slug: typing.Optional[str] = pydantic.Field(description="The unique slug for the flow used in API requests.")
+    updated_at: typing.Optional[str] = pydantic.Field(description="The date this flow was last updated.")
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

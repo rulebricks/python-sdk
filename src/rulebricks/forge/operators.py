@@ -54,7 +54,6 @@ class Argument(Generic[T]):
             return f"<{self.value.name.upper()}>"
         return f"{self.value}"
 
-
 class BooleanField(Field):
     """Valid boolean comparisons/operations in Rulebricks"""
     def __init__(self, name: str, description: str = "", default: bool = False):

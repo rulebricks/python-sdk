@@ -12,7 +12,7 @@ except ImportError:
 
 
 class NotFoundErrorBody(pydantic.BaseModel):
-    error: typing.Optional[str] = pydantic.Field(description="Error message indicating the value was not found.")
+    error: typing.Optional[str] = pydantic.Field(description="Error message indicating the folder was not found.")
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
