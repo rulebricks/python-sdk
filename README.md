@@ -1,5 +1,7 @@
 ![Banner](banner.png)
 
+---
+
 [![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
 
 The Rulebricks Python SDK provides convenient access to the Rulebricks API from Python.
