@@ -1,14 +1,15 @@
 ![Banner](banner.png)
 
----
+The Rulebricks Python SDK provides convenient access to the Rulebricks API from Python.
 
 [![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
 
-The Rulebricks Python SDK provides convenient access to the Rulebricks API from Python.
+---
 
 ## Documentation
 
-API reference documentation is available [here](https://rulebricks.com/docs).
+General API reference documentation is available [here](https://rulebricks.com/docs).
+For more detailed information on using the Forge SDK, read our [Forge SDK implementation examples](https://github.com/rulebricks/examples).
 
 ## Installation
 
