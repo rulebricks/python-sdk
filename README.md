@@ -1,4 +1,6 @@
-# Rulebricks – Python SDK
+![Banner](banner.png)
+
+# Python SDK
 
 [![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
 
