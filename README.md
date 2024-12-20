@@ -105,6 +105,8 @@ Using a combination of `solve`, `bulk_solve`, `parallel_solve` and `flows` in sy
 
 The Forge SDK is a powerful tool within the Rulebricks package that allows you to programmatically create and manage rules. It provides a flexible and intuitive way to define rule sets, conditions, and responses.
 
+Looking for more comprehensive documentation? Read through our [Forge SDK implementation examples](https://github.com/rulebricks/examples).
+
 ### Purpose
 
 The Forge SDK enables you to:
@@ -119,6 +121,8 @@ Here's a simple example of creating a rule:
 
 ```python
 from rulebricks.forge import Rule
+
+import rulebricks as rb
 
 # Initialize a new rule
 rule = Rule()
@@ -156,8 +160,18 @@ rule.when(
 #     discount_eligible=False
 # )
 
-# Export the rule
-rule.export()
+# Preview the rule locally
+print(rule.to_table())
+
+# Or, export the rule to a file
+# rule.export()
+#
+# Or, publish the rule to your Rulebricks workspace
+# rb.configure(
+#     api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+# )
+# rule.set_workspace(rb)
+# rule.publish()
 ```
 
 ### Field Types

@@ -1,11 +1,9 @@
-# For development, use
-# PYTHONPATH=$PYTHONPATH:$(pwd)/src python3 src/rulebricks/forge/examples/health_insurance_selector.py
-
 from rulebricks.forge import Rule
 
 import rulebricks as rb
+import os
 
-def create_health_insurance_selector():
+def build_example_rule():
     # Initialize the rule
     rule = Rule()
 
@@ -75,7 +73,7 @@ def create_health_insurance_selector():
 
 if __name__ == "__main__":
     # Create and preview the rule's conditions...
-    rule = create_health_insurance_selector()
+    rule = build_example_rule()
     print(rule.to_table())
 
     # Export the rule to a .rbx file that can be imported into Rulebricks manually
@@ -83,11 +81,14 @@ if __name__ == "__main__":
 
     # Or, import the rule directly into your Rulebricks workspace
     rb.configure(
-        api_key="XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+        api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
     )
 
-    # Import the rule, but don't immediately publish it...
-    created_rule = rb.assets.import_rule(rule=rule, publish=False)
+    # Provide our configured workspace client to the Forge SDK
+    rule.set_workspace(rb)
+
+    # Push the rule to the workspace without publishing it...
+    rule.update()
 
     # The new rule should appear in your Rulebricks workspace if we list all rules
     print(rb.assets.list_rules())
@@ -95,15 +96,8 @@ if __name__ == "__main__":
     # The URL to edit the rule in the Rulebricks web app should work!
     print(rule.get_editor_url())
 
-    # We can retrieve the rule data we just created using its returned ID
-    rule_json = rb.assets.export_rule(id=created_rule.id)
-
-    # Create a Rule object to represent it
-    # This is useful if you want to modify the rule using the SDK
-    located_rule = Rule.from_json(rule_json)
-
-    # Update the rule– but let's publish it this time
-    updated_rule = rb.assets.import_rule(rule=located_rule, publish=True)
+    # Publish the rule to make it live
+    rule.publish()
 
     # Let's try solving the rule with some test data!
     test_data = {
@@ -113,12 +107,12 @@ if __name__ == "__main__":
         "deductible_preference": 750,
         "medical_service_frequency": "monthly"
     }
-    print(updated_rule)
+    print(rule)
     test_data_solution = rb.rules.solve(
-        slug=updated_rule.slug,
+        slug=rule.slug,
         request=test_data
     )
     print(test_data_solution)
 
     # Delete the rule
-    rb.assets.delete_rule(id=updated_rule.id)
+    rb.assets.delete_rule(id=rule.id)
