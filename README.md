@@ -2,7 +2,6 @@
 
 [![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
 
----
 
 ## Documentation
 
