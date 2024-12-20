@@ -1,7 +1,11 @@
 ![Banner](banner.png)
 
-[![pypi](https://img.shields.io/pypi/v/rulebricks.svg)](https://pypi.python.org/pypi/rulebricks)
-
+<p>
+    <a href="https://pypi.python.org/pypi/rulebricks" alt="PyPI">
+        <img src="https://img.shields.io/pypi/v/rulebricks.svg" /></a>
+    <a href="https://github.com/rulebricks/python-sdk" alt="License">
+        <img src="https://img.shields.io/github/license/rulebricks/python-sdk" /></a>
+</p>
 
 ## Documentation
 
@@ -20,7 +24,7 @@ poetry add rulebricks
 
 ## Configuration
 
-Before using the SDK, configure your API key. You can find your API key in your Rulebricks Dashboard.
+Before using the SDK, configure ye bour API key. You can find your API key in your Rulebricks Dashboard.
 
 ```python
 import rulebricks as rb
