@@ -9,8 +9,8 @@
 
 ## Documentation
 
-General API reference documentation is available [here](https://rulebricks.com/docs).
-For more detailed information on using the Forge SDK, read our [Forge SDK implementation examples](https://github.com/rulebricks/examples).
+Find detailed examples of using this SDK in our [examples repository](https://github.com/rulebricks/examples).
+General API reference documentation is available on our User Guide [here](https://rulebricks.com/docs).
 
 ## Installation
 
