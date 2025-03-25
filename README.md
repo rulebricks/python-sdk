@@ -27,13 +27,12 @@ poetry add rulebricks
 Before using the SDK, configure ye bour API key. You can find your API key in your Rulebricks Dashboard.
 
 ```python
-import rulebricks as rb
+from rulebricks import Rulebricks
 
-# Replace 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX' with your actual API key
-rb.configure(
-    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-    # base_url="https://rulebricks.com" # Optional: Use this to override the default base URL for private cloud deployments
-    # timeout=10 # Optional: Use this to override the default timeout in seconds
+rb = Rulebricks(
+      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
+      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+      # timeout=10 # Optional: Use this to override the default timeout in seconds
 )
 ```
 
@@ -50,11 +49,12 @@ Using the SDK to interact with the Rulebricks API in a synchronous manner is sim
 Here's an example of how to use our Python SDK to solve a rule:
 
 ```python
-import rulebricks as rb
+from rulebricks import Rulebricks
 
 # Set the API key
-rb.configure(
-    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+rb = Rulebricks(
+      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
+      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 )
 
 result = rb.rules.solve(
@@ -78,16 +78,17 @@ For asynchronous API calls, access methods via the async_api attribute.
 This allows you to leverage Python's asyncio library for non-blocking operations:
 
 ```python
-import rulebricks as rb
+from rulebricks import AsyncRulebricks
 import asyncio
 
 # Set the API key
-rb.configure(
-    api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+rb = AsyncRulebricks(
+      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
+      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 )
 
 async def main():
-    async_result = await rb.async_api.rules.solve(
+    async_result = await rb.rules.solve(
         slug="tJOCd8XXXX",
         request={
             "customer_id": "anc39as3",
@@ -171,8 +172,9 @@ print(rule.to_table())
 # rule.export()
 #
 # Or, publish the rule to your Rulebricks workspace
-# rb.configure(
-#     api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+# rb = Rulebricks(
+#       base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
+#       api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 # )
 # rule.set_workspace(rb)
 # rule.publish()
