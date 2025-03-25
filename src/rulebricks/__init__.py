@@ -27,6 +27,7 @@ from .types import (
     Folder,
     FolderListResponse,
     ListValue,
+    ListValueValueItem,
     NumberValue,
     ParallelSolveRequest,
     ParallelSolveRequestValue,
@@ -55,7 +56,8 @@ from .types import (
 )
 from .errors import BadRequestError, ForbiddenError, InternalServerError, NotFoundError
 from . import assets, decisions, flows, rules, tests, users, values
-from .client import AsyncRulebricksApi, RulebricksApi
+from .client import AsyncRulebricks, Rulebricks
+from .environment import RulebricksEnvironment
 from .users import UserInviteRequestRole
 from .values import UpdateValuesRequestValuesValue
 from .forge import Rule, Condition, DynamicValue, DynamicValues
@@ -66,8 +68,8 @@ class Config:
     timeout: float = 10
 
 # Initialize the API clients immediately when the module is loaded
-sync_api = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
-async_api = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
+sync_api = Rulebricks(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
+async_api = AsyncRulebricks(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
 
 rules = sync_api.rules
 flows = sync_api.flows
@@ -85,8 +87,8 @@ def configure(api_key: str = "", base_url: str = "https://rulebricks.com", timeo
 
     # Reinitialize clients with new config
     global sync_api, async_api
-    sync_api = RulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
-    async_api = AsyncRulebricksApi(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
+    sync_api = Rulebricks(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
+    async_api = AsyncRulebricks(base_url=Config.base_url, api_key=Config.api_key, timeout=Config.timeout)
 
     global rules, flows, assets, decisions, tests, users, values
     rules = sync_api.rules
@@ -98,7 +100,7 @@ def configure(api_key: str = "", base_url: str = "https://rulebricks.com", timeo
     values = sync_api.values
 
 __all__ = [
-    "AsyncRulebricksApi",
+    "AsyncRulebricks",
     "BadRequestError",
     "BooleanValue",
     "BulkRuleResponseItem",
@@ -128,6 +130,7 @@ __all__ = [
     "ForbiddenError",
     "InternalServerError",
     "ListValue",
+    "ListValueValueItem",
     "NotFoundError",
     "NumberValue",
     "ParallelSolveRequest",
@@ -138,7 +141,8 @@ __all__ = [
     "RuleExport",
     "RuleListResponse",
     "RuleUsage",
-    "RulebricksApi",
+    "Rulebricks",
+    "RulebricksEnvironment",
     "SchemaField",
     "SchemaFieldDefaultValue",
     "SchemaFieldType",
@@ -157,8 +161,6 @@ __all__ = [
     "UserInviteResponse",
     "UserInviteResponseUser",
     "ValueLimits",
-    "Rule",
-    "Condition",
     "assets",
     "decisions",
     "flows",

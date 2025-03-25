@@ -91,7 +91,7 @@ if __name__ == "__main__":
     rule.update()
 
     # The new rule should appear in your Rulebricks workspace if we list all rules
-    print(rb.assets.list_rules())
+    print(rb.assets.rules.list())
 
     # The URL to edit the rule in the Rulebricks web app should work!
     print(rule.get_editor_url())
@@ -115,4 +115,4 @@ if __name__ == "__main__":
     print(test_data_solution)
 
     # Delete the rule
-    rb.assets.delete_rule(id=rule.id)
+    rb.assets.rules.delete(id=rule.id)

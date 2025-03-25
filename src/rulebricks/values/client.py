@@ -35,7 +35,7 @@ class ValuesClient:
         Parameters
         ----------
         name : typing.Optional[str]
-            Name of a specific dynamic value to retrieve data for
+            Query all dynamic values containing a specific name
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -47,16 +47,15 @@ class ValuesClient:
 
         Examples
         --------
-        from rulebricks import RulebricksApi
+        from rulebricks import Rulebricks
 
-        client = RulebricksApi(
+        client = Rulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
         client.values.list()
         """
         _response = self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="GET",
             params={
                 "name": name,
@@ -115,11 +114,10 @@ class ValuesClient:
 
         Examples
         --------
-        from rulebricks import RulebricksApi
+        from rulebricks import Rulebricks
 
-        client = RulebricksApi(
+        client = Rulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
         client.values.update(
             values={
@@ -132,7 +130,7 @@ class ValuesClient:
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="POST",
             json={
                 "values": convert_and_respect_annotation_metadata(
@@ -203,18 +201,17 @@ class ValuesClient:
 
         Examples
         --------
-        from rulebricks import RulebricksApi
+        from rulebricks import Rulebricks
 
-        client = RulebricksApi(
+        client = Rulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
         client.values.delete(
             id="id",
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="DELETE",
             params={
                 "id": id,
@@ -282,7 +279,7 @@ class AsyncValuesClient:
         Parameters
         ----------
         name : typing.Optional[str]
-            Name of a specific dynamic value to retrieve data for
+            Query all dynamic values containing a specific name
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -296,11 +293,10 @@ class AsyncValuesClient:
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricksApi
+        from rulebricks import AsyncRulebricks
 
-        client = AsyncRulebricksApi(
+        client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -311,7 +307,7 @@ class AsyncValuesClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="GET",
             params={
                 "name": name,
@@ -372,11 +368,10 @@ class AsyncValuesClient:
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricksApi
+        from rulebricks import AsyncRulebricks
 
-        client = AsyncRulebricksApi(
+        client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -395,7 +390,7 @@ class AsyncValuesClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="POST",
             json={
                 "values": convert_and_respect_annotation_metadata(
@@ -468,11 +463,10 @@ class AsyncValuesClient:
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricksApi
+        from rulebricks import AsyncRulebricks
 
-        client = AsyncRulebricksApi(
+        client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -485,7 +479,7 @@ class AsyncValuesClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/values",
+            "values",
             method="DELETE",
             params={
                 "id": id,

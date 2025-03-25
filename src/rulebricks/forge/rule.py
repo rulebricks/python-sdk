@@ -11,7 +11,7 @@ import os
 import re
 
 if TYPE_CHECKING:
-    from ..client import RulebricksApi
+    from ..client import Rulebricks
 
 def process_dynamic_values(arg: Any) -> Any:
     """
@@ -422,7 +422,7 @@ class Rule:
     managing business rules including their conditions, fields, tests, and metadata.
 
     Attributes:
-        workspace (Optional[RulebricksApi]): Connected Rulebricks workspace client.
+        workspace (Optional[Rulebricks]): Connected Rulebricks workspace client.
         request_fields (Dict): Dictionary of input fields for the rule.
         response_fields (Dict): Dictionary of output fields for the rule.
         test_request (Optional[Dict]): Sample request for testing.
@@ -449,12 +449,12 @@ class Rule:
         published_groups (Dict): Published version of groups.
     """
 
-    def __init__(self, rulebricks_client: Optional['RulebricksApi'] = None):
+    def __init__(self, rulebricks_client: Optional['Rulebricks'] = None):
         """
         Initialize a new Rule instance.
 
         Args:
-            rulebricks_client (Optional[RulebricksApi]): A connected Rulebricks workspace client.
+            rulebricks_client (Optional[Rulebricks]): A connected Rulebricks workspace client.
                                                         Defaults to None.
         """
         self.workspace = rulebricks_client
@@ -616,7 +616,7 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to load a rule from the workspace")
-        rule_data = self.workspace.assets.export_rule(id=rule_id)
+        rule_data = self.workspace.assets.rules.export(id=rule_id)
         return Rule.from_json(rule_data)
 
     def update(self) -> 'Rule':
@@ -631,7 +631,7 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to push a rule to the workspace. See Rule.set_workspace()")
-        self.workspace.assets.import_rule(rule=self.to_dict())
+        self.workspace.assets.rules.import(rule=self.to_dict())
         self = self.from_workspace(rule_id=self.id)
         return self
 
@@ -651,7 +651,7 @@ class Rule:
         # Flag the rule to publish a *new* version
         # Note this is different from self.published
         rule_dict["_publish"] = True
-        self.workspace.assets.import_rule(rule=rule_dict)
+        self.workspace.assets.rules.import(rule=rule_dict)
         self = self.from_workspace(rule_id=self.id)
         return self
 
@@ -731,12 +731,12 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to set a folder by name")
-        folders = self.workspace.assets.list_folders()
+        folders = self.workspace.assets.folders.list()
         folder = next((f for f in folders if f.name == folder_name), None)
         if not folder and create_if_missing:
             if any(f.name == folder_name for f in folders):
                 raise ValueError("Folder name conflicts with an existing folder")
-            folder = self.workspace.assets.upsert_folder(name=folder_name)
+            folder = self.workspace.assets.folders.upsert(name=folder_name)
         if not folder:
             raise ValueError(f"Folder '{folder_name}' not found and create_if_missing is False")
         self.folder_id = folder.id
@@ -777,7 +777,7 @@ class Rule:
         if not all(c in string.ascii_letters + string.digits + '-' for c in alias):
             raise ValueError("Alias cannot contain special characters")
 
-        rules = self.workspace.assets.list_rules()
+        rules = self.workspace.assets.rules.list()
         if any(r.slug == alias for r in rules):
             raise ValueError("Alias conflicts with an existing rule")
 
@@ -801,14 +801,14 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to add access groups")
-        existing_access_groups = self.workspace.users.list_groups()
+        existing_access_groups = self.workspace.users.groups.list()
         group = next((g for g in existing_access_groups if g.name == group_name), None)
         if group:
             self.access_groups.append(group.name)
         if not group and not create_if_missing:
             raise ValueError(f"User group '{group_name}' not found and create_if_missing is False")
         if not group and create_if_missing:
-            created_group = self.workspace.users.create_group(name=group_name)
+            created_group = self.workspace.users.groups.create(name=group_name)
             self.access_groups.append(created_group.name)
         return self
 

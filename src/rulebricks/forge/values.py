@@ -1,5 +1,5 @@
 from .types import DynamicValueNotFoundError, DynamicValueType
-from typing import Dict, Any, Type
+from typing import Dict, Any, Type, List
 from datetime import datetime
 
 class DynamicValue:
@@ -90,12 +90,13 @@ class DynamicValues:
         return dynamic_value
 
     @classmethod
-    def set(cls, dynamic_values: Dict = {}) -> None:
+    def set(cls, dynamic_values: Dict = {}, access_groups: List[str] = []) -> None:
         """
         Upsert one or more dynamic values in your Rulebricks workspace using a dictionary.
 
         Args:
             values: A dictionary of dynamic values to set containing name-value pairs
+            access_groups: A list of access groups to assign to the dynamic values (optional)
 
         Returns:
             None
@@ -114,7 +115,7 @@ class DynamicValues:
 
         # Upsert the values dictionary
         cls._workspace.values.update(
-            request=dynamic_values
+            request={"values": dynamic_values, "access_groups": access_groups}
         )
 
     @classmethod

@@ -48,11 +48,10 @@ class FlowsClient:
 
         Examples
         --------
-        from rulebricks import RulebricksApi
+        from rulebricks import Rulebricks
 
-        client = RulebricksApi(
+        client = Rulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
         client.flows.execute(
             slug="slug",
@@ -60,7 +59,7 @@ class FlowsClient:
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"api/v1/flows/{jsonable_encoder(slug)}",
+            f"flows/{jsonable_encoder(slug)}",
             method="POST",
             json=request,
             request_options=request_options,
@@ -134,11 +133,10 @@ class AsyncFlowsClient:
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricksApi
+        from rulebricks import AsyncRulebricks
 
-        client = AsyncRulebricksApi(
+        client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
 
 
@@ -152,7 +150,7 @@ class AsyncFlowsClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"api/v1/flows/{jsonable_encoder(slug)}",
+            f"flows/{jsonable_encoder(slug)}",
             method="POST",
             json=request,
             request_options=request_options,

@@ -2,6 +2,7 @@
 
 import typing
 from ..core.client_wrapper import SyncClientWrapper
+from .groups.client import GroupsClient
 from .types.user_invite_request_role import UserInviteRequestRole
 from ..core.request_options import RequestOptions
 from ..types.user_invite_response import UserInviteResponse
@@ -10,9 +11,8 @@ from ..errors.bad_request_error import BadRequestError
 from ..errors.internal_server_error import InternalServerError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from ..types.user_group_list_response import UserGroupListResponse
-from ..types.user_group import UserGroup
 from ..core.client_wrapper import AsyncClientWrapper
+from .groups.client import AsyncGroupsClient
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -21,8 +21,9 @@ OMIT = typing.cast(typing.Any, ...)
 class UsersClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+        self.groups = GroupsClient(client_wrapper=self._client_wrapper)
 
-    def invite_user(
+    def invite(
         self,
         *,
         email: str,
@@ -54,20 +55,19 @@ class UsersClient:
 
         Examples
         --------
-        from rulebricks import RulebricksApi
+        from rulebricks import Rulebricks
 
-        client = RulebricksApi(
+        client = Rulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
-        client.users.invite_user(
+        client.users.invite(
             email="newuser@example.com",
             role="developer",
             access_groups=["group1", "group2"],
         )
         """
         _response = self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/invite",
+            "admin/users/invite",
             method="POST",
             json={
                 "email": email,
@@ -86,147 +86,6 @@ class UsersClient:
                     UserInviteResponse,
                     parse_obj_as(
                         type_=UserInviteResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def list_groups(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> UserGroupListResponse:
-        """
-        List all user groups available in your Rulebricks organization.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UserGroupListResponse
-            List of user groups.
-
-        Examples
-        --------
-        from rulebricks import RulebricksApi
-
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.users.list_groups()
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/groups",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    UserGroupListResponse,
-                    parse_obj_as(
-                        type_=UserGroupListResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    def create_group(
-        self,
-        *,
-        name: str,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> UserGroup:
-        """
-        Create a new user group in your Rulebricks organization.
-
-        Parameters
-        ----------
-        name : str
-            Unique name of the user group.
-
-        description : typing.Optional[str]
-            Description of the user group.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UserGroup
-            Group created successfully.
-
-        Examples
-        --------
-        from rulebricks import RulebricksApi
-
-        client = RulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.users.create_group(
-            name="NewGroup",
-            description="Description of the new group.",
-        )
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/groups",
-            method="POST",
-            json={
-                "name": name,
-                "description": description,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    UserGroup,
-                    parse_obj_as(
-                        type_=UserGroup,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -259,8 +118,9 @@ class UsersClient:
 class AsyncUsersClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
+        self.groups = AsyncGroupsClient(client_wrapper=self._client_wrapper)
 
-    async def invite_user(
+    async def invite(
         self,
         *,
         email: str,
@@ -294,16 +154,15 @@ class AsyncUsersClient:
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricksApi
+        from rulebricks import AsyncRulebricks
 
-        client = AsyncRulebricksApi(
+        client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
         )
 
 
         async def main() -> None:
-            await client.users.invite_user(
+            await client.users.invite(
                 email="newuser@example.com",
                 role="developer",
                 access_groups=["group1", "group2"],
@@ -313,7 +172,7 @@ class AsyncUsersClient:
         asyncio.run(main())
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/invite",
+            "admin/users/invite",
             method="POST",
             json={
                 "email": email,
@@ -332,163 +191,6 @@ class AsyncUsersClient:
                     UserInviteResponse,
                     parse_obj_as(
                         type_=UserInviteResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def list_groups(
-        self, *, request_options: typing.Optional[RequestOptions] = None
-    ) -> UserGroupListResponse:
-        """
-        List all user groups available in your Rulebricks organization.
-
-        Parameters
-        ----------
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UserGroupListResponse
-            List of user groups.
-
-        Examples
-        --------
-        import asyncio
-
-        from rulebricks import AsyncRulebricksApi
-
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.users.list_groups()
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/groups",
-            method="GET",
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    UserGroupListResponse,
-                    parse_obj_as(
-                        type_=UserGroupListResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    typing.cast(
-                        typing.Optional[typing.Any],
-                        parse_obj_as(
-                            type_=typing.Optional[typing.Any],  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    )
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def create_group(
-        self,
-        *,
-        name: str,
-        description: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> UserGroup:
-        """
-        Create a new user group in your Rulebricks organization.
-
-        Parameters
-        ----------
-        name : str
-            Unique name of the user group.
-
-        description : typing.Optional[str]
-            Description of the user group.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UserGroup
-            Group created successfully.
-
-        Examples
-        --------
-        import asyncio
-
-        from rulebricks import AsyncRulebricksApi
-
-        client = AsyncRulebricksApi(
-            api_key="YOUR_API_KEY",
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.users.create_group(
-                name="NewGroup",
-                description="Description of the new group.",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "api/v1/admin/users/groups",
-            method="POST",
-            json={
-                "name": name,
-                "description": description,
-            },
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                return typing.cast(
-                    UserGroup,
-                    parse_obj_as(
-                        type_=UserGroup,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
