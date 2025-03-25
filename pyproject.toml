@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "rulebricks"
-version = "0.5.0"
-description = "Python SDK for the Rulebricks API"
+version = "1.0.0"
+description = "A JSON-based, server-side rule engine with a customizable decision table UI for non-technical end users"
 readme = "README.md"
 authors = ["Sid Garimella <sid@rulebricks.com>"]
 packages = [{ include = "rulebricks", from = "src" }]
