@@ -110,7 +110,7 @@ class RulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def export(
+    def pull(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> RuleExport:
         """
@@ -136,7 +136,7 @@ class RulesClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.assets.rules.export(
+        client.assets.rules.pull(
             id="id",
         )
         """
@@ -192,7 +192,7 @@ class RulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def import_(
+    def push(
         self,
         *,
         rule: typing.Dict[str, typing.Optional[typing.Any]],
@@ -221,7 +221,7 @@ class RulesClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.assets.rules.import_(
+        client.assets.rules.push(
             rule={"key": "value"},
         )
         """
@@ -453,7 +453,7 @@ class AsyncRulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def export(
+    async def pull(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> RuleExport:
         """
@@ -484,7 +484,7 @@ class AsyncRulesClient:
 
 
         async def main() -> None:
-            await client.assets.rules.export(
+            await client.assets.rules.pull(
                 id="id",
             )
 
@@ -543,7 +543,7 @@ class AsyncRulesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def import_(
+    async def push(
         self,
         *,
         rule: typing.Dict[str, typing.Optional[typing.Any]],
@@ -577,7 +577,7 @@ class AsyncRulesClient:
 
 
         async def main() -> None:
-            await client.assets.rules.import_(
+            await client.assets.rules.push(
                 rule={"key": "value"},
             )
 

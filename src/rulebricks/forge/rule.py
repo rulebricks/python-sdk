@@ -616,7 +616,7 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to load a rule from the workspace")
-        rule_data = self.workspace.assets.rules.export(id=rule_id)
+        rule_data = self.workspace.assets.rules.pull(id=rule_id)
         return Rule.from_json(rule_data)
 
     def update(self) -> 'Rule':
@@ -631,7 +631,7 @@ class Rule:
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to push a rule to the workspace. See Rule.set_workspace()")
-        self.workspace.assets.rules.import(rule=self.to_dict())
+        self.workspace.assets.rules.push(rule=self.to_dict())
         self = self.from_workspace(rule_id=self.id)
         return self
 
@@ -651,7 +651,7 @@ class Rule:
         # Flag the rule to publish a *new* version
         # Note this is different from self.published
         rule_dict["_publish"] = True
-        self.workspace.assets.rules.import(rule=rule_dict)
+        self.workspace.assets.rules.push(rule=rule_dict)
         self = self.from_workspace(rule_id=self.id)
         return self
 
