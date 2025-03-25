@@ -21,7 +21,7 @@ class FlowsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def execute_flow(
+    def execute(
         self,
         slug: str,
         *,
@@ -54,7 +54,7 @@ class FlowsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.flows.execute_flow(
+        client.flows.execute(
             slug="slug",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
@@ -105,7 +105,7 @@ class AsyncFlowsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def execute_flow(
+    async def execute(
         self,
         slug: str,
         *,
@@ -143,7 +143,7 @@ class AsyncFlowsClient:
 
 
         async def main() -> None:
-            await client.flows.execute_flow(
+            await client.flows.execute(
                 slug="slug",
                 request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
             )

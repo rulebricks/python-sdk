@@ -18,7 +18,7 @@ class DecisionsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def query_decisions(
+    def query(
         self,
         *,
         slug: str,
@@ -64,7 +64,7 @@ class DecisionsClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.decisions.query_decisions(
+        client.decisions.query(
             slug="slug",
         )
         """
@@ -119,7 +119,7 @@ class AsyncDecisionsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def query_decisions(
+    async def query(
         self,
         *,
         slug: str,
@@ -170,7 +170,7 @@ class AsyncDecisionsClient:
 
 
         async def main() -> None:
-            await client.decisions.query_decisions(
+            await client.decisions.query(
                 slug="slug",
             )
 

@@ -8,6 +8,7 @@ import typing_extensions
 from ..core.serialization import FieldMetadata
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 import pydantic
+from .list_value_value_item import ListValueValueItem
 
 
 class DynamicValue_String(UniversalBaseModel):
@@ -78,7 +79,7 @@ class DynamicValue_Boolean(UniversalBaseModel):
 
 class DynamicValue_List(UniversalBaseModel):
     type: typing.Literal["list"] = "list"
-    value: typing.Optional[typing.List[str]] = None
+    value: typing.Optional[typing.List[ListValueValueItem]] = None
     id: typing.Optional[str] = None
     name: typing.Optional[str] = None
     usages: typing.Optional[typing.List[RuleUsage]] = None

@@ -23,7 +23,7 @@ class ValuesClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list_dynamic_values(
+    def list(
         self,
         *,
         name: typing.Optional[str] = None,
@@ -53,7 +53,7 @@ class ValuesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.values.list_dynamic_values()
+        client.values.list()
         """
         _response = self._client_wrapper.httpx_client.request(
             "api/v1/values",
@@ -87,7 +87,7 @@ class ValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def update_values(
+    def update(
         self,
         *,
         values: typing.Dict[str, UpdateValuesRequestValuesValue],
@@ -121,7 +121,7 @@ class ValuesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.values.update_values(
+        client.values.update(
             values={
                 "Favorite Color": "blue",
                 "Age": 30.0,
@@ -182,7 +182,7 @@ class ValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def delete_dynamic_value(
+    def delete(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> SuccessMessage:
         """
@@ -209,7 +209,7 @@ class ValuesClient:
             api_key="YOUR_API_KEY",
             base_url="https://yourhost.com/path/to/api",
         )
-        client.values.delete_dynamic_value(
+        client.values.delete(
             id="id",
         )
         """
@@ -270,7 +270,7 @@ class AsyncValuesClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def list_dynamic_values(
+    async def list(
         self,
         *,
         name: typing.Optional[str] = None,
@@ -305,7 +305,7 @@ class AsyncValuesClient:
 
 
         async def main() -> None:
-            await client.values.list_dynamic_values()
+            await client.values.list()
 
 
         asyncio.run(main())
@@ -342,7 +342,7 @@ class AsyncValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def update_values(
+    async def update(
         self,
         *,
         values: typing.Dict[str, UpdateValuesRequestValuesValue],
@@ -381,7 +381,7 @@ class AsyncValuesClient:
 
 
         async def main() -> None:
-            await client.values.update_values(
+            await client.values.update(
                 values={
                     "Favorite Color": "blue",
                     "Age": 30.0,
@@ -445,7 +445,7 @@ class AsyncValuesClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def delete_dynamic_value(
+    async def delete(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> SuccessMessage:
         """
@@ -477,7 +477,7 @@ class AsyncValuesClient:
 
 
         async def main() -> None:
-            await client.values.delete_dynamic_value(
+            await client.values.delete(
                 id="id",
             )
 

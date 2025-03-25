@@ -2,12 +2,15 @@
 
 from .dynamic_value_base import DynamicValueBase
 import typing
+from .list_value_value_item import ListValueValueItem
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 
 
 class ListValue(DynamicValueBase):
-    value: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    value: typing.Optional[typing.List[ListValueValueItem]] = pydantic.Field(
+        default=None
+    )
     """
     The list value
     """
