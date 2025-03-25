@@ -125,9 +125,8 @@ The Forge SDK enables you to:
 Here's a simple example of creating a rule:
 
 ```python
+from rulebricks import Rulebricks
 from rulebricks.forge import Rule
-
-import rulebricks as rb
 
 # Initialize a new rule
 rule = Rule()
