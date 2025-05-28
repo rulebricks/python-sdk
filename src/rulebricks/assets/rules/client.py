@@ -12,7 +12,6 @@ from json.decoder import JSONDecodeError
 from ...core.api_error import ApiError
 from ...types.rule_export import RuleExport
 from ...errors.forbidden_error import ForbiddenError
-from ...types.error import Error
 from ...types.rule_list_response import RuleListResponse
 from ...core.client_wrapper import AsyncClientWrapper
 
@@ -259,9 +258,9 @@ class RulesClient:
             if _response.status_code == 403:
                 raise ForbiddenError(
                     typing.cast(
-                        Error,
+                        typing.Optional[typing.Any],
                         parse_obj_as(
-                            type_=Error,  # type: ignore
+                            type_=typing.Optional[typing.Any],  # type: ignore
                             object_=_response.json(),
                         ),
                     )
@@ -618,9 +617,9 @@ class AsyncRulesClient:
             if _response.status_code == 403:
                 raise ForbiddenError(
                     typing.cast(
-                        Error,
+                        typing.Optional[typing.Any],
                         parse_obj_as(
-                            type_=Error,  # type: ignore
+                            type_=typing.Optional[typing.Any],  # type: ignore
                             object_=_response.json(),
                         ),
                     )

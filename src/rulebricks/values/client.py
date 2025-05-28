@@ -5,14 +5,13 @@ from ..core.client_wrapper import SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.dynamic_value_list_response import DynamicValueListResponse
 from ..core.pydantic_utilities import parse_obj_as
+from ..errors.not_found_error import NotFoundError
 from ..errors.internal_server_error import InternalServerError
 from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
-from .types.update_values_request_values_value import UpdateValuesRequestValuesValue
-from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
+from ..errors.forbidden_error import ForbiddenError
 from ..types.success_message import SuccessMessage
-from ..errors.not_found_error import NotFoundError
 from ..core.client_wrapper import AsyncClientWrapper
 
 # this is used as the default value for optional parameters
@@ -27,15 +26,19 @@ class ValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
-        Retrieve all dynamic values for the authenticated user.
+        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
 
         Parameters
         ----------
         name : typing.Optional[str]
             Query all dynamic values containing a specific name
+
+        include : typing.Optional[str]
+            Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -52,13 +55,16 @@ class ValuesClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.values.list()
+        client.values.list(
+            include="usage",
+        )
         """
         _response = self._client_wrapper.httpx_client.request(
             "values",
             method="GET",
             params={
                 "name": name,
+                "include": include,
             },
             request_options=request_options,
         )
@@ -70,6 +76,16 @@ class ValuesClient:
                         type_=DynamicValueListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             if _response.status_code == 500:
                 raise InternalServerError(
@@ -89,17 +105,17 @@ class ValuesClient:
     def update(
         self,
         *,
-        values: typing.Dict[str, UpdateValuesRequestValuesValue],
+        values: typing.Dict[str, typing.Optional[typing.Any]],
         access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
-        Update existing dynamic values or add new ones for the authenticated user.
+        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         Parameters
         ----------
-        values : typing.Dict[str, UpdateValuesRequestValuesValue]
-            A flat dictionary of keys and values to update or add.
+        values : typing.Dict[str, typing.Optional[typing.Any]]
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         access_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
@@ -122,7 +138,7 @@ class ValuesClient:
         client.values.update(
             values={
                 "Favorite Color": "blue",
-                "Age": 30.0,
+                "Age": 30,
                 "Is Student": False,
                 "Hobbies": ["reading", "cycling"],
             },
@@ -133,11 +149,7 @@ class ValuesClient:
             "values",
             method="POST",
             json={
-                "values": convert_and_respect_annotation_metadata(
-                    object_=values,
-                    annotation=typing.Dict[str, UpdateValuesRequestValuesValue],
-                    direction="write",
-                ),
+                "values": values,
                 "accessGroups": access_groups,
             },
             headers={
@@ -157,6 +169,16 @@ class ValuesClient:
                 )
             if _response.status_code == 400:
                 raise BadRequestError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
                     typing.cast(
                         typing.Optional[typing.Any],
                         parse_obj_as(
@@ -271,15 +293,19 @@ class AsyncValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
-        Retrieve all dynamic values for the authenticated user.
+        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
 
         Parameters
         ----------
         name : typing.Optional[str]
             Query all dynamic values containing a specific name
+
+        include : typing.Optional[str]
+            Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -301,7 +327,9 @@ class AsyncValuesClient:
 
 
         async def main() -> None:
-            await client.values.list()
+            await client.values.list(
+                include="usage",
+            )
 
 
         asyncio.run(main())
@@ -311,6 +339,7 @@ class AsyncValuesClient:
             method="GET",
             params={
                 "name": name,
+                "include": include,
             },
             request_options=request_options,
         )
@@ -322,6 +351,16 @@ class AsyncValuesClient:
                         type_=DynamicValueListResponse,  # type: ignore
                         object_=_response.json(),
                     ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
                 )
             if _response.status_code == 500:
                 raise InternalServerError(
@@ -341,17 +380,17 @@ class AsyncValuesClient:
     async def update(
         self,
         *,
-        values: typing.Dict[str, UpdateValuesRequestValuesValue],
+        values: typing.Dict[str, typing.Optional[typing.Any]],
         access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
-        Update existing dynamic values or add new ones for the authenticated user.
+        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         Parameters
         ----------
-        values : typing.Dict[str, UpdateValuesRequestValuesValue]
-            A flat dictionary of keys and values to update or add.
+        values : typing.Dict[str, typing.Optional[typing.Any]]
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         access_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
@@ -379,7 +418,7 @@ class AsyncValuesClient:
             await client.values.update(
                 values={
                     "Favorite Color": "blue",
-                    "Age": 30.0,
+                    "Age": 30,
                     "Is Student": False,
                     "Hobbies": ["reading", "cycling"],
                 },
@@ -393,11 +432,7 @@ class AsyncValuesClient:
             "values",
             method="POST",
             json={
-                "values": convert_and_respect_annotation_metadata(
-                    object_=values,
-                    annotation=typing.Dict[str, UpdateValuesRequestValuesValue],
-                    direction="write",
-                ),
+                "values": values,
                 "accessGroups": access_groups,
             },
             headers={
@@ -417,6 +452,16 @@ class AsyncValuesClient:
                 )
             if _response.status_code == 400:
                 raise BadRequestError(
+                    typing.cast(
+                        typing.Optional[typing.Any],
+                        parse_obj_as(
+                            type_=typing.Optional[typing.Any],  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    )
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
                     typing.cast(
                         typing.Optional[typing.Any],
                         parse_obj_as(
