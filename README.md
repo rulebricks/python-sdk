@@ -24,15 +24,14 @@ poetry add rulebricks
 
 ## Configuration
 
-Before using the SDK, configure ye bour API key. You can find your API key in your Rulebricks Dashboard.
+Before using the SDK, configure your API key. You can find your API key in your Rulebricks Dashboard.
 
 ```python
 from rulebricks import Rulebricks
 
 rb = Rulebricks(
-      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
-      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
-      # timeout=10 # Optional: Use this to override the default timeout in seconds
+      base_url="https://rulebricks.com/api/v1",
+      api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 )
 ```
 
@@ -53,8 +52,8 @@ from rulebricks import Rulebricks
 
 # Set the API key
 rb = Rulebricks(
-      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
-      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+      base_url="https://rulebricks.com/api/v1",
+      api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 )
 
 result = rb.rules.solve(
@@ -83,8 +82,8 @@ import asyncio
 
 # Set the API key
 rb = AsyncRulebricks(
-      base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
-      api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+      base_url="https://rulebricks.com/api/v1",
+      api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 )
 
 async def main():
@@ -172,8 +171,8 @@ print(rule.to_table())
 #
 # Or, publish the rule to your Rulebricks workspace
 # rb = Rulebricks(
-#       base_url=os.getenv("RULEBRICKS_ENVIRONMENT") or "https://rulebricks.com/api/v1",
-#       api_key=os.getenv("RULEBRICKS_API_KEY") or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+#       base_url="https://rulebricks.com/api/v1",
+#       api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
 # )
 # rule.set_workspace(rb)
 # rule.publish()
