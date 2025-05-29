@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rulebricks"
-version = "1.5.0"
+version = "1.5.1"
 description = "A JSON-based, server-side rule engine with a customizable decision table UI for non-technical end users"
 readme = "README.md"
 authors = ["Sid Garimella <sid@rulebricks.com>"]

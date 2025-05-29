@@ -80,7 +80,7 @@ class DynamicValues:
 
         # Convert SDK type to our DynamicValueType
         try:
-            value_type = DynamicValueType(value.type.value)
+            value_type = DynamicValueType(value.type)
         except (ValueError, AttributeError):
             raise ValueError(f"Invalid type '{value.type}' for dynamic value '{name}'")
 
