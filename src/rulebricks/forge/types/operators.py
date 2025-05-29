@@ -36,3 +36,4 @@ class RuleType(Enum):
     STRING = "string"
     DATE = "date"
     LIST = "list"
+    FUNCTION = "function"

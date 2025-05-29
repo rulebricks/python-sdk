@@ -72,7 +72,7 @@ class DynamicValues:
             return cls._cache[name]
 
         # Use SDK to find value
-        values = cls._workspace.values.list_dynamic_values()
+        values = cls._workspace.values.list()
         value = next((v for v in values if v.name == name), None)
 
         if not value:

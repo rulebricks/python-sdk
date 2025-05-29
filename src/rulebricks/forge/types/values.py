@@ -8,6 +8,7 @@ class DynamicValueType(Enum):
     DATE = "date"
     LIST = "list"
     OBJECT = "object"
+    FUNCTION = "function"
 
 class DynamicValueNotFoundError(Exception):
     """Raised when a dynamic value cannot be found"""
