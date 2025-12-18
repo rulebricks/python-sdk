@@ -6,7 +6,6 @@ import pydantic
 import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from ..core.serialization import FieldMetadata
-from .test_test_state_conditions_item_value import TestTestStateConditionsItemValue
 from .test_test_state_evaluation_error import TestTestStateEvaluationError
 
 
@@ -25,7 +24,7 @@ class TestTestState(UniversalBaseModel):
     Actual response returned
     """
 
-    conditions: typing.Optional[typing.List[typing.Dict[str, TestTestStateConditionsItemValue]]] = None
+    conditions: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None
     http_status: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="httpStatus")] = pydantic.Field(
         default=None
     )
