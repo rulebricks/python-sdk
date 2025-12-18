@@ -2,6 +2,4 @@
 
 import typing
 
-SchemaFieldType = typing.Union[
-    typing.Literal["string", "number", "boolean", "object", "array"], typing.Any
-]
+SchemaFieldType = typing.Union[typing.Literal["string", "number", "boolean", "object", "array"], typing.Any]

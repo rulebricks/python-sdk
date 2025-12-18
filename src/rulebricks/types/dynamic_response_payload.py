@@ -2,4 +2,4 @@
 
 import typing
 
-DynamicResponsePayload = typing.Dict[str, typing.Optional[typing.Any]]
+DynamicResponsePayload = typing.Dict[str, typing.Any]

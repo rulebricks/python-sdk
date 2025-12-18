@@ -2,10 +2,4 @@
 
 import typing
 
-SchemaFieldDefaultValue = typing.Union[
-    str,
-    float,
-    bool,
-    typing.Dict[str, typing.Optional[typing.Any]],
-    typing.List[typing.Optional[typing.Any]],
-]
+SchemaFieldDefaultValue = typing.Union[str, float, bool, typing.Dict[str, typing.Any], typing.List[typing.Any]]

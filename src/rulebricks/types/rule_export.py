@@ -2,4 +2,4 @@
 
 import typing
 
-RuleExport = typing.Dict[str, typing.Optional[typing.Any]]
+RuleExport = typing.Dict[str, typing.Any]

@@ -4,4 +4,4 @@ import enum
 
 
 class RulebricksEnvironment(enum.Enum):
-    DEFAULT = "https://rulebricks.com/api/v1"
+    DEFAULT = "https%3A%2F%2Frulebricks.com/api/v1"
