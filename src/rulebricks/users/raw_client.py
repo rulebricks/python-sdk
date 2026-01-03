@@ -29,7 +29,7 @@ class RawUsersClient:
         *,
         email: str,
         role: typing.Optional[UserInviteRequestRole] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[UserInviteResponse]:
         """
@@ -43,8 +43,8 @@ class RawUsersClient:
         role : typing.Optional[UserInviteRequestRole]
             System or custom role ID to assign to the user. Available system roles include 'admin', 'editor', and 'developer'.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user. All specified groups must exist in your organization.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user. All specified groups must exist in your organization.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -60,7 +60,7 @@ class RawUsersClient:
             json={
                 "email": email,
                 "role": role,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",
@@ -157,7 +157,7 @@ class RawUsersClient:
         password: str,
         name: typing.Optional[str] = OMIT,
         role: typing.Optional[str] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[CreateUserResponse]:
         """
@@ -177,8 +177,8 @@ class RawUsersClient:
         role : typing.Optional[str]
             Role to assign to the user. Defaults to 'developer' if not specified.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -196,7 +196,7 @@ class RawUsersClient:
                 "password": password,
                 "name": name,
                 "role": role,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",
@@ -262,7 +262,7 @@ class AsyncRawUsersClient:
         *,
         email: str,
         role: typing.Optional[UserInviteRequestRole] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[UserInviteResponse]:
         """
@@ -276,8 +276,8 @@ class AsyncRawUsersClient:
         role : typing.Optional[UserInviteRequestRole]
             System or custom role ID to assign to the user. Available system roles include 'admin', 'editor', and 'developer'.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user. All specified groups must exist in your organization.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user. All specified groups must exist in your organization.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -293,7 +293,7 @@ class AsyncRawUsersClient:
             json={
                 "email": email,
                 "role": role,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",
@@ -392,7 +392,7 @@ class AsyncRawUsersClient:
         password: str,
         name: typing.Optional[str] = OMIT,
         role: typing.Optional[str] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[CreateUserResponse]:
         """
@@ -412,8 +412,8 @@ class AsyncRawUsersClient:
         role : typing.Optional[str]
             Role to assign to the user. Defaults to 'developer' if not specified.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -431,7 +431,7 @@ class AsyncRawUsersClient:
                 "password": password,
                 "name": name,
                 "role": role,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",

@@ -3,9 +3,8 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
+from .dynamic_value_value import DynamicValueValue
 from .rule_usage import RuleUsage
 
 
@@ -25,7 +24,7 @@ class DynamicValue(UniversalBaseModel):
     Type identifier for the value (e.g., 'string', 'number', 'boolean', 'list', 'function', etc.)
     """
 
-    value: typing.Optional[typing.Any] = pydantic.Field(default=None)
+    value: typing.Optional[DynamicValueValue] = pydantic.Field(default=None)
     """
     The actual value - can be any valid JSON type
     """
@@ -35,11 +34,9 @@ class DynamicValue(UniversalBaseModel):
     Rules that use this dynamic value (only included when 'include=usage' parameter is used).
     """
 
-    access_groups: typing_extensions.Annotated[
-        typing.Optional[typing.List[str]], FieldMetadata(alias="accessGroups")
-    ] = pydantic.Field(default=None)
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Access groups assigned to this value.
+    User groups assigned to this value.
     """
 
     if IS_PYDANTIC_V2:

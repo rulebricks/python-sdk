@@ -6,13 +6,18 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.import_manifest_response import ImportManifestResponse
 from ..types.usage_statistics import UsageStatistics
 from .raw_client import AsyncRawAssetsClient, RawAssetsClient
+from .types.export_assets_response import ExportAssetsResponse
+from .types.import_manifest_request_manifest import ImportManifestRequestManifest
 
 if typing.TYPE_CHECKING:
     from .flows.client import AsyncFlowsClient, FlowsClient
     from .folders.client import AsyncFoldersClient, FoldersClient
     from .rules.client import AsyncRulesClient, RulesClient
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
 
 
 class AssetsClient:
@@ -58,6 +63,121 @@ class AssetsClient:
         client.assets.get_usage()
         """
         _response = self._raw_client.get_usage(request_options=request_options)
+        return _response.data
+
+    def import_(
+        self,
+        *,
+        manifest: ImportManifestRequestManifest,
+        overwrite: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ImportManifestResponse:
+        """
+        Import rules, flows, contexts, and values from an RBM manifest file.
+
+        Parameters
+        ----------
+        manifest : ImportManifestRequestManifest
+            The RBM manifest object containing assets to import.
+
+        overwrite : typing.Optional[bool]
+            Whether to overwrite existing assets with the same ID/slug.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ImportManifestResponse
+            Import completed successfully
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+        from rulebricks.assets import ImportManifestRequestManifest
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.assets.import_(
+            manifest=ImportManifestRequestManifest(
+                version="1.0",
+                rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
+                flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
+                contexts=[{"name": "Customer", "slug": "customer"}],
+                values=[{"key": "tax_rate", "value": 0.08}],
+            ),
+            overwrite=False,
+        )
+        """
+        _response = self._raw_client.import_(manifest=manifest, overwrite=overwrite, request_options=request_options)
+        return _response.data
+
+    def export(
+        self,
+        *,
+        rules: typing.Optional[typing.Sequence[str]] = OMIT,
+        flows: typing.Optional[typing.Sequence[str]] = OMIT,
+        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
+        values: typing.Optional[typing.Sequence[str]] = OMIT,
+        include_all: typing.Optional[bool] = OMIT,
+        preview: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ExportAssetsResponse:
+        """
+        Export selected rules, flows, contexts, and values to an RBM manifest file.
+
+        Parameters
+        ----------
+        rules : typing.Optional[typing.Sequence[str]]
+            Rule IDs or slugs to export.
+
+        flows : typing.Optional[typing.Sequence[str]]
+            Flow IDs or slugs to export.
+
+        contexts : typing.Optional[typing.Sequence[str]]
+            Context IDs or slugs to export.
+
+        values : typing.Optional[typing.Sequence[str]]
+            Value IDs or names to export.
+
+        include_all : typing.Optional[bool]
+            Export all assets of specified types.
+
+        preview : typing.Optional[bool]
+            Return a preview of what would be exported without the full data.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ExportAssetsResponse
+            Export completed successfully
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.assets.export(
+            rules=["pricing-rule", "eligibility-check"],
+            flows=["onboarding-flow"],
+            contexts=["customer"],
+            values=["tax_rate", "discount_threshold"],
+        )
+        """
+        _response = self._raw_client.export(
+            rules=rules,
+            flows=flows,
+            contexts=contexts,
+            values=values,
+            include_all=include_all,
+            preview=preview,
+            request_options=request_options,
+        )
         return _response.data
 
     @property
@@ -136,6 +256,139 @@ class AsyncAssetsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.get_usage(request_options=request_options)
+        return _response.data
+
+    async def import_(
+        self,
+        *,
+        manifest: ImportManifestRequestManifest,
+        overwrite: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ImportManifestResponse:
+        """
+        Import rules, flows, contexts, and values from an RBM manifest file.
+
+        Parameters
+        ----------
+        manifest : ImportManifestRequestManifest
+            The RBM manifest object containing assets to import.
+
+        overwrite : typing.Optional[bool]
+            Whether to overwrite existing assets with the same ID/slug.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ImportManifestResponse
+            Import completed successfully
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+        from rulebricks.assets import ImportManifestRequestManifest
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.assets.import_(
+                manifest=ImportManifestRequestManifest(
+                    version="1.0",
+                    rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
+                    flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
+                    contexts=[{"name": "Customer", "slug": "customer"}],
+                    values=[{"key": "tax_rate", "value": 0.08}],
+                ),
+                overwrite=False,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.import_(
+            manifest=manifest, overwrite=overwrite, request_options=request_options
+        )
+        return _response.data
+
+    async def export(
+        self,
+        *,
+        rules: typing.Optional[typing.Sequence[str]] = OMIT,
+        flows: typing.Optional[typing.Sequence[str]] = OMIT,
+        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
+        values: typing.Optional[typing.Sequence[str]] = OMIT,
+        include_all: typing.Optional[bool] = OMIT,
+        preview: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> ExportAssetsResponse:
+        """
+        Export selected rules, flows, contexts, and values to an RBM manifest file.
+
+        Parameters
+        ----------
+        rules : typing.Optional[typing.Sequence[str]]
+            Rule IDs or slugs to export.
+
+        flows : typing.Optional[typing.Sequence[str]]
+            Flow IDs or slugs to export.
+
+        contexts : typing.Optional[typing.Sequence[str]]
+            Context IDs or slugs to export.
+
+        values : typing.Optional[typing.Sequence[str]]
+            Value IDs or names to export.
+
+        include_all : typing.Optional[bool]
+            Export all assets of specified types.
+
+        preview : typing.Optional[bool]
+            Return a preview of what would be exported without the full data.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        ExportAssetsResponse
+            Export completed successfully
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.assets.export(
+                rules=["pricing-rule", "eligibility-check"],
+                flows=["onboarding-flow"],
+                contexts=["customer"],
+                values=["tax_rate", "discount_threshold"],
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.export(
+            rules=rules,
+            flows=flows,
+            contexts=contexts,
+            values=values,
+            include_all=include_all,
+            preview=preview,
+            request_options=request_options,
+        )
         return _response.data
 
     @property

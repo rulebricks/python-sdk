@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 
 
 class UserInviteResponseUser(UniversalBaseModel):
@@ -19,11 +17,9 @@ class UserInviteResponseUser(UniversalBaseModel):
     Role assigned to the user.
     """
 
-    access_groups: typing_extensions.Annotated[
-        typing.Optional[typing.List[str]], FieldMetadata(alias="accessGroups")
-    ] = pydantic.Field(default=None)
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Access groups assigned to the user.
+    User groups assigned to the user.
     """
 
     if IS_PYDANTIC_V2:

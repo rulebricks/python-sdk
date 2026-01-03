@@ -4,9 +4,7 @@ import datetime as dt
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 
 
 class Folder(UniversalBaseModel):
@@ -25,9 +23,7 @@ class Folder(UniversalBaseModel):
     Description of the folder.
     """
 
-    updated_at: typing_extensions.Annotated[typing.Optional[dt.datetime], FieldMetadata(alias="updatedAt")] = (
-        pydantic.Field(default=None)
-    )
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     Timestamp of when the folder was last updated.
     """

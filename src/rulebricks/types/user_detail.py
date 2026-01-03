@@ -4,9 +4,7 @@ import datetime as dt
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 
 
 class UserDetail(UniversalBaseModel):
@@ -29,9 +27,7 @@ class UserDetail(UniversalBaseModel):
     Display name of the user (if set).
     """
 
-    api_key: typing_extensions.Annotated[typing.Optional[str], FieldMetadata(alias="apiKey")] = pydantic.Field(
-        default=None
-    )
+    api_key: typing.Optional[str] = pydantic.Field(default=None)
     """
     API key assigned to the user.
     """
@@ -41,16 +37,12 @@ class UserDetail(UniversalBaseModel):
     Role assigned to the user (e.g., 'administrator', 'developer', 'editor', or custom role ID).
     """
 
-    access_groups: typing_extensions.Annotated[
-        typing.Optional[typing.List[str]], FieldMetadata(alias="accessGroups")
-    ] = pydantic.Field(default=None)
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    List of access group names the user belongs to.
+    List of user group names the user belongs to.
     """
 
-    joined_at: typing_extensions.Annotated[typing.Optional[dt.datetime], FieldMetadata(alias="joinedAt")] = (
-        pydantic.Field(default=None)
-    )
+    joined_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     Date and time when the user joined the organization.
     """

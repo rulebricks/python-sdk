@@ -10,6 +10,7 @@ from .environment import RulebricksEnvironment
 
 if typing.TYPE_CHECKING:
     from .assets.client import AssetsClient, AsyncAssetsClient
+    from .contexts.client import AsyncContextsClient, ContextsClient
     from .decisions.client import AsyncDecisionsClient, DecisionsClient
     from .flows.client import AsyncFlowsClient, FlowsClient
     from .rules.client import AsyncRulesClient, RulesClient
@@ -89,6 +90,7 @@ class Rulebricks:
         self._users: typing.Optional[UsersClient] = None
         self._assets: typing.Optional[AssetsClient] = None
         self._values: typing.Optional[ValuesClient] = None
+        self._contexts: typing.Optional[ContextsClient] = None
         self._tests: typing.Optional[TestsClient] = None
 
     @property
@@ -138,6 +140,14 @@ class Rulebricks:
 
             self._values = ValuesClient(client_wrapper=self._client_wrapper)
         return self._values
+
+    @property
+    def contexts(self):
+        if self._contexts is None:
+            from .contexts.client import ContextsClient  # noqa: E402
+
+            self._contexts = ContextsClient(client_wrapper=self._client_wrapper)
+        return self._contexts
 
     @property
     def tests(self):
@@ -219,6 +229,7 @@ class AsyncRulebricks:
         self._users: typing.Optional[AsyncUsersClient] = None
         self._assets: typing.Optional[AsyncAssetsClient] = None
         self._values: typing.Optional[AsyncValuesClient] = None
+        self._contexts: typing.Optional[AsyncContextsClient] = None
         self._tests: typing.Optional[AsyncTestsClient] = None
 
     @property
@@ -268,6 +279,14 @@ class AsyncRulebricks:
 
             self._values = AsyncValuesClient(client_wrapper=self._client_wrapper)
         return self._values
+
+    @property
+    def contexts(self):
+        if self._contexts is None:
+            from .contexts.client import AsyncContextsClient  # noqa: E402
+
+            self._contexts = AsyncContextsClient(client_wrapper=self._client_wrapper)
+        return self._contexts
 
     @property
     def tests(self):

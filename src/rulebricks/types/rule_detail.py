@@ -7,6 +7,7 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from .folder import Folder
 from .rule_base import RuleBase
+from .rule_detail_context import RuleDetailContext
 from .schema_field import SchemaField
 
 
@@ -16,7 +17,17 @@ class RuleDetail(RuleBase):
     The date this rule was created.
     """
 
+    updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    The date this rule was last updated.
+    """
+
     folder: typing.Optional[Folder] = None
+    context: typing.Optional[RuleDetailContext] = pydantic.Field(default=None)
+    """
+    The context this rule is bound to (if any). Rules bound to a context have their inputs/outputs mapped to context fields.
+    """
+
     request_schema: typing.Optional[typing.List[SchemaField]] = pydantic.Field(default=None)
     """
     The published request schema for the rule.

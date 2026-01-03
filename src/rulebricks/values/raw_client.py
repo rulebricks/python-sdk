@@ -99,7 +99,7 @@ class RawValuesClient:
         self,
         *,
         values: typing.Dict[str, typing.Any],
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DynamicValueListResponse]:
         """
@@ -110,7 +110,7 @@ class RawValuesClient:
         values : typing.Dict[str, typing.Any]
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
-        access_groups : typing.Optional[typing.Sequence[str]]
+        user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
 
         request_options : typing.Optional[RequestOptions]
@@ -126,7 +126,7 @@ class RawValuesClient:
             method="POST",
             json={
                 "values": values,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",
@@ -338,7 +338,7 @@ class AsyncRawValuesClient:
         self,
         *,
         values: typing.Dict[str, typing.Any],
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DynamicValueListResponse]:
         """
@@ -349,7 +349,7 @@ class AsyncRawValuesClient:
         values : typing.Dict[str, typing.Any]
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
-        access_groups : typing.Optional[typing.Sequence[str]]
+        user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
 
         request_options : typing.Optional[RequestOptions]
@@ -365,7 +365,7 @@ class AsyncRawValuesClient:
             method="POST",
             json={
                 "values": values,
-                "accessGroups": access_groups,
+                "user_groups": user_groups,
             },
             headers={
                 "content-type": "application/json",

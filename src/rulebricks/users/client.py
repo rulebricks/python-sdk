@@ -40,7 +40,7 @@ class UsersClient:
         *,
         email: str,
         role: typing.Optional[UserInviteRequestRole] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserInviteResponse:
         """
@@ -54,8 +54,8 @@ class UsersClient:
         role : typing.Optional[UserInviteRequestRole]
             System or custom role ID to assign to the user. Available system roles include 'admin', 'editor', and 'developer'.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user. All specified groups must exist in your organization.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user. All specified groups must exist in your organization.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -75,11 +75,11 @@ class UsersClient:
         client.users.invite(
             email="newuser@example.com",
             role="developer",
-            access_groups=["group1", "group2"],
+            user_groups=["group1", "group2"],
         )
         """
         _response = self._raw_client.invite(
-            email=email, role=role, access_groups=access_groups, request_options=request_options
+            email=email, role=role, user_groups=user_groups, request_options=request_options
         )
         return _response.data
 
@@ -116,7 +116,7 @@ class UsersClient:
         password: str,
         name: typing.Optional[str] = OMIT,
         role: typing.Optional[str] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateUserResponse:
         """
@@ -136,8 +136,8 @@ class UsersClient:
         role : typing.Optional[str]
             Role to assign to the user. Defaults to 'developer' if not specified.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -164,7 +164,7 @@ class UsersClient:
             password=password,
             name=name,
             role=role,
-            access_groups=access_groups,
+            user_groups=user_groups,
             request_options=request_options,
         )
         return _response.data
@@ -200,7 +200,7 @@ class AsyncUsersClient:
         *,
         email: str,
         role: typing.Optional[UserInviteRequestRole] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserInviteResponse:
         """
@@ -214,8 +214,8 @@ class AsyncUsersClient:
         role : typing.Optional[UserInviteRequestRole]
             System or custom role ID to assign to the user. Available system roles include 'admin', 'editor', and 'developer'.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user. All specified groups must exist in your organization.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user. All specified groups must exist in your organization.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -240,14 +240,14 @@ class AsyncUsersClient:
             await client.users.invite(
                 email="newuser@example.com",
                 role="developer",
-                access_groups=["group1", "group2"],
+                user_groups=["group1", "group2"],
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.invite(
-            email=email, role=role, access_groups=access_groups, request_options=request_options
+            email=email, role=role, user_groups=user_groups, request_options=request_options
         )
         return _response.data
 
@@ -292,7 +292,7 @@ class AsyncUsersClient:
         password: str,
         name: typing.Optional[str] = OMIT,
         role: typing.Optional[str] = OMIT,
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateUserResponse:
         """
@@ -312,8 +312,8 @@ class AsyncUsersClient:
         role : typing.Optional[str]
             Role to assign to the user. Defaults to 'developer' if not specified.
 
-        access_groups : typing.Optional[typing.Sequence[str]]
-            List of access group names or IDs to assign to the user.
+        user_groups : typing.Optional[typing.Sequence[str]]
+            List of user group names or IDs to assign to the user.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -348,7 +348,7 @@ class AsyncUsersClient:
             password=password,
             name=name,
             role=role,
-            access_groups=access_groups,
+            user_groups=user_groups,
             request_options=request_options,
         )
         return _response.data

@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 
 
 class CreateUserResponseUser(UniversalBaseModel):
@@ -29,16 +27,12 @@ class CreateUserResponseUser(UniversalBaseModel):
     Role assigned to the user.
     """
 
-    access_groups: typing_extensions.Annotated[
-        typing.Optional[typing.List[str]], FieldMetadata(alias="accessGroups")
-    ] = pydantic.Field(default=None)
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Access groups assigned to the user.
+    User groups assigned to the user.
     """
 
-    api_key: typing_extensions.Annotated[typing.Optional[str], FieldMetadata(alias="apiKey")] = pydantic.Field(
-        default=None
-    )
+    api_key: typing.Optional[str] = pydantic.Field(default=None)
     """
     API key generated for the user.
     """

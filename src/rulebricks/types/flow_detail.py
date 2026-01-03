@@ -6,6 +6,8 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from .flow_base import FlowBase
+from .flow_detail_context import FlowDetailContext
+from .flow_detail_origin_rule import FlowDetailOriginRule
 
 
 class FlowDetail(FlowBase):
@@ -17,6 +19,16 @@ class FlowDetail(FlowBase):
     updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     The date this flow was last updated.
+    """
+
+    origin_rule: typing.Optional[FlowDetailOriginRule] = pydantic.Field(default=None)
+    """
+    The origin rule that this flow starts from. Flows execute starting from this rule's outputs.
+    """
+
+    context: typing.Optional[FlowDetailContext] = pydantic.Field(default=None)
+    """
+    The context this flow is bound to (via its origin rule). Flows inherit context binding from their origin rule.
     """
 
     if IS_PYDANTIC_V2:

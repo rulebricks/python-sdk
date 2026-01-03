@@ -71,7 +71,7 @@ class ValuesClient:
         self,
         *,
         values: typing.Dict[str, typing.Any],
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
@@ -82,7 +82,7 @@ class ValuesClient:
         values : typing.Dict[str, typing.Any]
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
-        access_groups : typing.Optional[typing.Sequence[str]]
+        user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
 
         request_options : typing.Optional[RequestOptions]
@@ -107,10 +107,10 @@ class ValuesClient:
                 "Is Student": False,
                 "Hobbies": ["reading", "cycling"],
             },
-            access_groups=["marketing", "developers"],
+            user_groups=["marketing", "developers"],
         )
         """
-        _response = self._raw_client.update(values=values, access_groups=access_groups, request_options=request_options)
+        _response = self._raw_client.update(values=values, user_groups=user_groups, request_options=request_options)
         return _response.data
 
     def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
@@ -212,7 +212,7 @@ class AsyncValuesClient:
         self,
         *,
         values: typing.Dict[str, typing.Any],
-        access_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
@@ -223,7 +223,7 @@ class AsyncValuesClient:
         values : typing.Dict[str, typing.Any]
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
-        access_groups : typing.Optional[typing.Sequence[str]]
+        user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
 
         request_options : typing.Optional[RequestOptions]
@@ -253,14 +253,14 @@ class AsyncValuesClient:
                     "Is Student": False,
                     "Hobbies": ["reading", "cycling"],
                 },
-                access_groups=["marketing", "developers"],
+                user_groups=["marketing", "developers"],
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.update(
-            values=values, access_groups=access_groups, request_options=request_options
+            values=values, user_groups=user_groups, request_options=request_options
         )
         return _response.data
 

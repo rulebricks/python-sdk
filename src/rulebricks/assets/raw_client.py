@@ -8,7 +8,16 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
+from ..errors.bad_request_error import BadRequestError
+from ..errors.internal_server_error import InternalServerError
+from ..types.import_manifest_response import ImportManifestResponse
 from ..types.usage_statistics import UsageStatistics
+from .types.export_assets_response import ExportAssetsResponse
+from .types.import_manifest_request_manifest import ImportManifestRequestManifest
+
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
 
 
 class RawAssetsClient:
@@ -44,6 +53,180 @@ class RawAssetsClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def import_(
+        self,
+        *,
+        manifest: ImportManifestRequestManifest,
+        overwrite: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ImportManifestResponse]:
+        """
+        Import rules, flows, contexts, and values from an RBM manifest file.
+
+        Parameters
+        ----------
+        manifest : ImportManifestRequestManifest
+            The RBM manifest object containing assets to import.
+
+        overwrite : typing.Optional[bool]
+            Whether to overwrite existing assets with the same ID/slug.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ImportManifestResponse]
+            Import completed successfully
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "admin/import",
+            method="POST",
+            json={
+                "manifest": convert_and_respect_annotation_metadata(
+                    object_=manifest, annotation=ImportManifestRequestManifest, direction="write"
+                ),
+                "overwrite": overwrite,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ImportManifestResponse,
+                    parse_obj_as(
+                        type_=ImportManifestResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def export(
+        self,
+        *,
+        rules: typing.Optional[typing.Sequence[str]] = OMIT,
+        flows: typing.Optional[typing.Sequence[str]] = OMIT,
+        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
+        values: typing.Optional[typing.Sequence[str]] = OMIT,
+        include_all: typing.Optional[bool] = OMIT,
+        preview: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ExportAssetsResponse]:
+        """
+        Export selected rules, flows, contexts, and values to an RBM manifest file.
+
+        Parameters
+        ----------
+        rules : typing.Optional[typing.Sequence[str]]
+            Rule IDs or slugs to export.
+
+        flows : typing.Optional[typing.Sequence[str]]
+            Flow IDs or slugs to export.
+
+        contexts : typing.Optional[typing.Sequence[str]]
+            Context IDs or slugs to export.
+
+        values : typing.Optional[typing.Sequence[str]]
+            Value IDs or names to export.
+
+        include_all : typing.Optional[bool]
+            Export all assets of specified types.
+
+        preview : typing.Optional[bool]
+            Return a preview of what would be exported without the full data.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[ExportAssetsResponse]
+            Export completed successfully
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "admin/export",
+            method="POST",
+            json={
+                "rules": rules,
+                "flows": flows,
+                "contexts": contexts,
+                "values": values,
+                "includeAll": include_all,
+                "preview": preview,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ExportAssetsResponse,
+                    parse_obj_as(
+                        type_=ExportAssetsResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -85,6 +268,180 @@ class AsyncRawAssetsClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def import_(
+        self,
+        *,
+        manifest: ImportManifestRequestManifest,
+        overwrite: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ImportManifestResponse]:
+        """
+        Import rules, flows, contexts, and values from an RBM manifest file.
+
+        Parameters
+        ----------
+        manifest : ImportManifestRequestManifest
+            The RBM manifest object containing assets to import.
+
+        overwrite : typing.Optional[bool]
+            Whether to overwrite existing assets with the same ID/slug.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ImportManifestResponse]
+            Import completed successfully
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "admin/import",
+            method="POST",
+            json={
+                "manifest": convert_and_respect_annotation_metadata(
+                    object_=manifest, annotation=ImportManifestRequestManifest, direction="write"
+                ),
+                "overwrite": overwrite,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ImportManifestResponse,
+                    parse_obj_as(
+                        type_=ImportManifestResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def export(
+        self,
+        *,
+        rules: typing.Optional[typing.Sequence[str]] = OMIT,
+        flows: typing.Optional[typing.Sequence[str]] = OMIT,
+        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
+        values: typing.Optional[typing.Sequence[str]] = OMIT,
+        include_all: typing.Optional[bool] = OMIT,
+        preview: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[ExportAssetsResponse]:
+        """
+        Export selected rules, flows, contexts, and values to an RBM manifest file.
+
+        Parameters
+        ----------
+        rules : typing.Optional[typing.Sequence[str]]
+            Rule IDs or slugs to export.
+
+        flows : typing.Optional[typing.Sequence[str]]
+            Flow IDs or slugs to export.
+
+        contexts : typing.Optional[typing.Sequence[str]]
+            Context IDs or slugs to export.
+
+        values : typing.Optional[typing.Sequence[str]]
+            Value IDs or names to export.
+
+        include_all : typing.Optional[bool]
+            Export all assets of specified types.
+
+        preview : typing.Optional[bool]
+            Return a preview of what would be exported without the full data.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[ExportAssetsResponse]
+            Export completed successfully
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "admin/export",
+            method="POST",
+            json={
+                "rules": rules,
+                "flows": flows,
+                "contexts": contexts,
+                "values": values,
+                "includeAll": include_all,
+                "preview": preview,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    ExportAssetsResponse,
+                    parse_obj_as(
+                        type_=ExportAssetsResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)

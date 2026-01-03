@@ -6,8 +6,15 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .types import ExportAssetsResponse, ImportManifestRequestManifest
     from . import flows, folders, rules
-_dynamic_imports: typing.Dict[str, str] = {"flows": ".flows", "folders": ".folders", "rules": ".rules"}
+_dynamic_imports: typing.Dict[str, str] = {
+    "ExportAssetsResponse": ".types",
+    "ImportManifestRequestManifest": ".types",
+    "flows": ".flows",
+    "folders": ".folders",
+    "rules": ".rules",
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +38,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["flows", "folders", "rules"]
+__all__ = ["ExportAssetsResponse", "ImportManifestRequestManifest", "flows", "folders", "rules"]
