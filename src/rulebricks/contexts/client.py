@@ -6,19 +6,22 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.cascade_context_request import CascadeContextRequest
 from ..types.cascade_context_response import CascadeContextResponse
 from ..types.context_instance_history import ContextInstanceHistory
 from ..types.context_instance_pending_response import ContextInstancePendingResponse
 from ..types.context_instance_state import ContextInstanceState
 from ..types.delete_context_instance_response import DeleteContextInstanceResponse
+from ..types.solve_context_flow_request import SolveContextFlowRequest
 from ..types.solve_context_flow_response import SolveContextFlowResponse
+from ..types.solve_context_rule_request import SolveContextRuleRequest
 from ..types.solve_context_rule_response import SolveContextRuleResponse
 from ..types.submit_context_data_request import SubmitContextDataRequest
 from ..types.submit_context_data_response import SubmitContextDataResponse
 from .raw_client import AsyncRawContextsClient, RawContextsClient
 
 if typing.TYPE_CHECKING:
-    from .admin.client import AdminClient, AsyncAdminClient
+    from .objects.client import AsyncObjectsClient, ObjectsClient
     from .relationships.client import AsyncRelationshipsClient, RelationshipsClient
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -28,7 +31,7 @@ class ContextsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._raw_client = RawContextsClient(client_wrapper=client_wrapper)
         self._client_wrapper = client_wrapper
-        self._admin: typing.Optional[AdminClient] = None
+        self._objects: typing.Optional[ObjectsClient] = None
         self._relationships: typing.Optional[RelationshipsClient] = None
 
     @property
@@ -42,7 +45,7 @@ class ContextsClient:
         """
         return self._raw_client
 
-    def get_instance(
+    def get(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> ContextInstanceState:
         """
@@ -71,12 +74,12 @@ class ContextsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.get_instance(
+        client.contexts.get(
             slug="customer",
             instance="cust-12345",
         )
         """
-        _response = self._raw_client.get_instance(slug, instance, request_options=request_options)
+        _response = self._raw_client.get(slug, instance, request_options=request_options)
         return _response.data
 
     def submit(
@@ -124,7 +127,7 @@ class ContextsClient:
         _response = self._raw_client.submit(slug, instance, request=request, request_options=request_options)
         return _response.data
 
-    def delete_instance(
+    def delete(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> DeleteContextInstanceResponse:
         """
@@ -153,12 +156,12 @@ class ContextsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.delete_instance(
+        client.contexts.delete(
             slug="customer",
             instance="cust-12345",
         )
         """
-        _response = self._raw_client.delete_instance(slug, instance, request_options=request_options)
+        _response = self._raw_client.delete(slug, instance, request_options=request_options)
         return _response.data
 
     def get_history(
@@ -255,8 +258,7 @@ class ContextsClient:
         instance: str,
         rule_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextRuleRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SolveContextRuleResponse:
         """
@@ -273,11 +275,7 @@ class ContextsClient:
         rule_slug : str
             The unique slug for the rule.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for rule evaluation.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextRuleRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -298,11 +296,10 @@ class ContextsClient:
             slug="customer",
             instance="cust-12345",
             rule_slug="eligibility-check",
+            request={},
         )
         """
-        _response = self._raw_client.solve(
-            slug, instance, rule_slug, additional_data=additional_data, persist=persist, request_options=request_options
-        )
+        _response = self._raw_client.solve(slug, instance, rule_slug, request=request, request_options=request_options)
         return _response.data
 
     def cascade(
@@ -310,7 +307,7 @@ class ContextsClient:
         slug: str,
         instance: str,
         *,
-        max_depth: typing.Optional[int] = OMIT,
+        request: CascadeContextRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CascadeContextResponse:
         """
@@ -324,8 +321,7 @@ class ContextsClient:
         instance : str
             The unique identifier for the context instance.
 
-        max_depth : typing.Optional[int]
-            Maximum depth for cascading evaluations.
+        request : CascadeContextRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -345,9 +341,10 @@ class ContextsClient:
         client.contexts.cascade(
             slug="customer",
             instance="cust-12345",
+            request={},
         )
         """
-        _response = self._raw_client.cascade(slug, instance, max_depth=max_depth, request_options=request_options)
+        _response = self._raw_client.cascade(slug, instance, request=request, request_options=request_options)
         return _response.data
 
     def execute(
@@ -356,8 +353,7 @@ class ContextsClient:
         instance: str,
         flow_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextFlowRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SolveContextFlowResponse:
         """
@@ -374,11 +370,7 @@ class ContextsClient:
         flow_slug : str
             The unique slug for the flow.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for flow execution.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextFlowRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -399,20 +391,21 @@ class ContextsClient:
             slug="customer",
             instance="cust-12345",
             flow_slug="onboarding-flow",
+            request={},
         )
         """
         _response = self._raw_client.execute(
-            slug, instance, flow_slug, additional_data=additional_data, persist=persist, request_options=request_options
+            slug, instance, flow_slug, request=request, request_options=request_options
         )
         return _response.data
 
     @property
-    def admin(self):
-        if self._admin is None:
-            from .admin.client import AdminClient  # noqa: E402
+    def objects(self):
+        if self._objects is None:
+            from .objects.client import ObjectsClient  # noqa: E402
 
-            self._admin = AdminClient(client_wrapper=self._client_wrapper)
-        return self._admin
+            self._objects = ObjectsClient(client_wrapper=self._client_wrapper)
+        return self._objects
 
     @property
     def relationships(self):
@@ -427,7 +420,7 @@ class AsyncContextsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._raw_client = AsyncRawContextsClient(client_wrapper=client_wrapper)
         self._client_wrapper = client_wrapper
-        self._admin: typing.Optional[AsyncAdminClient] = None
+        self._objects: typing.Optional[AsyncObjectsClient] = None
         self._relationships: typing.Optional[AsyncRelationshipsClient] = None
 
     @property
@@ -441,7 +434,7 @@ class AsyncContextsClient:
         """
         return self._raw_client
 
-    async def get_instance(
+    async def get(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> ContextInstanceState:
         """
@@ -475,7 +468,7 @@ class AsyncContextsClient:
 
 
         async def main() -> None:
-            await client.contexts.get_instance(
+            await client.contexts.get(
                 slug="customer",
                 instance="cust-12345",
             )
@@ -483,7 +476,7 @@ class AsyncContextsClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.get_instance(slug, instance, request_options=request_options)
+        _response = await self._raw_client.get(slug, instance, request_options=request_options)
         return _response.data
 
     async def submit(
@@ -539,7 +532,7 @@ class AsyncContextsClient:
         _response = await self._raw_client.submit(slug, instance, request=request, request_options=request_options)
         return _response.data
 
-    async def delete_instance(
+    async def delete(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> DeleteContextInstanceResponse:
         """
@@ -573,7 +566,7 @@ class AsyncContextsClient:
 
 
         async def main() -> None:
-            await client.contexts.delete_instance(
+            await client.contexts.delete(
                 slug="customer",
                 instance="cust-12345",
             )
@@ -581,7 +574,7 @@ class AsyncContextsClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.delete_instance(slug, instance, request_options=request_options)
+        _response = await self._raw_client.delete(slug, instance, request_options=request_options)
         return _response.data
 
     async def get_history(
@@ -694,8 +687,7 @@ class AsyncContextsClient:
         instance: str,
         rule_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextRuleRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SolveContextRuleResponse:
         """
@@ -712,11 +704,7 @@ class AsyncContextsClient:
         rule_slug : str
             The unique slug for the rule.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for rule evaluation.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextRuleRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -742,13 +730,14 @@ class AsyncContextsClient:
                 slug="customer",
                 instance="cust-12345",
                 rule_slug="eligibility-check",
+                request={},
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.solve(
-            slug, instance, rule_slug, additional_data=additional_data, persist=persist, request_options=request_options
+            slug, instance, rule_slug, request=request, request_options=request_options
         )
         return _response.data
 
@@ -757,7 +746,7 @@ class AsyncContextsClient:
         slug: str,
         instance: str,
         *,
-        max_depth: typing.Optional[int] = OMIT,
+        request: CascadeContextRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CascadeContextResponse:
         """
@@ -771,8 +760,7 @@ class AsyncContextsClient:
         instance : str
             The unique identifier for the context instance.
 
-        max_depth : typing.Optional[int]
-            Maximum depth for cascading evaluations.
+        request : CascadeContextRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -797,12 +785,13 @@ class AsyncContextsClient:
             await client.contexts.cascade(
                 slug="customer",
                 instance="cust-12345",
+                request={},
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.cascade(slug, instance, max_depth=max_depth, request_options=request_options)
+        _response = await self._raw_client.cascade(slug, instance, request=request, request_options=request_options)
         return _response.data
 
     async def execute(
@@ -811,8 +800,7 @@ class AsyncContextsClient:
         instance: str,
         flow_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextFlowRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SolveContextFlowResponse:
         """
@@ -829,11 +817,7 @@ class AsyncContextsClient:
         flow_slug : str
             The unique slug for the flow.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for flow execution.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextFlowRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -859,23 +843,24 @@ class AsyncContextsClient:
                 slug="customer",
                 instance="cust-12345",
                 flow_slug="onboarding-flow",
+                request={},
             )
 
 
         asyncio.run(main())
         """
         _response = await self._raw_client.execute(
-            slug, instance, flow_slug, additional_data=additional_data, persist=persist, request_options=request_options
+            slug, instance, flow_slug, request=request, request_options=request_options
         )
         return _response.data
 
     @property
-    def admin(self):
-        if self._admin is None:
-            from .admin.client import AsyncAdminClient  # noqa: E402
+    def objects(self):
+        if self._objects is None:
+            from .objects.client import AsyncObjectsClient  # noqa: E402
 
-            self._admin = AsyncAdminClient(client_wrapper=self._client_wrapper)
-        return self._admin
+            self._objects = AsyncObjectsClient(client_wrapper=self._client_wrapper)
+        return self._objects
 
     @property
     def relationships(self):

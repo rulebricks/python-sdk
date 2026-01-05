@@ -6,11 +6,14 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class ImportManifestResponseErrorsItem(UniversalBaseModel):
-    type: typing.Optional[str] = None
-    stable_id: typing.Optional[str] = None
-    status: typing.Optional[str] = None
-    reason: typing.Optional[str] = None
+class ImportManifestResponseOrganizationCreated(UniversalBaseModel):
+    """
+    IDs of any organizational folders created during import.
+    """
+
+    entity_set_id: typing.Optional[str] = None
+    rule_tag_id: typing.Optional[str] = None
+    flow_tag_id: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

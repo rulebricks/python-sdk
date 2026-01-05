@@ -5,4 +5,4 @@ import typing
 from ...types.export_manifest_preview_response import ExportManifestPreviewResponse
 from ...types.export_manifest_response import ExportManifestResponse
 
-ExportAssetsResponse = typing.Union[ExportManifestResponse, ExportManifestPreviewResponse]
+ExportRbmAssetsResponse = typing.Union[ExportManifestResponse, ExportManifestPreviewResponse]

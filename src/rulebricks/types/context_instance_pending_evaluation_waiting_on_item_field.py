@@ -6,15 +6,20 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class DeleteRelationshipResponse(UniversalBaseModel):
-    message: typing.Optional[str] = pydantic.Field(default=None)
+class ContextInstancePendingEvaluationWaitingOnItemField(UniversalBaseModel):
+    field: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Success message.
+    Field key this evaluation is waiting for.
     """
 
-    id: typing.Optional[str] = pydantic.Field(default=None)
+    relation: typing.Optional[str] = pydantic.Field(default=None)
     """
-    The ID of the deleted relationship.
+    Related context name if waiting on a relationship.
+    """
+
+    instance: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Instance ID of the related context (if applicable).
     """
 
     if IS_PYDANTIC_V2:

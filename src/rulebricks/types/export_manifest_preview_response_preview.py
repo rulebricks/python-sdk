@@ -4,17 +4,17 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .export_manifest_preview_response_preview_counts import ExportManifestPreviewResponsePreviewCounts
+from .export_manifest_preview_response_preview_items import ExportManifestPreviewResponsePreviewItems
 
 
-class ImportManifestResponseImported(UniversalBaseModel):
+class ExportManifestPreviewResponsePreview(UniversalBaseModel):
     """
-    Count of imported assets by type.
+    Preview of assets that would be exported.
     """
 
-    rules: typing.Optional[int] = None
-    flows: typing.Optional[int] = None
-    contexts: typing.Optional[int] = None
-    values: typing.Optional[int] = None
+    counts: typing.Optional[ExportManifestPreviewResponsePreviewCounts] = None
+    items: typing.Optional[ExportManifestPreviewResponsePreviewItems] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

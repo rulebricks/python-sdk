@@ -4,13 +4,24 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .export_manifest_preview_response_counts import ExportManifestPreviewResponseCounts
-from .export_manifest_preview_response_items import ExportManifestPreviewResponseItems
+from .export_manifest_preview_response_preview import ExportManifestPreviewResponsePreview
 
 
 class ExportManifestPreviewResponse(UniversalBaseModel):
-    counts: typing.Optional[ExportManifestPreviewResponseCounts] = None
-    items: typing.Optional[ExportManifestPreviewResponseItems] = None
+    success: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the preview completed successfully.
+    """
+
+    preview: typing.Optional[ExportManifestPreviewResponsePreview] = pydantic.Field(default=None)
+    """
+    Preview of assets that would be exported.
+    """
+
+    error: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Error message if preview failed.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

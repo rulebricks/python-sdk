@@ -6,7 +6,7 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class ImportManifestResponseErrorsItem(UniversalBaseModel):
+class ImportManifestResponseSkippedItem(UniversalBaseModel):
     type: typing.Optional[str] = None
     stable_id: typing.Optional[str] = None
     status: typing.Optional[str] = None

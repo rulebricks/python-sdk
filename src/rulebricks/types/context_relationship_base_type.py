@@ -2,4 +2,4 @@
 
 import typing
 
-ContextRelationshipBaseType = typing.Union[typing.Literal["one-to-one", "one-to-many", "many-to-one"], typing.Any]
+ContextRelationshipBaseType = typing.Union[typing.Literal["has_many", "has_one", "belongs_to"], typing.Any]

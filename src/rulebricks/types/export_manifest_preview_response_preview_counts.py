@@ -6,10 +6,11 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class ExportManifestPreviewResponseItemsFlowsItem(UniversalBaseModel):
-    id: typing.Optional[str] = None
-    name: typing.Optional[str] = None
-    slug: typing.Optional[str] = None
+class ExportManifestPreviewResponsePreviewCounts(UniversalBaseModel):
+    rules: typing.Optional[int] = None
+    flows: typing.Optional[int] = None
+    contexts: typing.Optional[int] = None
+    values: typing.Optional[int] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

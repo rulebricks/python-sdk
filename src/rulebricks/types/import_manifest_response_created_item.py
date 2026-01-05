@@ -6,15 +6,25 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class DeleteRelationshipResponse(UniversalBaseModel):
-    message: typing.Optional[str] = pydantic.Field(default=None)
+class ImportManifestResponseCreatedItem(UniversalBaseModel):
+    type: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Success message.
+    Asset type (context, value, rule, flow, relationship).
     """
 
-    id: typing.Optional[str] = pydantic.Field(default=None)
+    stable_id: typing.Optional[str] = pydantic.Field(default=None)
     """
-    The ID of the deleted relationship.
+    Stable ID of asset.
+    """
+
+    db_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Database ID of asset.
+    """
+
+    status: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Import status.
     """
 
     if IS_PYDANTIC_V2:

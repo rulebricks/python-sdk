@@ -6,10 +6,20 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .export_assets_response import ExportAssetsResponse
+    from .export_manifest_request_root_type import ExportManifestRequestRootType
+    from .export_rbm_assets_response import ExportRbmAssetsResponse
+    from .import_manifest_request_conflict_strategy import ImportManifestRequestConflictStrategy
+    from .import_manifest_request_legacy_rule_mapping_value import ImportManifestRequestLegacyRuleMappingValue
+    from .import_manifest_request_legacy_rule_mapping_value_action import (
+        ImportManifestRequestLegacyRuleMappingValueAction,
+    )
     from .import_manifest_request_manifest import ImportManifestRequestManifest
 _dynamic_imports: typing.Dict[str, str] = {
-    "ExportAssetsResponse": ".export_assets_response",
+    "ExportManifestRequestRootType": ".export_manifest_request_root_type",
+    "ExportRbmAssetsResponse": ".export_rbm_assets_response",
+    "ImportManifestRequestConflictStrategy": ".import_manifest_request_conflict_strategy",
+    "ImportManifestRequestLegacyRuleMappingValue": ".import_manifest_request_legacy_rule_mapping_value",
+    "ImportManifestRequestLegacyRuleMappingValueAction": ".import_manifest_request_legacy_rule_mapping_value_action",
     "ImportManifestRequestManifest": ".import_manifest_request_manifest",
 }
 
@@ -35,4 +45,11 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["ExportAssetsResponse", "ImportManifestRequestManifest"]
+__all__ = [
+    "ExportManifestRequestRootType",
+    "ExportRbmAssetsResponse",
+    "ImportManifestRequestConflictStrategy",
+    "ImportManifestRequestLegacyRuleMappingValue",
+    "ImportManifestRequestLegacyRuleMappingValueAction",
+    "ImportManifestRequestManifest",
+]

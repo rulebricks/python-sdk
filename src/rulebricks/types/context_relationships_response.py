@@ -6,9 +6,15 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .context_relationship_incoming import ContextRelationshipIncoming
 from .context_relationship_outgoing import ContextRelationshipOutgoing
+from .context_relationships_response_context import ContextRelationshipsResponseContext
 
 
 class ContextRelationshipsResponse(UniversalBaseModel):
+    context: typing.Optional[ContextRelationshipsResponseContext] = pydantic.Field(default=None)
+    """
+    The context these relationships belong to.
+    """
+
     outgoing: typing.Optional[typing.List[ContextRelationshipOutgoing]] = None
     incoming: typing.Optional[typing.List[ContextRelationshipIncoming]] = None
 

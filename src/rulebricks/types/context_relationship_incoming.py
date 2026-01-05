@@ -3,17 +3,13 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
-from ..core.serialization import FieldMetadata
 from .context_relationship_base import ContextRelationshipBase
 from .context_relationship_incoming_source_context import ContextRelationshipIncomingSourceContext
 
 
 class ContextRelationshipIncoming(ContextRelationshipBase):
-    source_context: typing_extensions.Annotated[
-        typing.Optional[ContextRelationshipIncomingSourceContext], FieldMetadata(alias="sourceContext")
-    ] = None
+    source_context: typing.Optional[ContextRelationshipIncomingSourceContext] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

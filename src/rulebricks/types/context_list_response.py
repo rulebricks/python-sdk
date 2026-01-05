@@ -2,6 +2,6 @@
 
 import typing
 
-from .context_detail import ContextDetail
+from .context_list_item import ContextListItem
 
-ContextListResponse = typing.List[ContextDetail]
+ContextListResponse = typing.List[ContextListItem]

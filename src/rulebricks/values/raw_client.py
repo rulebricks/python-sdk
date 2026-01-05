@@ -111,7 +111,7 @@ class RawValuesClient:
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         user_groups : typing.Optional[typing.Sequence[str]]
-            Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
+            Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -350,7 +350,7 @@ class AsyncRawValuesClient:
             A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
 
         user_groups : typing.Optional[typing.Sequence[str]]
-            Optional array of access group names or IDs. If omitted and user belongs to access groups, values will be assigned to all user's access groups. Required if values should be restricted to specific access groups.
+            Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

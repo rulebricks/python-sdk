@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 from .schema_field_default_value import SchemaFieldDefaultValue
 from .schema_field_type import SchemaFieldType
 
@@ -36,16 +34,12 @@ class SchemaField(UniversalBaseModel):
     Data type of this field.
     """
 
-    default_value: typing_extensions.Annotated[
-        typing.Optional[SchemaFieldDefaultValue], FieldMetadata(alias="defaultValue")
-    ] = pydantic.Field(default=None)
+    default_value: typing.Optional[SchemaFieldDefaultValue] = pydantic.Field(default=None)
     """
     Default value for this field.
     """
 
-    default_computed_value: typing_extensions.Annotated[
-        typing.Optional[str], FieldMetadata(alias="defaultComputedValue")
-    ] = pydantic.Field(default=None)
+    default_computed_value: typing.Optional[str] = pydantic.Field(default=None)
     """
     Computed default value for this field.
     """

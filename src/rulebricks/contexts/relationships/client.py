@@ -8,7 +8,7 @@ from ...types.context_relationships_response import ContextRelationshipsResponse
 from ...types.create_relationship_response import CreateRelationshipResponse
 from ...types.delete_relationship_response import DeleteRelationshipResponse
 from .raw_client import AsyncRawRelationshipsClient, RawRelationshipsClient
-from .types.create_relationship_request_type import CreateRelationshipRequestType
+from .types.create_relationship_request_relation_type import CreateRelationshipRequestRelationType
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -64,9 +64,9 @@ class RelationshipsClient:
         self,
         id: str,
         *,
-        target_context_id: str,
-        type: CreateRelationshipRequestType,
-        foreign_key: str,
+        to_context_id: str,
+        relation_type: CreateRelationshipRequestRelationType,
+        foreign_key_fact: str,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -79,13 +79,13 @@ class RelationshipsClient:
         id : str
             The unique identifier for the context.
 
-        target_context_id : str
+        to_context_id : str
             The ID of the target context.
 
-        type : CreateRelationshipRequestType
+        relation_type : CreateRelationshipRequestRelationType
             The type of relationship.
 
-        foreign_key : str
+        foreign_key_fact : str
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
@@ -111,17 +111,17 @@ class RelationshipsClient:
         )
         client.contexts.relationships.create(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-            target_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
-            type="one-to-many",
-            foreign_key="customer_id",
+            to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
+            relation_type="has_many",
+            foreign_key_fact="customer_id",
             name="Customer Orders",
         )
         """
         _response = self._raw_client.create(
             id,
-            target_context_id=target_context_id,
-            type=type,
-            foreign_key=foreign_key,
+            to_context_id=to_context_id,
+            relation_type=relation_type,
+            foreign_key_fact=foreign_key_fact,
             name=name,
             description=description,
             request_options=request_options,
@@ -226,9 +226,9 @@ class AsyncRelationshipsClient:
         self,
         id: str,
         *,
-        target_context_id: str,
-        type: CreateRelationshipRequestType,
-        foreign_key: str,
+        to_context_id: str,
+        relation_type: CreateRelationshipRequestRelationType,
+        foreign_key_fact: str,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -241,13 +241,13 @@ class AsyncRelationshipsClient:
         id : str
             The unique identifier for the context.
 
-        target_context_id : str
+        to_context_id : str
             The ID of the target context.
 
-        type : CreateRelationshipRequestType
+        relation_type : CreateRelationshipRequestRelationType
             The type of relationship.
 
-        foreign_key : str
+        foreign_key_fact : str
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
@@ -278,9 +278,9 @@ class AsyncRelationshipsClient:
         async def main() -> None:
             await client.contexts.relationships.create(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                target_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                type="one-to-many",
-                foreign_key="customer_id",
+                to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                relation_type="has_many",
+                foreign_key_fact="customer_id",
                 name="Customer Orders",
             )
 
@@ -289,9 +289,9 @@ class AsyncRelationshipsClient:
         """
         _response = await self._raw_client.create(
             id,
-            target_context_id=target_context_id,
-            type=type,
-            foreign_key=foreign_key,
+            to_context_id=to_context_id,
+            relation_type=relation_type,
+            foreign_key_fact=foreign_key_fact,
             name=name,
             description=description,
             request_options=request_options,

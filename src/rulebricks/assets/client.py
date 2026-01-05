@@ -9,7 +9,10 @@ from ..core.request_options import RequestOptions
 from ..types.import_manifest_response import ImportManifestResponse
 from ..types.usage_statistics import UsageStatistics
 from .raw_client import AsyncRawAssetsClient, RawAssetsClient
-from .types.export_assets_response import ExportAssetsResponse
+from .types.export_manifest_request_root_type import ExportManifestRequestRootType
+from .types.export_rbm_assets_response import ExportRbmAssetsResponse
+from .types.import_manifest_request_conflict_strategy import ImportManifestRequestConflictStrategy
+from .types.import_manifest_request_legacy_rule_mapping_value import ImportManifestRequestLegacyRuleMappingValue
 from .types.import_manifest_request_manifest import ImportManifestRequestManifest
 
 if typing.TYPE_CHECKING:
@@ -65,23 +68,31 @@ class AssetsClient:
         _response = self._raw_client.get_usage(request_options=request_options)
         return _response.data
 
-    def import_(
+    def import_rbm(
         self,
         *,
         manifest: ImportManifestRequestManifest,
-        overwrite: typing.Optional[bool] = OMIT,
+        conflict_strategy: typing.Optional[ImportManifestRequestConflictStrategy] = OMIT,
+        target_folder_name: typing.Optional[str] = OMIT,
+        legacy_rule_mapping: typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an RBM manifest file.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
             The RBM manifest object containing assets to import.
 
-        overwrite : typing.Optional[bool]
-            Whether to overwrite existing assets with the same ID/slug.
+        conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
+            How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
+
+        target_folder_name : typing.Optional[str]
+            Optional folder name to place imported assets into. Created if it doesn't exist.
+
+        legacy_rule_mapping : typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]]
+            Optional mapping for legacy flow imports to reuse existing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -99,60 +110,66 @@ class AssetsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.assets.import_(
+        client.assets.import_rbm(
             manifest=ImportManifestRequestManifest(
                 version="1.0",
                 rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
                 flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
-                contexts=[{"name": "Customer", "slug": "customer"}],
-                values=[{"key": "tax_rate", "value": 0.08}],
+                entities=[{"name": "Customer", "slug": "customer"}],
+                values=[{"name": "tax_rate", "value": 0.08}],
             ),
-            overwrite=False,
+            conflict_strategy="update",
         )
         """
-        _response = self._raw_client.import_(manifest=manifest, overwrite=overwrite, request_options=request_options)
+        _response = self._raw_client.import_rbm(
+            manifest=manifest,
+            conflict_strategy=conflict_strategy,
+            target_folder_name=target_folder_name,
+            legacy_rule_mapping=legacy_rule_mapping,
+            request_options=request_options,
+        )
         return _response.data
 
-    def export(
+    def export_rbm(
         self,
         *,
-        rules: typing.Optional[typing.Sequence[str]] = OMIT,
-        flows: typing.Optional[typing.Sequence[str]] = OMIT,
-        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
-        values: typing.Optional[typing.Sequence[str]] = OMIT,
-        include_all: typing.Optional[bool] = OMIT,
-        preview: typing.Optional[bool] = OMIT,
+        root_type: ExportManifestRequestRootType,
+        root_ids: typing.Sequence[str],
+        include_downstream: typing.Optional[bool] = OMIT,
+        manifest_name: typing.Optional[str] = OMIT,
+        manifest_description: typing.Optional[str] = OMIT,
+        preview_only: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ExportAssetsResponse:
+    ) -> ExportRbmAssetsResponse:
         """
-        Export selected rules, flows, contexts, and values to an RBM manifest file.
+        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
-        rules : typing.Optional[typing.Sequence[str]]
-            Rule IDs or slugs to export.
+        root_type : ExportManifestRequestRootType
+            The type of root asset to export. All dependencies will be included.
 
-        flows : typing.Optional[typing.Sequence[str]]
-            Flow IDs or slugs to export.
+        root_ids : typing.Sequence[str]
+            Array of IDs for the root assets to export. Dependencies are automatically resolved.
 
-        contexts : typing.Optional[typing.Sequence[str]]
-            Context IDs or slugs to export.
+        include_downstream : typing.Optional[bool]
+            For context exports, whether to include rules and flows bound to the context.
 
-        values : typing.Optional[typing.Sequence[str]]
-            Value IDs or names to export.
+        manifest_name : typing.Optional[str]
+            Optional name for the exported manifest.
 
-        include_all : typing.Optional[bool]
-            Export all assets of specified types.
+        manifest_description : typing.Optional[str]
+            Optional description for the exported manifest.
 
-        preview : typing.Optional[bool]
-            Return a preview of what would be exported without the full data.
+        preview_only : typing.Optional[bool]
+            If true, returns a preview of what would be exported without the full data.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ExportAssetsResponse
+        ExportRbmAssetsResponse
             Export completed successfully
 
         Examples
@@ -162,20 +179,19 @@ class AssetsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.assets.export(
-            rules=["pricing-rule", "eligibility-check"],
-            flows=["onboarding-flow"],
-            contexts=["customer"],
-            values=["tax_rate", "discount_threshold"],
+        client.assets.export_rbm(
+            root_type="rule",
+            root_ids=["pricing-rule", "eligibility-check"],
+            include_downstream=False,
         )
         """
-        _response = self._raw_client.export(
-            rules=rules,
-            flows=flows,
-            contexts=contexts,
-            values=values,
-            include_all=include_all,
-            preview=preview,
+        _response = self._raw_client.export_rbm(
+            root_type=root_type,
+            root_ids=root_ids,
+            include_downstream=include_downstream,
+            manifest_name=manifest_name,
+            manifest_description=manifest_description,
+            preview_only=preview_only,
             request_options=request_options,
         )
         return _response.data
@@ -258,23 +274,31 @@ class AsyncAssetsClient:
         _response = await self._raw_client.get_usage(request_options=request_options)
         return _response.data
 
-    async def import_(
+    async def import_rbm(
         self,
         *,
         manifest: ImportManifestRequestManifest,
-        overwrite: typing.Optional[bool] = OMIT,
+        conflict_strategy: typing.Optional[ImportManifestRequestConflictStrategy] = OMIT,
+        target_folder_name: typing.Optional[str] = OMIT,
+        legacy_rule_mapping: typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an RBM manifest file.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
             The RBM manifest object containing assets to import.
 
-        overwrite : typing.Optional[bool]
-            Whether to overwrite existing assets with the same ID/slug.
+        conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
+            How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
+
+        target_folder_name : typing.Optional[str]
+            Optional folder name to place imported assets into. Created if it doesn't exist.
+
+        legacy_rule_mapping : typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]]
+            Optional mapping for legacy flow imports to reuse existing rules.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -297,65 +321,69 @@ class AsyncAssetsClient:
 
 
         async def main() -> None:
-            await client.assets.import_(
+            await client.assets.import_rbm(
                 manifest=ImportManifestRequestManifest(
                     version="1.0",
                     rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
                     flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
-                    contexts=[{"name": "Customer", "slug": "customer"}],
-                    values=[{"key": "tax_rate", "value": 0.08}],
+                    entities=[{"name": "Customer", "slug": "customer"}],
+                    values=[{"name": "tax_rate", "value": 0.08}],
                 ),
-                overwrite=False,
+                conflict_strategy="update",
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.import_(
-            manifest=manifest, overwrite=overwrite, request_options=request_options
+        _response = await self._raw_client.import_rbm(
+            manifest=manifest,
+            conflict_strategy=conflict_strategy,
+            target_folder_name=target_folder_name,
+            legacy_rule_mapping=legacy_rule_mapping,
+            request_options=request_options,
         )
         return _response.data
 
-    async def export(
+    async def export_rbm(
         self,
         *,
-        rules: typing.Optional[typing.Sequence[str]] = OMIT,
-        flows: typing.Optional[typing.Sequence[str]] = OMIT,
-        contexts: typing.Optional[typing.Sequence[str]] = OMIT,
-        values: typing.Optional[typing.Sequence[str]] = OMIT,
-        include_all: typing.Optional[bool] = OMIT,
-        preview: typing.Optional[bool] = OMIT,
+        root_type: ExportManifestRequestRootType,
+        root_ids: typing.Sequence[str],
+        include_downstream: typing.Optional[bool] = OMIT,
+        manifest_name: typing.Optional[str] = OMIT,
+        manifest_description: typing.Optional[str] = OMIT,
+        preview_only: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> ExportAssetsResponse:
+    ) -> ExportRbmAssetsResponse:
         """
-        Export selected rules, flows, contexts, and values to an RBM manifest file.
+        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
-        rules : typing.Optional[typing.Sequence[str]]
-            Rule IDs or slugs to export.
+        root_type : ExportManifestRequestRootType
+            The type of root asset to export. All dependencies will be included.
 
-        flows : typing.Optional[typing.Sequence[str]]
-            Flow IDs or slugs to export.
+        root_ids : typing.Sequence[str]
+            Array of IDs for the root assets to export. Dependencies are automatically resolved.
 
-        contexts : typing.Optional[typing.Sequence[str]]
-            Context IDs or slugs to export.
+        include_downstream : typing.Optional[bool]
+            For context exports, whether to include rules and flows bound to the context.
 
-        values : typing.Optional[typing.Sequence[str]]
-            Value IDs or names to export.
+        manifest_name : typing.Optional[str]
+            Optional name for the exported manifest.
 
-        include_all : typing.Optional[bool]
-            Export all assets of specified types.
+        manifest_description : typing.Optional[str]
+            Optional description for the exported manifest.
 
-        preview : typing.Optional[bool]
-            Return a preview of what would be exported without the full data.
+        preview_only : typing.Optional[bool]
+            If true, returns a preview of what would be exported without the full data.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        ExportAssetsResponse
+        ExportRbmAssetsResponse
             Export completed successfully
 
         Examples
@@ -370,23 +398,22 @@ class AsyncAssetsClient:
 
 
         async def main() -> None:
-            await client.assets.export(
-                rules=["pricing-rule", "eligibility-check"],
-                flows=["onboarding-flow"],
-                contexts=["customer"],
-                values=["tax_rate", "discount_threshold"],
+            await client.assets.export_rbm(
+                root_type="rule",
+                root_ids=["pricing-rule", "eligibility-check"],
+                include_downstream=False,
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.export(
-            rules=rules,
-            flows=flows,
-            contexts=contexts,
-            values=values,
-            include_all=include_all,
-            preview=preview,
+        _response = await self._raw_client.export_rbm(
+            root_type=root_type,
+            root_ids=root_ids,
+            include_downstream=include_downstream,
+            manifest_name=manifest_name,
+            manifest_description=manifest_description,
+            preview_only=preview_only,
             request_options=request_options,
         )
         return _response.data

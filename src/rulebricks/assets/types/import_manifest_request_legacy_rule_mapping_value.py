@@ -3,18 +3,13 @@
 import typing
 
 import pydantic
-from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .import_manifest_request_legacy_rule_mapping_value_action import ImportManifestRequestLegacyRuleMappingValueAction
 
 
-class ImportManifestResponseSkipped(UniversalBaseModel):
-    """
-    Count of skipped assets by type (already exist and overwrite=false).
-    """
-
-    rules: typing.Optional[int] = None
-    flows: typing.Optional[int] = None
-    contexts: typing.Optional[int] = None
-    values: typing.Optional[int] = None
+class ImportManifestRequestLegacyRuleMappingValue(UniversalBaseModel):
+    action: typing.Optional[ImportManifestRequestLegacyRuleMappingValueAction] = None
+    rule_id: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

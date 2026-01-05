@@ -26,9 +26,9 @@ class ImportManifestRequestManifest(UniversalBaseModel):
     Flows to import.
     """
 
-    contexts: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    entities: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Contexts (entities) to import.
+    Contexts to import.
     """
 
     values: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)

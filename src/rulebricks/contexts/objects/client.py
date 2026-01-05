@@ -9,7 +9,7 @@ from ...types.context_list_response import ContextListResponse
 from ...types.create_context_response import CreateContextResponse
 from ...types.delete_context_response import DeleteContextResponse
 from ...types.update_context_response import UpdateContextResponse
-from .raw_client import AsyncRawAdminClient, RawAdminClient
+from .raw_client import AsyncRawObjectsClient, RawObjectsClient
 from .types.create_context_request_on_schema_mismatch import CreateContextRequestOnSchemaMismatch
 from .types.create_context_request_schema_item import CreateContextRequestSchemaItem
 from .types.update_context_request_on_schema_mismatch import UpdateContextRequestOnSchemaMismatch
@@ -19,24 +19,24 @@ from .types.update_context_request_schema_item import UpdateContextRequestSchema
 OMIT = typing.cast(typing.Any, ...)
 
 
-class AdminClient:
+class ObjectsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
-        self._raw_client = RawAdminClient(client_wrapper=client_wrapper)
+        self._raw_client = RawObjectsClient(client_wrapper=client_wrapper)
 
     @property
-    def with_raw_response(self) -> RawAdminClient:
+    def with_raw_response(self) -> RawObjectsClient:
         """
         Retrieves a raw implementation of this client that returns raw responses.
 
         Returns
         -------
-        RawAdminClient
+        RawObjectsClient
         """
         return self._raw_client
 
     def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> ContextListResponse:
         """
-        Retrieve all contexts (entities) for the authenticated user.
+        Retrieve all contexts for the authenticated user.
 
         Parameters
         ----------
@@ -55,7 +55,7 @@ class AdminClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.admin.list()
+        client.contexts.objects.list()
         """
         _response = self._raw_client.list(request_options=request_options)
         return _response.data
@@ -64,9 +64,10 @@ class AdminClient:
         self,
         *,
         name: str,
+        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        identity_fact: str,
         slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
@@ -76,21 +77,24 @@ class AdminClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateContextResponse:
         """
-        Create a new context (entity) for the authenticated user.
+        Create a new context for the authenticated user.
 
         Parameters
         ----------
         name : str
             The name of the context.
 
+        schema : typing.Sequence[CreateContextRequestSchemaItem]
+            Initial schema fields for the context. At least one field must be defined.
+
+        identity_fact : str
+            The field key to use as the unique identifier for instances. Must be a key from the schema.
+
         slug : typing.Optional[str]
             Optional custom slug. Auto-generated if not provided.
 
         description : typing.Optional[str]
             The description of the context.
-
-        schema : typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]]
-            Initial schema fields for the context.
 
         auto_execute_decisions : typing.Optional[bool]
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
@@ -121,12 +125,12 @@ class AdminClient:
         Examples
         --------
         from rulebricks import Rulebricks
-        from rulebricks.contexts.admin import CreateContextRequestSchemaItem
+        from rulebricks.contexts.objects import CreateContextRequestSchemaItem
 
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.admin.create(
+        client.contexts.objects.create(
             name="Customer",
             description="Represents a customer in the system",
             schema=[
@@ -141,13 +145,15 @@ class AdminClient:
                     type="number",
                 ),
             ],
+            identity_fact="email",
         )
         """
         _response = self._raw_client.create(
             name=name,
+            schema=schema,
+            identity_fact=identity_fact,
             slug=slug,
             description=description,
-            schema=schema,
             auto_execute_decisions=auto_execute_decisions,
             ttl_seconds=ttl_seconds,
             history_limit=history_limit,
@@ -182,7 +188,7 @@ class AdminClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.admin.get(
+        client.contexts.objects.get(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         )
         """
@@ -258,7 +264,7 @@ class AdminClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.admin.update(
+        client.contexts.objects.update(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             name="Updated Customer",
             description="Updated description for premium customers",
@@ -304,7 +310,7 @@ class AdminClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.admin.delete(
+        client.contexts.objects.delete(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         )
         """
@@ -312,24 +318,24 @@ class AdminClient:
         return _response.data
 
 
-class AsyncAdminClient:
+class AsyncObjectsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
-        self._raw_client = AsyncRawAdminClient(client_wrapper=client_wrapper)
+        self._raw_client = AsyncRawObjectsClient(client_wrapper=client_wrapper)
 
     @property
-    def with_raw_response(self) -> AsyncRawAdminClient:
+    def with_raw_response(self) -> AsyncRawObjectsClient:
         """
         Retrieves a raw implementation of this client that returns raw responses.
 
         Returns
         -------
-        AsyncRawAdminClient
+        AsyncRawObjectsClient
         """
         return self._raw_client
 
     async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> ContextListResponse:
         """
-        Retrieve all contexts (entities) for the authenticated user.
+        Retrieve all contexts for the authenticated user.
 
         Parameters
         ----------
@@ -353,7 +359,7 @@ class AsyncAdminClient:
 
 
         async def main() -> None:
-            await client.contexts.admin.list()
+            await client.contexts.objects.list()
 
 
         asyncio.run(main())
@@ -365,9 +371,10 @@ class AsyncAdminClient:
         self,
         *,
         name: str,
+        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        identity_fact: str,
         slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
@@ -377,21 +384,24 @@ class AsyncAdminClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CreateContextResponse:
         """
-        Create a new context (entity) for the authenticated user.
+        Create a new context for the authenticated user.
 
         Parameters
         ----------
         name : str
             The name of the context.
 
+        schema : typing.Sequence[CreateContextRequestSchemaItem]
+            Initial schema fields for the context. At least one field must be defined.
+
+        identity_fact : str
+            The field key to use as the unique identifier for instances. Must be a key from the schema.
+
         slug : typing.Optional[str]
             Optional custom slug. Auto-generated if not provided.
 
         description : typing.Optional[str]
             The description of the context.
-
-        schema : typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]]
-            Initial schema fields for the context.
 
         auto_execute_decisions : typing.Optional[bool]
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
@@ -424,7 +434,7 @@ class AsyncAdminClient:
         import asyncio
 
         from rulebricks import AsyncRulebricks
-        from rulebricks.contexts.admin import CreateContextRequestSchemaItem
+        from rulebricks.contexts.objects import CreateContextRequestSchemaItem
 
         client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
@@ -432,7 +442,7 @@ class AsyncAdminClient:
 
 
         async def main() -> None:
-            await client.contexts.admin.create(
+            await client.contexts.objects.create(
                 name="Customer",
                 description="Represents a customer in the system",
                 schema=[
@@ -447,6 +457,7 @@ class AsyncAdminClient:
                         type="number",
                     ),
                 ],
+                identity_fact="email",
             )
 
 
@@ -454,9 +465,10 @@ class AsyncAdminClient:
         """
         _response = await self._raw_client.create(
             name=name,
+            schema=schema,
+            identity_fact=identity_fact,
             slug=slug,
             description=description,
-            schema=schema,
             auto_execute_decisions=auto_execute_decisions,
             ttl_seconds=ttl_seconds,
             history_limit=history_limit,
@@ -496,7 +508,7 @@ class AsyncAdminClient:
 
 
         async def main() -> None:
-            await client.contexts.admin.get(
+            await client.contexts.objects.get(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             )
 
@@ -580,7 +592,7 @@ class AsyncAdminClient:
 
 
         async def main() -> None:
-            await client.contexts.admin.update(
+            await client.contexts.objects.update(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 name="Updated Customer",
                 description="Updated description for premium customers",
@@ -636,7 +648,7 @@ class AsyncAdminClient:
 
 
         async def main() -> None:
-            await client.contexts.admin.delete(
+            await client.contexts.objects.delete(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             )
 

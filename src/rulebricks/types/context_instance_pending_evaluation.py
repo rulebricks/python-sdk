@@ -6,6 +6,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .context_instance_pending_evaluation_type import ContextInstancePendingEvaluationType
+from .context_instance_pending_evaluation_waiting_on_item import ContextInstancePendingEvaluationWaitingOnItem
 
 
 class ContextInstancePendingEvaluation(UniversalBaseModel):
@@ -38,9 +39,11 @@ class ContextInstancePendingEvaluation(UniversalBaseModel):
     The flow ID (if type is 'flow').
     """
 
-    waiting_on: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    waiting_on: typing.Optional[typing.List[ContextInstancePendingEvaluationWaitingOnItem]] = pydantic.Field(
+        default=None
+    )
     """
-    List of field keys this evaluation is waiting for.
+    List of field keys or dependency objects this evaluation is waiting for. Can contain simple strings for direct fields or objects for relationship dependencies.
     """
 
     created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)

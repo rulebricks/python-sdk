@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 from .context_schema_field_type import ContextSchemaFieldType
 
 
@@ -34,9 +32,7 @@ class ContextSchemaField(UniversalBaseModel):
     Data type of this field. 'function' type fields compute values dynamically.
     """
 
-    default_value: typing_extensions.Annotated[typing.Optional[typing.Any], FieldMetadata(alias="defaultValue")] = (
-        pydantic.Field(default=None)
-    )
+    default_value: typing.Optional[typing.Any] = pydantic.Field(default=None)
     """
     Default value for this field.
     """
@@ -46,23 +42,17 @@ class ContextSchemaField(UniversalBaseModel):
     Whether this field is derived from rule/flow outputs.
     """
 
-    source_rule: typing_extensions.Annotated[typing.Optional[str], FieldMetadata(alias="sourceRule")] = pydantic.Field(
-        default=None
-    )
+    source_rule: typing.Optional[str] = pydantic.Field(default=None)
     """
     The rule ID that derives this field (if derived).
     """
 
-    source_flow: typing_extensions.Annotated[typing.Optional[str], FieldMetadata(alias="sourceFlow")] = pydantic.Field(
-        default=None
-    )
+    source_flow: typing.Optional[str] = pydantic.Field(default=None)
     """
     The flow ID that derives this field (if derived).
     """
 
-    source_field: typing_extensions.Annotated[typing.Optional[str], FieldMetadata(alias="sourceField")] = (
-        pydantic.Field(default=None)
-    )
+    source_field: typing.Optional[str] = pydantic.Field(default=None)
     """
     The source field key in the rule/flow output.
     """

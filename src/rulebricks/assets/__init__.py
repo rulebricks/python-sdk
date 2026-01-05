@@ -6,10 +6,21 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import ExportAssetsResponse, ImportManifestRequestManifest
+    from .types import (
+        ExportManifestRequestRootType,
+        ExportRbmAssetsResponse,
+        ImportManifestRequestConflictStrategy,
+        ImportManifestRequestLegacyRuleMappingValue,
+        ImportManifestRequestLegacyRuleMappingValueAction,
+        ImportManifestRequestManifest,
+    )
     from . import flows, folders, rules
 _dynamic_imports: typing.Dict[str, str] = {
-    "ExportAssetsResponse": ".types",
+    "ExportManifestRequestRootType": ".types",
+    "ExportRbmAssetsResponse": ".types",
+    "ImportManifestRequestConflictStrategy": ".types",
+    "ImportManifestRequestLegacyRuleMappingValue": ".types",
+    "ImportManifestRequestLegacyRuleMappingValueAction": ".types",
     "ImportManifestRequestManifest": ".types",
     "flows": ".flows",
     "folders": ".folders",
@@ -38,4 +49,14 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["ExportAssetsResponse", "ImportManifestRequestManifest", "flows", "folders", "rules"]
+__all__ = [
+    "ExportManifestRequestRootType",
+    "ExportRbmAssetsResponse",
+    "ImportManifestRequestConflictStrategy",
+    "ImportManifestRequestLegacyRuleMappingValue",
+    "ImportManifestRequestLegacyRuleMappingValueAction",
+    "ImportManifestRequestManifest",
+    "flows",
+    "folders",
+    "rules",
+]

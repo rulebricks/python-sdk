@@ -14,12 +14,12 @@ class UsageStatistics(UniversalBaseModel):
 
     monthly_period_start: typing.Optional[str] = pydantic.Field(default=None)
     """
-    The start date of the current monthly period.
+    The start date of the current monthly period (MM-DD-YYYY).
     """
 
     monthly_period_end: typing.Optional[str] = pydantic.Field(default=None)
     """
-    The end date of the current monthly period.
+    The end date of the current monthly period (MM-DD-YYYY).
     """
 
     monthly_executions_usage: typing.Optional[float] = pydantic.Field(default=None)
@@ -29,12 +29,27 @@ class UsageStatistics(UniversalBaseModel):
 
     monthly_executions_limit: typing.Optional[float] = pydantic.Field(default=None)
     """
-    The total number of rule executions allowed this month.
+    The total number of rule executions allowed this month. -1 indicates unlimited.
     """
 
     monthly_executions_remaining: typing.Optional[float] = pydantic.Field(default=None)
     """
-    The number of rule executions remaining this month.
+    The number of rule executions remaining this month. -1 indicates unlimited.
+    """
+
+    unlimited_plan: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the plan has unlimited executions (true when monthly_executions_limit is -1).
+    """
+
+    days_remaining_in_period: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Number of days remaining in the current billing period.
+    """
+
+    daily_average_usage: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Average number of executions per day in the current period.
     """
 
     if IS_PYDANTIC_V2:

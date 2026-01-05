@@ -4,9 +4,7 @@ import datetime as dt
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 from .test_test_state import TestTestState
 
 
@@ -36,26 +34,22 @@ class Test(UniversalBaseModel):
     Indicates whether the test is critical.
     """
 
-    error: bool = pydantic.Field()
+    error: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Indicates if the test resulted in an error.
-    """
-
-    success: bool = pydantic.Field()
-    """
-    Indicates if the test was successful.
+    Indicates if the test resulted in an error. Null if test has not been executed.
     """
 
-    test_state: typing_extensions.Annotated[typing.Optional[TestTestState], FieldMetadata(alias="testState")] = (
-        pydantic.Field(default=None)
-    )
+    success: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Indicates if the test was successful. Null if test has not been executed.
+    """
+
+    test_state: typing.Optional[TestTestState] = pydantic.Field(default=None)
     """
     The state of the test after execution.
     """
 
-    last_executed: typing_extensions.Annotated[typing.Optional[dt.datetime], FieldMetadata(alias="lastExecuted")] = (
-        pydantic.Field(default=None)
-    )
+    last_executed: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     The timestamp when the test was last executed.
     """

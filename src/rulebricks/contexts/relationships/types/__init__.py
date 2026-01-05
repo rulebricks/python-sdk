@@ -6,8 +6,10 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .create_relationship_request_type import CreateRelationshipRequestType
-_dynamic_imports: typing.Dict[str, str] = {"CreateRelationshipRequestType": ".create_relationship_request_type"}
+    from .create_relationship_request_relation_type import CreateRelationshipRequestRelationType
+_dynamic_imports: typing.Dict[str, str] = {
+    "CreateRelationshipRequestRelationType": ".create_relationship_request_relation_type"
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +33,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["CreateRelationshipRequestType"]
+__all__ = ["CreateRelationshipRequestRelationType"]

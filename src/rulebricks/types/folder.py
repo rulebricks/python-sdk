@@ -23,9 +23,19 @@ class Folder(UniversalBaseModel):
     Description of the folder.
     """
 
+    created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    Timestamp of when the folder was created.
+    """
+
     updated_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     Timestamp of when the folder was last updated.
+    """
+
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    User groups that can view this folder.
     """
 
     if IS_PYDANTIC_V2:

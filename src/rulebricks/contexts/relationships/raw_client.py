@@ -15,7 +15,7 @@ from ...errors.not_found_error import NotFoundError
 from ...types.context_relationships_response import ContextRelationshipsResponse
 from ...types.create_relationship_response import CreateRelationshipResponse
 from ...types.delete_relationship_response import DeleteRelationshipResponse
-from .types.create_relationship_request_type import CreateRelationshipRequestType
+from .types.create_relationship_request_relation_type import CreateRelationshipRequestRelationType
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -90,9 +90,9 @@ class RawRelationshipsClient:
         self,
         id: str,
         *,
-        target_context_id: str,
-        type: CreateRelationshipRequestType,
-        foreign_key: str,
+        to_context_id: str,
+        relation_type: CreateRelationshipRequestRelationType,
+        foreign_key_fact: str,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -105,13 +105,13 @@ class RawRelationshipsClient:
         id : str
             The unique identifier for the context.
 
-        target_context_id : str
+        to_context_id : str
             The ID of the target context.
 
-        type : CreateRelationshipRequestType
+        relation_type : CreateRelationshipRequestRelationType
             The type of relationship.
 
-        foreign_key : str
+        foreign_key_fact : str
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
@@ -132,9 +132,9 @@ class RawRelationshipsClient:
             f"admin/contexts/{jsonable_encoder(id)}/relationships",
             method="POST",
             json={
-                "targetContextId": target_context_id,
-                "type": type,
-                "foreignKey": foreign_key,
+                "to_context_id": to_context_id,
+                "relation_type": relation_type,
+                "foreign_key_fact": foreign_key_fact,
                 "name": name,
                 "description": description,
             },
@@ -326,9 +326,9 @@ class AsyncRawRelationshipsClient:
         self,
         id: str,
         *,
-        target_context_id: str,
-        type: CreateRelationshipRequestType,
-        foreign_key: str,
+        to_context_id: str,
+        relation_type: CreateRelationshipRequestRelationType,
+        foreign_key_fact: str,
         name: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
@@ -341,13 +341,13 @@ class AsyncRawRelationshipsClient:
         id : str
             The unique identifier for the context.
 
-        target_context_id : str
+        to_context_id : str
             The ID of the target context.
 
-        type : CreateRelationshipRequestType
+        relation_type : CreateRelationshipRequestRelationType
             The type of relationship.
 
-        foreign_key : str
+        foreign_key_fact : str
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
@@ -368,9 +368,9 @@ class AsyncRawRelationshipsClient:
             f"admin/contexts/{jsonable_encoder(id)}/relationships",
             method="POST",
             json={
-                "targetContextId": target_context_id,
-                "type": type,
-                "foreignKey": foreign_key,
+                "to_context_id": to_context_id,
+                "relation_type": relation_type,
+                "foreign_key_fact": foreign_key_fact,
                 "name": name,
                 "description": description,
             },

@@ -44,7 +44,7 @@ class UsersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserInviteResponse:
         """
-        Invite a new user to the organization or update role or access group data for an existing user.
+        Invite a new user to the organization or update role or user group data for an existing user.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ class UsersClient:
 
     def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> UserListResponse:
         """
-        List all users (including the admin and all team members) in the organization with their details including email, name, API key, role, access groups, and join date.
+        List all users (including the admin and all team members) in the organization with their details including email, name, API key, role, user groups, and join date.
 
         Parameters
         ----------
@@ -204,7 +204,7 @@ class AsyncUsersClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserInviteResponse:
         """
-        Invite a new user to the organization or update role or access group data for an existing user.
+        Invite a new user to the organization or update role or user group data for an existing user.
 
         Parameters
         ----------
@@ -253,7 +253,7 @@ class AsyncUsersClient:
 
     async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> UserListResponse:
         """
-        List all users (including the admin and all team members) in the organization with their details including email, name, API key, role, access groups, and join date.
+        List all users (including the admin and all team members) in the organization with their details including email, name, API key, role, user groups, and join date.
 
         Parameters
         ----------

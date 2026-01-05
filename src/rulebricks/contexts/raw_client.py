@@ -12,12 +12,15 @@ from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
 from ..errors.internal_server_error import InternalServerError
 from ..errors.not_found_error import NotFoundError
+from ..types.cascade_context_request import CascadeContextRequest
 from ..types.cascade_context_response import CascadeContextResponse
 from ..types.context_instance_history import ContextInstanceHistory
 from ..types.context_instance_pending_response import ContextInstancePendingResponse
 from ..types.context_instance_state import ContextInstanceState
 from ..types.delete_context_instance_response import DeleteContextInstanceResponse
+from ..types.solve_context_flow_request import SolveContextFlowRequest
 from ..types.solve_context_flow_response import SolveContextFlowResponse
+from ..types.solve_context_rule_request import SolveContextRuleRequest
 from ..types.solve_context_rule_response import SolveContextRuleResponse
 from ..types.submit_context_data_request import SubmitContextDataRequest
 from ..types.submit_context_data_response import SubmitContextDataResponse
@@ -30,7 +33,7 @@ class RawContextsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def get_instance(
+    def get(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[ContextInstanceState]:
         """
@@ -181,7 +184,7 @@ class RawContextsClient:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def delete_instance(
+    def delete(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[DeleteContextInstanceResponse]:
         """
@@ -395,8 +398,7 @@ class RawContextsClient:
         instance: str,
         rule_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextRuleRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SolveContextRuleResponse]:
         """
@@ -413,11 +415,7 @@ class RawContextsClient:
         rule_slug : str
             The unique slug for the rule.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for rule evaluation.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextRuleRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -430,10 +428,7 @@ class RawContextsClient:
         _response = self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/solve/{jsonable_encoder(rule_slug)}",
             method="POST",
-            json={
-                "additionalData": additional_data,
-                "persist": persist,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },
@@ -493,7 +488,7 @@ class RawContextsClient:
         slug: str,
         instance: str,
         *,
-        max_depth: typing.Optional[int] = OMIT,
+        request: CascadeContextRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[CascadeContextResponse]:
         """
@@ -507,8 +502,7 @@ class RawContextsClient:
         instance : str
             The unique identifier for the context instance.
 
-        max_depth : typing.Optional[int]
-            Maximum depth for cascading evaluations.
+        request : CascadeContextRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -521,9 +515,7 @@ class RawContextsClient:
         _response = self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/cascade",
             method="POST",
-            json={
-                "maxDepth": max_depth,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },
@@ -573,8 +565,7 @@ class RawContextsClient:
         instance: str,
         flow_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextFlowRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SolveContextFlowResponse]:
         """
@@ -591,11 +582,7 @@ class RawContextsClient:
         flow_slug : str
             The unique slug for the flow.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for flow execution.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextFlowRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -608,10 +595,7 @@ class RawContextsClient:
         _response = self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/flows/{jsonable_encoder(flow_slug)}",
             method="POST",
-            json={
-                "additionalData": additional_data,
-                "persist": persist,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },
@@ -671,7 +655,7 @@ class AsyncRawContextsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def get_instance(
+    async def get(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[ContextInstanceState]:
         """
@@ -822,7 +806,7 @@ class AsyncRawContextsClient:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def delete_instance(
+    async def delete(
         self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[DeleteContextInstanceResponse]:
         """
@@ -1036,8 +1020,7 @@ class AsyncRawContextsClient:
         instance: str,
         rule_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextRuleRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SolveContextRuleResponse]:
         """
@@ -1054,11 +1037,7 @@ class AsyncRawContextsClient:
         rule_slug : str
             The unique slug for the rule.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for rule evaluation.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextRuleRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1071,10 +1050,7 @@ class AsyncRawContextsClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/solve/{jsonable_encoder(rule_slug)}",
             method="POST",
-            json={
-                "additionalData": additional_data,
-                "persist": persist,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },
@@ -1134,7 +1110,7 @@ class AsyncRawContextsClient:
         slug: str,
         instance: str,
         *,
-        max_depth: typing.Optional[int] = OMIT,
+        request: CascadeContextRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[CascadeContextResponse]:
         """
@@ -1148,8 +1124,7 @@ class AsyncRawContextsClient:
         instance : str
             The unique identifier for the context instance.
 
-        max_depth : typing.Optional[int]
-            Maximum depth for cascading evaluations.
+        request : CascadeContextRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1162,9 +1137,7 @@ class AsyncRawContextsClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/cascade",
             method="POST",
-            json={
-                "maxDepth": max_depth,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },
@@ -1214,8 +1187,7 @@ class AsyncRawContextsClient:
         instance: str,
         flow_slug: str,
         *,
-        additional_data: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
-        persist: typing.Optional[bool] = OMIT,
+        request: SolveContextFlowRequest,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SolveContextFlowResponse]:
         """
@@ -1232,11 +1204,7 @@ class AsyncRawContextsClient:
         flow_slug : str
             The unique slug for the flow.
 
-        additional_data : typing.Optional[typing.Dict[str, typing.Any]]
-            Additional data to merge with instance state for flow execution.
-
-        persist : typing.Optional[bool]
-            Whether to persist derived outputs to the instance.
+        request : SolveContextFlowRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1249,10 +1217,7 @@ class AsyncRawContextsClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/flows/{jsonable_encoder(flow_slug)}",
             method="POST",
-            json={
-                "additionalData": additional_data,
-                "persist": persist,
-            },
+            json=request,
             headers={
                 "content-type": "application/json",
             },

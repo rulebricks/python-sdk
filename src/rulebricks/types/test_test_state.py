@@ -3,9 +3,7 @@
 import typing
 
 import pydantic
-import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ..core.serialization import FieldMetadata
 from .test_test_state_evaluation_error import TestTestStateEvaluationError
 
 
@@ -25,19 +23,13 @@ class TestTestState(UniversalBaseModel):
     """
 
     conditions: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None
-    http_status: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="httpStatus")] = pydantic.Field(
-        default=None
-    )
+    http_status: typing.Optional[int] = pydantic.Field(default=None)
     """
     HTTP status code returned
     """
 
-    success_idxs: typing_extensions.Annotated[typing.Optional[typing.List[int]], FieldMetadata(alias="successIdxs")] = (
-        None
-    )
-    evaluation_error: typing_extensions.Annotated[
-        typing.Optional[TestTestStateEvaluationError], FieldMetadata(alias="evaluationError")
-    ] = pydantic.Field(default=None)
+    success_idxs: typing.Optional[typing.List[int]] = None
+    evaluation_error: typing.Optional[TestTestStateEvaluationError] = pydantic.Field(default=None)
     """
     Error message or flag indicating if evaluation error occurred
     """

@@ -4,30 +4,47 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .import_manifest_response_created_item import ImportManifestResponseCreatedItem
 from .import_manifest_response_errors_item import ImportManifestResponseErrorsItem
-from .import_manifest_response_imported import ImportManifestResponseImported
-from .import_manifest_response_skipped import ImportManifestResponseSkipped
+from .import_manifest_response_organization_created import ImportManifestResponseOrganizationCreated
+from .import_manifest_response_skipped_item import ImportManifestResponseSkippedItem
+from .import_manifest_response_updated_item import ImportManifestResponseUpdatedItem
 
 
 class ImportManifestResponse(UniversalBaseModel):
-    message: typing.Optional[str] = pydantic.Field(default=None)
+    success: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Success message.
-    """
-
-    imported: typing.Optional[ImportManifestResponseImported] = pydantic.Field(default=None)
-    """
-    Count of imported assets by type.
+    Whether the import completed successfully.
     """
 
-    skipped: typing.Optional[ImportManifestResponseSkipped] = pydantic.Field(default=None)
+    created: typing.Optional[typing.List[ImportManifestResponseCreatedItem]] = pydantic.Field(default=None)
     """
-    Count of skipped assets by type (already exist and overwrite=false).
+    Assets that were created during import.
+    """
+
+    updated: typing.Optional[typing.List[ImportManifestResponseUpdatedItem]] = pydantic.Field(default=None)
+    """
+    Assets that were updated during import.
+    """
+
+    skipped: typing.Optional[typing.List[ImportManifestResponseSkippedItem]] = pydantic.Field(default=None)
+    """
+    Assets that were skipped during import.
     """
 
     errors: typing.Optional[typing.List[ImportManifestResponseErrorsItem]] = pydantic.Field(default=None)
     """
     Any errors encountered during import.
+    """
+
+    warnings: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Non-fatal warnings from import validation.
+    """
+
+    organization_created: typing.Optional[ImportManifestResponseOrganizationCreated] = pydantic.Field(default=None)
+    """
+    IDs of any organizational folders created during import.
     """
 
     if IS_PYDANTIC_V2:

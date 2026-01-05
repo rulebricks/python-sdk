@@ -27,13 +27,13 @@ from .types.update_context_request_schema_item import UpdateContextRequestSchema
 OMIT = typing.cast(typing.Any, ...)
 
 
-class RawAdminClient:
+class RawObjectsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
     def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> HttpResponse[ContextListResponse]:
         """
-        Retrieve all contexts (entities) for the authenticated user.
+        Retrieve all contexts for the authenticated user.
 
         Parameters
         ----------
@@ -80,9 +80,10 @@ class RawAdminClient:
         self,
         *,
         name: str,
+        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        identity_fact: str,
         slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
@@ -92,21 +93,24 @@ class RawAdminClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[CreateContextResponse]:
         """
-        Create a new context (entity) for the authenticated user.
+        Create a new context for the authenticated user.
 
         Parameters
         ----------
         name : str
             The name of the context.
 
+        schema : typing.Sequence[CreateContextRequestSchemaItem]
+            Initial schema fields for the context. At least one field must be defined.
+
+        identity_fact : str
+            The field key to use as the unique identifier for instances. Must be a key from the schema.
+
         slug : typing.Optional[str]
             Optional custom slug. Auto-generated if not provided.
 
         description : typing.Optional[str]
             The description of the context.
-
-        schema : typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]]
-            Initial schema fields for the context.
 
         auto_execute_decisions : typing.Optional[bool]
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
@@ -144,6 +148,7 @@ class RawAdminClient:
                 "schema": convert_and_respect_annotation_metadata(
                     object_=schema, annotation=typing.Sequence[CreateContextRequestSchemaItem], direction="write"
                 ),
+                "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
@@ -448,7 +453,7 @@ class RawAdminClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
-class AsyncRawAdminClient:
+class AsyncRawObjectsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
@@ -456,7 +461,7 @@ class AsyncRawAdminClient:
         self, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[ContextListResponse]:
         """
-        Retrieve all contexts (entities) for the authenticated user.
+        Retrieve all contexts for the authenticated user.
 
         Parameters
         ----------
@@ -503,9 +508,10 @@ class AsyncRawAdminClient:
         self,
         *,
         name: str,
+        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        identity_fact: str,
         slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
@@ -515,21 +521,24 @@ class AsyncRawAdminClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[CreateContextResponse]:
         """
-        Create a new context (entity) for the authenticated user.
+        Create a new context for the authenticated user.
 
         Parameters
         ----------
         name : str
             The name of the context.
 
+        schema : typing.Sequence[CreateContextRequestSchemaItem]
+            Initial schema fields for the context. At least one field must be defined.
+
+        identity_fact : str
+            The field key to use as the unique identifier for instances. Must be a key from the schema.
+
         slug : typing.Optional[str]
             Optional custom slug. Auto-generated if not provided.
 
         description : typing.Optional[str]
             The description of the context.
-
-        schema : typing.Optional[typing.Sequence[CreateContextRequestSchemaItem]]
-            Initial schema fields for the context.
 
         auto_execute_decisions : typing.Optional[bool]
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
@@ -567,6 +576,7 @@ class AsyncRawAdminClient:
                 "schema": convert_and_respect_annotation_metadata(
                     object_=schema, annotation=typing.Sequence[CreateContextRequestSchemaItem], direction="write"
                 ),
+                "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
