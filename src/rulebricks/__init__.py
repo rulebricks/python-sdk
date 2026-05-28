@@ -143,7 +143,7 @@ if typing.TYPE_CHECKING:
     from .decisions import QueryDecisionsRequestCount
     from .environment import RulebricksEnvironment
     from .users import UserInviteRequestRole
-    from .forge import Rule, Condition, DynamicValue, DynamicValues
+    from .forge import Rule, Condition, Vocabulary, VocabularyValue
 _dynamic_imports: typing.Dict[str, str] = {
     "AsyncRulebricks": ".client",
     "BadRequestError": ".errors",

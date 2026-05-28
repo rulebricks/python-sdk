@@ -1,6 +1,6 @@
 from .types.operators import RuleType
 from .operators import BooleanField, NumberField, StringField, DateField, ListField, Argument
-from .values import DynamicValue
+from .vocabulary import VocabularyValue
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from datetime import datetime
 import json
@@ -13,34 +13,34 @@ import re
 if TYPE_CHECKING:
     from ..client import Rulebricks
 
-def process_dynamic_values(arg: Any) -> Any:
+def process_vocabulary_values(arg: Any) -> Any:
     """
     Process any argument into the correct format for conditions.
 
-    This function recursively processes arguments to handle DynamicValue instances,
+    This function recursively processes arguments to handle VocabularyValue instances,
     Argument instances, lists, and dictionaries, converting them into the appropriate
     format for use in rule conditions.
 
     Args:
-        arg (Any): The argument to process. Can be a DynamicValue, Argument, list,
+        arg (Any): The argument to process. Can be a VocabularyValue, Argument, list,
                   dictionary, or any other type.
 
     Returns:
         Any: The processed argument in the correct format for conditions.
-              - For DynamicValue instances: Returns the dictionary representation
+              - For VocabularyValue instances: Returns the dictionary representation
               - For Argument instances: Returns the processed value
               - For lists: Returns a list with all items processed
               - For dictionaries: Returns a dict with all values processed
               - For other types: Returns the original value unchanged
     """
-    if isinstance(arg, DynamicValue):
+    if isinstance(arg, VocabularyValue):
         return arg.to_dict()
     elif isinstance(arg, Argument):
-        return arg.value if not isinstance(arg.value, DynamicValue) else arg.value.to_dict()
+        return arg.value if not isinstance(arg.value, VocabularyValue) else arg.value.to_dict()
     elif isinstance(arg, list):
-        return [process_dynamic_values(item) for item in arg]
+        return [process_vocabulary_values(item) for item in arg]
     elif isinstance(arg, dict):
-        return {k: process_dynamic_values(v) for k, v in arg.items()}
+        return {k: process_vocabulary_values(v) for k, v in arg.items()}
     return arg
 
 class Condition:
@@ -107,7 +107,7 @@ class Condition:
             if self.index is not None:  # Editing existing condition
                 self.rule.conditions[self.index]["request"][field_name] = {
                     "op": operator,
-                    "args": [process_dynamic_values(arg) for arg in args]
+                    "args": [process_vocabulary_values(arg) for arg in args]
                 }
             else:  # Creating new condition
                 self.conditions[field_name] = (operator, args)
@@ -138,7 +138,7 @@ class Condition:
         if self.index is not None:  # Editing existing condition
             for field_name, value in responses.items():
                 self.rule.conditions[self.index]["response"][field_name] = {
-                    "value": process_dynamic_values(value)
+                    "value": process_vocabulary_values(value)
                 }
             return self
 
@@ -154,13 +154,13 @@ class Condition:
             for field_name, (operator, args) in self.conditions.items():
                 condition["request"][field_name] = {
                     "op": operator,
-                    "args": [process_dynamic_values(arg) for arg in args]
+                    "args": [process_vocabulary_values(arg) for arg in args]
                 }
 
             # Process responses
             for field_name, value in self.responses.items():
                 condition["response"][field_name] = {
-                    "value": process_dynamic_values(value)
+                    "value": process_vocabulary_values(value)
                 }
 
             self.rule.conditions.append(condition)
@@ -1331,8 +1331,8 @@ class Rule:
                 if request["op"] != operator:
                     matches = False
                     break
-                # Compare args (ignoring DynamicValues)
-                if any(isinstance(a, DynamicValue) for a in args):
+                # Compare args (ignoring Vocabulary)
+                if any(isinstance(a, VocabularyValue) for a in args):
                     continue
                 # Convert both sets of args to strings for comparison
                 existing_args = [str(arg) for arg in request["args"]]

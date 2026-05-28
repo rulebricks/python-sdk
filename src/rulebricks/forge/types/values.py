@@ -1,7 +1,7 @@
 from enum import Enum
 
-class DynamicValueType(Enum):
-    """Matches the SDK's ListDynamicValuesResponseItemType"""
+class VocabularyValueType(Enum):
+    """Matches the value type strings returned by the generated SDK"""
     STRING = "string"
     NUMBER = "number"
     BOOLEAN = "boolean"
@@ -10,10 +10,10 @@ class DynamicValueType(Enum):
     OBJECT = "object"
     FUNCTION = "function"
 
-class DynamicValueNotFoundError(Exception):
-    """Raised when a dynamic value cannot be found"""
+class VocabularyValueNotFoundError(Exception):
+    """Raised when a vocabulary value cannot be found"""
     pass
 
 class TypeMismatchError(Exception):
-    """Raised when a dynamic value's type doesn't match the expected type"""
+    """Raised when a vocabulary value's type doesn't match the expected type"""
     pass

@@ -1,7 +1,7 @@
 from .rule import Rule, Condition, RuleTest
 from .operators import BooleanField, NumberField, StringField, DateField, ListField
-from .values import DynamicValue, DynamicValues, DynamicValueNotFoundError
-from .types.values import TypeMismatchError
+from .vocabulary import Vocabulary, VocabularyValue
+from .types.values import VocabularyValueNotFoundError, TypeMismatchError
 
 __all__ = [
     "Rule",
@@ -12,8 +12,8 @@ __all__ = [
     "StringField",
     "DateField",
     "ListField",
-    "DynamicValue",
-    "DynamicValues",
-    "DynamicValueNotFoundError",
+    "Vocabulary",
+    "VocabularyValue",
+    "VocabularyValueNotFoundError",
     "TypeMismatchError",
 ]

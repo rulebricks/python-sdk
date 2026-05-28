@@ -1,28 +1,28 @@
 from typing import Any, Union, List, Optional, Generic, TypeVar
 from datetime import datetime
-from .types import OperatorDef, OperatorArg, Field, DynamicValueType, TypeMismatchError
-from .values import DynamicValue
+from .types import OperatorDef, OperatorArg, Field, VocabularyValueType, TypeMismatchError
+from .vocabulary import VocabularyValue
 
 T = TypeVar('T')
 U = TypeVar('U')  # For handling nested generic types
 
 class Argument(Generic[T]):
-    """Represents a value that could be either a primitive or dynamic value"""
-    def __init__(self, value: Union[T, DynamicValue], expected_type: DynamicValueType):
+    """Represents a value that could be either a primitive or vocabulary value"""
+    def __init__(self, value: Union[T, VocabularyValue], expected_type: VocabularyValueType):
         self.value = value
         self.expected_type = expected_type
         self._validate_type()
 
     def _validate_type(self) -> None:
         """Validate that the value matches the expected type"""
-        if isinstance(self.value, DynamicValue):
+        if isinstance(self.value, VocabularyValue):
             if self.value.value_type != self.expected_type:
                 raise TypeMismatchError(
-                    f"Dynamic value '{self.value.name}' has type {self.value.value_type.value}, "
+                    f"Vocabulary value '{self.value.name}' has type {self.value.value_type.value}, "
                     f"but {self.expected_type.value} was expected"
                 )
         else:
-            expected_python_type = DynamicValue.get_expected_type(self.expected_type)
+            expected_python_type = VocabularyValue.get_expected_type(self.expected_type)
             if not isinstance(self.value, expected_python_type):
                 actual_type = type(self.value).__name__
                 raise TypeMismatchError(
@@ -31,17 +31,17 @@ class Argument(Generic[T]):
                 )
 
     def to_dict(self) -> Any:
-        """Return the primitive value or dynamic value dict"""
-        if isinstance(self.value, DynamicValue):
+        """Return the primitive value or vocabulary value dict"""
+        if isinstance(self.value, VocabularyValue):
             return self.value.to_dict()
         return self.value  # Return the primitive value directly
 
     @classmethod
-    def process(cls, arg: Any, expected_type: DynamicValueType) -> Any:
+    def process(cls, arg: Any, expected_type: VocabularyValueType) -> Any:
         """Process any argument into the correct format for conditions"""
         if isinstance(arg, Argument):
             return arg.to_dict()
-        elif isinstance(arg, DynamicValue):
+        elif isinstance(arg, VocabularyValue):
             return arg.to_dict()
         elif isinstance(arg, list):
             return [cls.process(item, expected_type) for item in arg]
@@ -50,7 +50,7 @@ class Argument(Generic[T]):
         return arg
 
     def __repr__(self) -> str:
-        if isinstance(self.value, DynamicValue):
+        if isinstance(self.value, VocabularyValue):
             return f"<{self.value.name.upper()}>"
         return f"{self.value}"
 
@@ -65,7 +65,7 @@ class BooleanField(Field):
                 "is_null": OperatorDef("is null", [], "Check if value is null")
             }
 
-    def equals(self, value: Union[bool, DynamicValue]) -> tuple:
+    def equals(self, value: Union[bool, VocabularyValue]) -> tuple:
         """Check if value equals the given boolean"""
         op_name = "is true" if value else "is false"
         return (op_name, [])
@@ -117,37 +117,37 @@ class NumberField(Field):
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
-    def equals(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("equals", [Argument(value, DynamicValueType.NUMBER)])
+    def equals(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("equals", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def not_equals(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("does not equal", [Argument(value, DynamicValueType.NUMBER)])
+    def not_equals(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("does not equal", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def greater_than(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("greater than", [Argument(value, DynamicValueType.NUMBER)])
+    def greater_than(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("greater than", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def less_than(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("less than", [Argument(value, DynamicValueType.NUMBER)])
+    def less_than(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("less than", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def greater_than_or_equal(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("greater than or equal to", [Argument(value, DynamicValueType.NUMBER)])
+    def greater_than_or_equal(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("greater than or equal to", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def less_than_or_equal(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("less than or equal to", [Argument(value, DynamicValueType.NUMBER)])
+    def less_than_or_equal(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("less than or equal to", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def between(self, start: Union[int, float, DynamicValue], end: Union[int, float, DynamicValue]) -> tuple:
-        start_arg = Argument(start, DynamicValueType.NUMBER)
-        end_arg = Argument(end, DynamicValueType.NUMBER)
-        if not isinstance(start, DynamicValue) and not isinstance(end, DynamicValue):
+    def between(self, start: Union[int, float, VocabularyValue], end: Union[int, float, VocabularyValue]) -> tuple:
+        start_arg = Argument(start, VocabularyValueType.NUMBER)
+        end_arg = Argument(end, VocabularyValueType.NUMBER)
+        if not isinstance(start, VocabularyValue) and not isinstance(end, VocabularyValue):
             op = self.operators["between"]
             if op.validate and not op.validate([start, end]):
                 raise ValueError(f"Invalid range for between: start ({start}) must be less than end ({end})")
         return ("between", [start_arg, end_arg])
 
-    def not_between(self, start: Union[int, float, DynamicValue], end: Union[int, float, DynamicValue]) -> tuple:
-        start_arg = Argument(start, DynamicValueType.NUMBER)
-        end_arg = Argument(end, DynamicValueType.NUMBER)
-        if not isinstance(start, DynamicValue) and not isinstance(end, DynamicValue):
+    def not_between(self, start: Union[int, float, VocabularyValue], end: Union[int, float, VocabularyValue]) -> tuple:
+        start_arg = Argument(start, VocabularyValueType.NUMBER)
+        end_arg = Argument(end, VocabularyValueType.NUMBER)
+        if not isinstance(start, VocabularyValue) and not isinstance(end, VocabularyValue):
             op = self.operators["not_between"]
             if op.validate and not op.validate([start, end]):
                 raise ValueError(f"Invalid range for not between: start ({start}) must be less than end ({end})")
@@ -171,18 +171,18 @@ class NumberField(Field):
     def is_not_zero(self) -> tuple:
         return ("is not zero", [])
 
-    def is_multiple_of(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("is a multiple of", [Argument(value, DynamicValueType.NUMBER)])
+    def is_multiple_of(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("is a multiple of", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def is_not_multiple_of(self, value: Union[int, float, DynamicValue]) -> tuple:
-        return ("is not a multiple of", [Argument(value, DynamicValueType.NUMBER)])
+    def is_not_multiple_of(self, value: Union[int, float, VocabularyValue]) -> tuple:
+        return ("is not a multiple of", [Argument(value, VocabularyValueType.NUMBER)])
 
-    def is_power_of(self, base: Union[int, float, DynamicValue]) -> tuple:
-        if not isinstance(base, DynamicValue):
+    def is_power_of(self, base: Union[int, float, VocabularyValue]) -> tuple:
+        if not isinstance(base, VocabularyValue):
             op = self.operators["is_power_of"]
             if op.validate and not op.validate([base]):
                 raise ValueError(f"Invalid base for is power of: {base}. Base must be positive.")
-        return ("is a power of", [Argument(base, DynamicValueType.NUMBER)])
+        return ("is a power of", [Argument(base, VocabularyValueType.NUMBER)])
 
     def is_null(self) -> tuple:
         return ("is null", [])
@@ -300,33 +300,33 @@ class StringField(Field):
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
-    def contains(self, value: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(value, DynamicValueType.STRING)
-        if not isinstance(value, DynamicValue):
+    def contains(self, value: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(value, VocabularyValueType.STRING)
+        if not isinstance(value, VocabularyValue):
             op = self.operators["contains"]
             if op.args[0].validate and not op.args[0].validate(value):
                 raise ValueError(f"Invalid value for contains: {value}")
         return ("contains", [arg])
 
-    def not_contains(self, value: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(value, DynamicValueType.STRING)
-        if not isinstance(value, DynamicValue):
+    def not_contains(self, value: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(value, VocabularyValueType.STRING)
+        if not isinstance(value, VocabularyValue):
             op = self.operators["does_not_contain"]
             if op.args[0].validate and not op.args[0].validate(value):
                 raise ValueError(f"Invalid value for does not contain: {value}")
         return ("does not contain", [arg])
 
-    def equals(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("equals", [Argument(value, DynamicValueType.STRING)])
+    def equals(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("equals", [Argument(value, VocabularyValueType.STRING)])
 
-    def equals_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("equals (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+    def equals_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("equals (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
-    def not_equals(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("does not equal", [Argument(value, DynamicValueType.STRING)])
+    def not_equals(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("does not equal", [Argument(value, VocabularyValueType.STRING)])
 
-    def not_equals_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("does not equal (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+    def not_equals_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("does not equal (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
     def is_empty(self) -> tuple:
         return ("is empty", [])
@@ -334,141 +334,141 @@ class StringField(Field):
     def is_not_empty(self) -> tuple:
         return ("is not empty", [])
 
-    def starts_with(self, value: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(value, DynamicValueType.STRING)
-        if not isinstance(value, DynamicValue):
+    def starts_with(self, value: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(value, VocabularyValueType.STRING)
+        if not isinstance(value, VocabularyValue):
             op = self.operators["starts_with"]
             if op.args[0].validate and not op.args[0].validate(value):
                 raise ValueError(f"Invalid value for starts with: {value}")
         return ("starts with", [arg])
 
-    def ends_with(self, value: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(value, DynamicValueType.STRING)
-        if not isinstance(value, DynamicValue):
+    def ends_with(self, value: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(value, VocabularyValueType.STRING)
+        if not isinstance(value, VocabularyValue):
             op = self.operators["ends_with"]
             if op.args[0].validate and not op.args[0].validate(value):
                 raise ValueError(f"Invalid value for ends with: {value}")
         return ("ends with", [arg])
 
-    def contains_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("contains (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+    def contains_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("contains (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
-    def starts_with_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("starts with (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+    def starts_with_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("starts with (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
-    def ends_with_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
-        return ("ends with (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+    def ends_with_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
+        return ("ends with (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
-    def is_included_in(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
+    def is_included_in(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
-                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"Vocabulary value '{values.name}' has type {values.value_type.value}, "
                     f"but list was expected"
                 )
-            return ("is included in", [Argument(values, DynamicValueType.LIST)])
+            return ("is included in", [Argument(values, VocabularyValueType.LIST)])
 
         op = self.operators["is_included_in"]
         if op.args[0].validate and not op.args[0].validate(values):
             raise ValueError("List must not be empty")
 
-        return ("is included in", [[Argument(v, DynamicValueType.STRING) for v in values]])
+        return ("is included in", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def is_not_included_in(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
+    def is_not_included_in(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
-                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"Vocabulary value '{values.name}' has type {values.value_type.value}, "
                     f"but list was expected"
                 )
-            return ("is not included in", [Argument(values, DynamicValueType.LIST)])
+            return ("is not included in", [Argument(values, VocabularyValueType.LIST)])
 
         op = self.operators["is_not_included_in"]
         if op.args[0].validate and not op.args[0].validate(values):
             raise ValueError("List must not be empty")
 
-        return ("is not included in", [[Argument(v, DynamicValueType.STRING) for v in values]])
+        return ("is not included in", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def contains_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
+    def contains_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
-                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"Vocabulary value '{values.name}' has type {values.value_type.value}, "
                     f"but list was expected"
                 )
-            return ("contains any of", [Argument(values, DynamicValueType.LIST)])
+            return ("contains any of", [Argument(values, VocabularyValueType.LIST)])
 
         op = self.operators["contains_any_of"]
         if op.args[0].validate and not op.args[0].validate(values):
             raise ValueError("List must not be empty")
 
-        return ("contains any of", [[Argument(v, DynamicValueType.STRING) for v in values]])
+        return ("contains any of", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def not_contains_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
+    def not_contains_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
-                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"Vocabulary value '{values.name}' has type {values.value_type.value}, "
                     f"but list was expected"
                 )
-            return ("does not contain any of", [Argument(values, DynamicValueType.LIST)])
+            return ("does not contain any of", [Argument(values, VocabularyValueType.LIST)])
 
         op = self.operators["does_not_contain_any_of"]
         if op.args[0].validate and not op.args[0].validate(values):
             raise ValueError("List must not be empty")
 
-        return ("does not contain any of", [[Argument(v, DynamicValueType.STRING) for v in values]])
+        return ("does not contain any of", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def does_not_contain_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
+    def does_not_contain_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
         return self.not_contains_any_of(values)
 
-    def length_equals(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is of length", [Argument(length, DynamicValueType.NUMBER)])
+    def length_equals(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is of length", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_of_length(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_of_length(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.length_equals(length)
 
-    def length_not_equals(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is not of length", [Argument(length, DynamicValueType.NUMBER)])
+    def length_not_equals(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is not of length", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_not_of_length(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_not_of_length(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.length_not_equals(length)
 
-    def longer_than(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is longer than", [Argument(length, DynamicValueType.NUMBER)])
+    def longer_than(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is longer than", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_longer_than(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_longer_than(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.longer_than(length)
 
-    def shorter_than(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is shorter than", [Argument(length, DynamicValueType.NUMBER)])
+    def shorter_than(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is shorter than", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_shorter_than(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_shorter_than(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.shorter_than(length)
 
-    def longer_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is longer than or equal to", [Argument(length, DynamicValueType.NUMBER)])
+    def longer_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is longer than or equal to", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_longer_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_longer_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.longer_than_or_equal(length)
 
-    def shorter_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is shorter than or equal to", [Argument(length, DynamicValueType.NUMBER)])
+    def shorter_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is shorter than or equal to", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def is_shorter_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+    def is_shorter_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.shorter_than_or_equal(length)
 
-    def matches_regex(self, pattern: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(pattern, DynamicValueType.STRING)
-        if not isinstance(pattern, DynamicValue):
+    def matches_regex(self, pattern: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(pattern, VocabularyValueType.STRING)
+        if not isinstance(pattern, VocabularyValue):
             op = self.operators["matches_regex"]
             if op.args[0].validate and not op.args[0].validate(pattern):
                 raise ValueError(f"Invalid regex pattern: {pattern}")
         return ("matches RegEx", [arg])
 
-    def not_matches_regex(self, pattern: Union[str, DynamicValue]) -> tuple:
-        arg = Argument(pattern, DynamicValueType.STRING)
-        if not isinstance(pattern, DynamicValue):
+    def not_matches_regex(self, pattern: Union[str, VocabularyValue]) -> tuple:
+        arg = Argument(pattern, VocabularyValueType.STRING)
+        if not isinstance(pattern, VocabularyValue):
             op = self.operators["does_not_match_regex"]
             if op.args[0].validate and not op.args[0].validate(pattern):
                 raise ValueError(f"Invalid regex pattern: {pattern}")
@@ -640,53 +640,53 @@ class DateField(Field):
     def is_future(self) -> tuple:
         return ("is in the future", [])
 
-    def days_ago(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("days ago", [Argument(days, DynamicValueType.NUMBER)])
+    def days_ago(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("days ago", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def less_than_days_ago(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("is less than N days ago", [Argument(days, DynamicValueType.NUMBER)])
+    def less_than_days_ago(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N days ago", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def more_than_days_ago(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("is more than N days ago", [Argument(days, DynamicValueType.NUMBER)])
+    def more_than_days_ago(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N days ago", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def between_n_and_m_days_ago(self, min_days: Union[int, DynamicValue], max_days: Union[int, DynamicValue]) -> tuple:
+    def between_n_and_m_days_ago(self, min_days: Union[int, VocabularyValue], max_days: Union[int, VocabularyValue]) -> tuple:
         return (
             "is between N and M days ago",
-            [Argument(min_days, DynamicValueType.NUMBER), Argument(max_days, DynamicValueType.NUMBER)]
+            [Argument(min_days, VocabularyValueType.NUMBER), Argument(max_days, VocabularyValueType.NUMBER)]
         )
 
-    def days_from_now(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("days from now", [Argument(days, DynamicValueType.NUMBER)])
+    def days_from_now(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("days from now", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def less_than_days_from_now(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("is less than N days from now", [Argument(days, DynamicValueType.NUMBER)])
+    def less_than_days_from_now(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N days from now", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def more_than_days_from_now(self, days: Union[int, DynamicValue]) -> tuple:
-        return ("is more than N days from now", [Argument(days, DynamicValueType.NUMBER)])
+    def more_than_days_from_now(self, days: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N days from now", [Argument(days, VocabularyValueType.NUMBER)])
 
-    def months_ago(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("months ago", [Argument(months, DynamicValueType.NUMBER)])
+    def months_ago(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("months ago", [Argument(months, VocabularyValueType.NUMBER)])
 
-    def less_than_months_ago(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("is less than N months ago", [Argument(months, DynamicValueType.NUMBER)])
+    def less_than_months_ago(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N months ago", [Argument(months, VocabularyValueType.NUMBER)])
 
-    def more_than_months_ago(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("is more than N months ago", [Argument(months, DynamicValueType.NUMBER)])
+    def more_than_months_ago(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N months ago", [Argument(months, VocabularyValueType.NUMBER)])
 
-    def between_n_and_m_months_ago(self, min_months: Union[int, DynamicValue], max_months: Union[int, DynamicValue]) -> tuple:
+    def between_n_and_m_months_ago(self, min_months: Union[int, VocabularyValue], max_months: Union[int, VocabularyValue]) -> tuple:
         return (
             "is between N and M months ago",
-            [Argument(min_months, DynamicValueType.NUMBER), Argument(max_months, DynamicValueType.NUMBER)]
+            [Argument(min_months, VocabularyValueType.NUMBER), Argument(max_months, VocabularyValueType.NUMBER)]
         )
 
-    def months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("months from now", [Argument(months, DynamicValueType.NUMBER)])
+    def months_from_now(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("months from now", [Argument(months, VocabularyValueType.NUMBER)])
 
-    def less_than_months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("is less than N months from now", [Argument(months, DynamicValueType.NUMBER)])
+    def less_than_months_from_now(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N months from now", [Argument(months, VocabularyValueType.NUMBER)])
 
-    def more_than_months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
-        return ("is more than N months from now", [Argument(months, DynamicValueType.NUMBER)])
+    def more_than_months_from_now(self, months: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N months from now", [Argument(months, VocabularyValueType.NUMBER)])
 
     def is_today(self) -> tuple:
         return ("is today", [])
@@ -718,29 +718,29 @@ class DateField(Field):
     def is_last_year(self) -> tuple:
         return ("is last year", [])
 
-    def after(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("after", [Argument(date, DynamicValueType.DATE)])
+    def after(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("after", [Argument(date, VocabularyValueType.DATE)])
 
-    def on_or_after(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("on or after", [Argument(date, DynamicValueType.DATE)])
+    def on_or_after(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("on or after", [Argument(date, VocabularyValueType.DATE)])
 
-    def before(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("before", [Argument(date, DynamicValueType.DATE)])
+    def before(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("before", [Argument(date, VocabularyValueType.DATE)])
 
-    def on_or_before(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("on or before", [Argument(date, DynamicValueType.DATE)])
+    def on_or_before(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("on or before", [Argument(date, VocabularyValueType.DATE)])
 
-    def equals(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("equals", [Argument(date, DynamicValueType.DATE)])
+    def equals(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("equals", [Argument(date, VocabularyValueType.DATE)])
 
-    def not_equals(self, date: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("does not equal", [Argument(date, DynamicValueType.DATE)])
+    def not_equals(self, date: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("does not equal", [Argument(date, VocabularyValueType.DATE)])
 
-    def between(self, start: Union[datetime, str, DynamicValue], end: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("between", [Argument(start, DynamicValueType.DATE), Argument(end, DynamicValueType.DATE)])
+    def between(self, start: Union[datetime, str, VocabularyValue], end: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("between", [Argument(start, VocabularyValueType.DATE), Argument(end, VocabularyValueType.DATE)])
 
-    def not_between(self, start: Union[datetime, str, DynamicValue], end: Union[datetime, str, DynamicValue]) -> tuple:
-        return ("not between", [Argument(start, DynamicValueType.DATE), Argument(end, DynamicValueType.DATE)])
+    def not_between(self, start: Union[datetime, str, VocabularyValue], end: Union[datetime, str, VocabularyValue]) -> tuple:
+        return ("not between", [Argument(start, VocabularyValueType.DATE), Argument(end, VocabularyValueType.DATE)])
 
     def is_null(self) -> tuple:
         return ("is null", [])
@@ -833,8 +833,8 @@ class ListField(Field):
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
-    def contains(self, value: Union[Any, DynamicValue]) -> tuple:
-        return ("contains", [Argument(value, DynamicValueType.OBJECT)])  # Use OBJECT type for generic values
+    def contains(self, value: Union[Any, VocabularyValue]) -> tuple:
+        return ("contains", [Argument(value, VocabularyValueType.OBJECT)])  # Use OBJECT type for generic values
 
     def is_empty(self) -> tuple:
         return ("is empty", [])
@@ -842,58 +842,58 @@ class ListField(Field):
     def is_not_empty(self) -> tuple:
         return ("is not empty", [])
 
-    def length_equals(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is of length", [Argument(length, DynamicValueType.NUMBER)])
+    def length_equals(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is of length", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def length_not_equals(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is not of length", [Argument(length, DynamicValueType.NUMBER)])
+    def length_not_equals(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is not of length", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def longer_than(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is longer than", [Argument(length, DynamicValueType.NUMBER)])
+    def longer_than(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is longer than", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def shorter_than(self, length: Union[int, DynamicValue]) -> tuple:
-        return ("is shorter than", [Argument(length, DynamicValueType.NUMBER)])
+    def shorter_than(self, length: Union[int, VocabularyValue]) -> tuple:
+        return ("is shorter than", [Argument(length, VocabularyValueType.NUMBER)])
 
-    def contains_all(self, values: Union[List[Any], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains all of", [Argument(values, DynamicValueType.LIST)])
-        return ("contains all of", [[Argument(v, DynamicValueType.OBJECT) for v in values]])
+    def contains_all(self, values: Union[List[Any], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
+            return ("contains all of", [Argument(values, VocabularyValueType.LIST)])
+        return ("contains all of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
 
-    def contains_any(self, values: Union[List[Any], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains any of", [Argument(values, DynamicValueType.LIST)])
-        return ("contains any of", [[Argument(v, DynamicValueType.OBJECT) for v in values]])
+    def contains_any(self, values: Union[List[Any], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
+            return ("contains any of", [Argument(values, VocabularyValueType.LIST)])
+        return ("contains any of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
 
-    def contains_none(self, values: Union[List[Any], DynamicValue]) -> tuple:
-        if isinstance(values, DynamicValue):
-            if values.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains none of", [Argument(values, DynamicValueType.LIST)])
-        return ("contains none of", [[Argument(v, DynamicValueType.OBJECT) for v in values]])
+    def contains_none(self, values: Union[List[Any], VocabularyValue]) -> tuple:
+        if isinstance(values, VocabularyValue):
+            if values.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
+            return ("contains none of", [Argument(values, VocabularyValueType.LIST)])
+        return ("contains none of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
 
-    def not_contains(self, value: Union[Any, DynamicValue]) -> tuple:
+    def not_contains(self, value: Union[Any, VocabularyValue]) -> tuple:
         """Check if list does not contain value"""
-        return ("does not contain", [Argument(value, DynamicValueType.OBJECT)])
+        return ("does not contain", [Argument(value, VocabularyValueType.OBJECT)])
 
-    def equals(self, other: Union[List[Any], DynamicValue]) -> tuple:
+    def equals(self, other: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list equals another list"""
-        if isinstance(other, DynamicValue):
-            if other.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{other.name}' has type {other.value_type.value}, but list was expected")
-            return ("is equal to", [Argument(other, DynamicValueType.LIST)])
-        return ("is equal to", [[Argument(v, DynamicValueType.OBJECT) for v in other]])
+        if isinstance(other, VocabularyValue):
+            if other.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{other.name}' has type {other.value_type.value}, but list was expected")
+            return ("is equal to", [Argument(other, VocabularyValueType.LIST)])
+        return ("is equal to", [[Argument(v, VocabularyValueType.OBJECT) for v in other]])
 
-    def not_equals(self, other: Union[List[Any], DynamicValue]) -> tuple:
+    def not_equals(self, other: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list does not equal another list"""
-        if isinstance(other, DynamicValue):
-            if other.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{other.name}' has type {other.value_type.value}, but list was expected")
-            return ("is not equal to", [Argument(other, DynamicValueType.LIST)])
-        return ("is not equal to", [[Argument(v, DynamicValueType.OBJECT) for v in other]])
+        if isinstance(other, VocabularyValue):
+            if other.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{other.name}' has type {other.value_type.value}, but list was expected")
+            return ("is not equal to", [Argument(other, VocabularyValueType.LIST)])
+        return ("is not equal to", [[Argument(v, VocabularyValueType.OBJECT) for v in other]])
 
     def has_duplicates(self) -> tuple:
         """Check if list has duplicate values"""
@@ -903,47 +903,47 @@ class ListField(Field):
         """Check if list has no duplicate values"""
         return ("does not contain duplicates", [])
 
-    def contains_object_with_key_value(self, key: Union[str, DynamicValue], value: Union[Any, DynamicValue]) -> tuple:
+    def contains_object_with_key_value(self, key: Union[str, VocabularyValue], value: Union[Any, VocabularyValue]) -> tuple:
         """Check if list contains an object with specified key and value"""
         return ("contains object with key & value", [
-            Argument(key, DynamicValueType.STRING),
-            Argument(value, DynamicValueType.OBJECT)
+            Argument(key, VocabularyValueType.STRING),
+            Argument(value, VocabularyValueType.OBJECT)
         ])
 
-    def does_not_contain_object_with_key_value(self, key: Union[str, DynamicValue], value: Union[Any, DynamicValue]) -> tuple:
+    def does_not_contain_object_with_key_value(self, key: Union[str, VocabularyValue], value: Union[Any, VocabularyValue]) -> tuple:
         """Check if list does not contain an object with specified key and value"""
         return ("does not contain object with key & value", [
-            Argument(key, DynamicValueType.STRING),
-            Argument(value, DynamicValueType.OBJECT)
+            Argument(key, VocabularyValueType.STRING),
+            Argument(value, VocabularyValueType.OBJECT)
         ])
 
-    def contains_object_with_key(self, key: Union[str, DynamicValue]) -> tuple:
+    def contains_object_with_key(self, key: Union[str, VocabularyValue]) -> tuple:
         """Check if list contains an object with specified key"""
-        return ("contains object with key", [Argument(key, DynamicValueType.STRING)])
+        return ("contains object with key", [Argument(key, VocabularyValueType.STRING)])
 
-    def does_not_contain_object_with_key(self, key: Union[str, DynamicValue]) -> tuple:
+    def does_not_contain_object_with_key(self, key: Union[str, VocabularyValue]) -> tuple:
         """Check if list does not contain an object with specified key"""
-        return ("does not contain object with key", [Argument(key, DynamicValueType.STRING)])
+        return ("does not contain object with key", [Argument(key, VocabularyValueType.STRING)])
 
     def has_unique_elements(self) -> tuple:
         """Check if all elements in the list are unique"""
         return ("has unique elements", [])
 
-    def is_sublist_of(self, superlist: Union[List[Any], DynamicValue]) -> tuple:
+    def is_sublist_of(self, superlist: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list is a sublist of another list"""
-        if isinstance(superlist, DynamicValue):
-            if superlist.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{superlist.name}' has type {superlist.value_type.value}, but list was expected")
-            return ("is a sublist of", [Argument(superlist, DynamicValueType.LIST)])
-        return ("is a sublist of", [[Argument(v, DynamicValueType.OBJECT) for v in superlist]])
+        if isinstance(superlist, VocabularyValue):
+            if superlist.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{superlist.name}' has type {superlist.value_type.value}, but list was expected")
+            return ("is a sublist of", [Argument(superlist, VocabularyValueType.LIST)])
+        return ("is a sublist of", [[Argument(v, VocabularyValueType.OBJECT) for v in superlist]])
 
-    def is_superlist_of(self, sublist: Union[List[Any], DynamicValue]) -> tuple:
+    def is_superlist_of(self, sublist: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list contains another list as a sublist"""
-        if isinstance(sublist, DynamicValue):
-            if sublist.value_type != DynamicValueType.LIST:
-                raise TypeMismatchError(f"Dynamic value '{sublist.name}' has type {sublist.value_type.value}, but list was expected")
-            return ("is a superlist of", [Argument(sublist, DynamicValueType.LIST)])
-        return ("is a superlist of", [[Argument(v, DynamicValueType.OBJECT) for v in sublist]])
+        if isinstance(sublist, VocabularyValue):
+            if sublist.value_type != VocabularyValueType.LIST:
+                raise TypeMismatchError(f"Vocabulary value '{sublist.name}' has type {sublist.value_type.value}, but list was expected")
+            return ("is a superlist of", [Argument(sublist, VocabularyValueType.LIST)])
+        return ("is a superlist of", [[Argument(v, VocabularyValueType.OBJECT) for v in sublist]])
 
     def is_null(self) -> tuple:
         return ("is null", [])
