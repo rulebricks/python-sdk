@@ -3,3 +3,6 @@
 import typing
 
 SolveContextFlowRequest = typing.Dict[str, typing.Any]
+"""
+Optional request body for executing a flow against context. The entire body is merged with instance state before flow execution.
+"""

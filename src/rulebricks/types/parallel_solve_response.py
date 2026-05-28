@@ -5,3 +5,6 @@ import typing
 from .dynamic_response_payload import DynamicResponsePayload
 
 ParallelSolveResponse = typing.Dict[str, DynamicResponsePayload]
+"""
+Response from parallel rule/flow execution with results from each execution.
+"""

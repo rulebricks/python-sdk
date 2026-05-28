@@ -6,7 +6,8 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
-from ..core.jsonable_encoder import jsonable_encoder
+from ..core.jsonable_encoder import encode_path_param
+from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
@@ -15,8 +16,10 @@ from ..errors.internal_server_error import InternalServerError
 from ..types.bulk_rule_response_item import BulkRuleResponseItem
 from ..types.dynamic_request_payload import DynamicRequestPayload
 from ..types.dynamic_response_payload import DynamicResponsePayload
+from ..types.error import Error
 from ..types.parallel_solve_request import ParallelSolveRequest
 from ..types.parallel_solve_response import ParallelSolveResponse
+from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -48,7 +51,7 @@ class RawRulesClient:
             Rule execution successful. The response structure depends on the rule configuration.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"solve/{jsonable_encoder(slug)}",
+            f"solve/{encode_path_param(slug)}",
             method="POST",
             json=request,
             headers={
@@ -71,9 +74,9 @@ class RawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -82,9 +85,9 @@ class RawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -92,6 +95,10 @@ class RawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def bulk_solve(
@@ -120,7 +127,7 @@ class RawRulesClient:
             Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"bulk-solve/{jsonable_encoder(slug)}",
+            f"bulk-solve/{encode_path_param(slug)}",
             method="POST",
             json=request,
             headers={
@@ -143,9 +150,9 @@ class RawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -154,9 +161,9 @@ class RawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -164,6 +171,10 @@ class RawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def parallel_solve(
@@ -190,9 +201,6 @@ class RawRulesClient:
             json=convert_and_respect_annotation_metadata(
                 object_=request, annotation=ParallelSolveRequest, direction="write"
             ),
-            headers={
-                "content-type": "application/json",
-            },
             request_options=request_options,
             omit=OMIT,
         )
@@ -210,9 +218,9 @@ class RawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -221,9 +229,9 @@ class RawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -231,6 +239,10 @@ class RawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
@@ -260,7 +272,7 @@ class AsyncRawRulesClient:
             Rule execution successful. The response structure depends on the rule configuration.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"solve/{jsonable_encoder(slug)}",
+            f"solve/{encode_path_param(slug)}",
             method="POST",
             json=request,
             headers={
@@ -283,9 +295,9 @@ class AsyncRawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -294,9 +306,9 @@ class AsyncRawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -304,6 +316,10 @@ class AsyncRawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def bulk_solve(
@@ -332,7 +348,7 @@ class AsyncRawRulesClient:
             Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"bulk-solve/{jsonable_encoder(slug)}",
+            f"bulk-solve/{encode_path_param(slug)}",
             method="POST",
             json=request,
             headers={
@@ -355,9 +371,9 @@ class AsyncRawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -366,9 +382,9 @@ class AsyncRawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -376,6 +392,10 @@ class AsyncRawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def parallel_solve(
@@ -402,9 +422,6 @@ class AsyncRawRulesClient:
             json=convert_and_respect_annotation_metadata(
                 object_=request, annotation=ParallelSolveRequest, direction="write"
             ),
-            headers={
-                "content-type": "application/json",
-            },
             request_options=request_options,
             omit=OMIT,
         )
@@ -422,9 +439,9 @@ class AsyncRawRulesClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -433,9 +450,9 @@ class AsyncRawRulesClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -443,4 +460,8 @@ class AsyncRawRulesClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)

@@ -6,14 +6,17 @@ from json.decoder import JSONDecodeError
 from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.http_response import AsyncHttpResponse, HttpResponse
-from ...core.jsonable_encoder import jsonable_encoder
+from ...core.jsonable_encoder import encode_path_param
+from ...core.parse_error import ParsingError
 from ...core.pydantic_utilities import parse_obj_as
 from ...core.request_options import RequestOptions
 from ...errors.bad_request_error import BadRequestError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
+from ...types.error import Error
 from ...types.test import Test
 from ...types.test_list_response import TestListResponse
+from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -43,7 +46,7 @@ class RawFlowsClient:
             A list of tests for the specified flow.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests",
+            f"admin/flows/{encode_path_param(slug)}/tests",
             method="GET",
             request_options=request_options,
         )
@@ -61,9 +64,9 @@ class RawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -72,9 +75,9 @@ class RawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -82,6 +85,10 @@ class RawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def create(
@@ -123,7 +130,7 @@ class RawFlowsClient:
             Test created successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests",
+            f"admin/flows/{encode_path_param(slug)}/tests",
             method="POST",
             json={
                 "name": name,
@@ -151,9 +158,9 @@ class RawFlowsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -162,9 +169,9 @@ class RawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -173,9 +180,9 @@ class RawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -183,6 +190,10 @@ class RawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete(
@@ -208,7 +219,7 @@ class RawFlowsClient:
             Test deleted successfully.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests/{jsonable_encoder(test_id)}",
+            f"admin/flows/{encode_path_param(slug)}/tests/{encode_path_param(test_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -226,9 +237,9 @@ class RawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -237,9 +248,9 @@ class RawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -247,6 +258,10 @@ class RawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
@@ -274,7 +289,7 @@ class AsyncRawFlowsClient:
             A list of tests for the specified flow.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests",
+            f"admin/flows/{encode_path_param(slug)}/tests",
             method="GET",
             request_options=request_options,
         )
@@ -292,9 +307,9 @@ class AsyncRawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -303,9 +318,9 @@ class AsyncRawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -313,6 +328,10 @@ class AsyncRawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def create(
@@ -354,7 +373,7 @@ class AsyncRawFlowsClient:
             Test created successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests",
+            f"admin/flows/{encode_path_param(slug)}/tests",
             method="POST",
             json={
                 "name": name,
@@ -382,9 +401,9 @@ class AsyncRawFlowsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -393,9 +412,9 @@ class AsyncRawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -404,9 +423,9 @@ class AsyncRawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -414,6 +433,10 @@ class AsyncRawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete(
@@ -439,7 +462,7 @@ class AsyncRawFlowsClient:
             Test deleted successfully.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/flows/{jsonable_encoder(slug)}/tests/{jsonable_encoder(test_id)}",
+            f"admin/flows/{encode_path_param(slug)}/tests/{encode_path_param(test_id)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -457,9 +480,9 @@ class AsyncRawFlowsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -468,9 +491,9 @@ class AsyncRawFlowsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -478,4 +501,8 @@ class AsyncRawFlowsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)

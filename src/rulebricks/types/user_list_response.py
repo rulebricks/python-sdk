@@ -5,3 +5,6 @@ import typing
 from .user_detail import UserDetail
 
 UserListResponse = typing.List[UserDetail]
+"""
+List of users in the organization.
+"""

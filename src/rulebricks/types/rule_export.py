@@ -3,3 +3,6 @@
 import typing
 
 RuleExport = typing.Dict[str, typing.Any]
+"""
+The exported rule object containing all rule definition data. This payload intentionally preserves raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
+"""

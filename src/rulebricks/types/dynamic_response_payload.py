@@ -3,3 +3,6 @@
 import typing
 
 DynamicResponsePayload = typing.Dict[str, typing.Any]
+"""
+Dynamic response payload from rule execution. Structure depends on rule configuration.
+"""

@@ -61,13 +61,17 @@ class BooleanField(Field):
             self.operators = {
                 "any": OperatorDef("any", [], "Match any boolean value", skip_typecheck=True),
                 "is_true": OperatorDef("is true", [], "Check if value is true"),
-                "is_false": OperatorDef("is false", [], "Check if value is false")
+                "is_false": OperatorDef("is false", [], "Check if value is false"),
+                "is_null": OperatorDef("is null", [], "Check if value is null")
             }
 
     def equals(self, value: Union[bool, DynamicValue]) -> tuple:
         """Check if value equals the given boolean"""
         op_name = "is true" if value else "is false"
         return (op_name, [])
+
+    def is_null(self) -> tuple:
+        return ("is null", [])
 
 class NumberField(Field):
     """Valid number comparisons/operations in Rulebricks"""
@@ -109,7 +113,8 @@ class NumberField(Field):
                 "is a power of",
                 [OperatorArg("base", "number", "The base number")],
                 validate=lambda args: args[0] > 0
-            )
+            ),
+            "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
     def equals(self, value: Union[int, float, DynamicValue]) -> tuple:
@@ -179,6 +184,9 @@ class NumberField(Field):
                 raise ValueError(f"Invalid base for is power of: {base}. Base must be positive.")
         return ("is a power of", [Argument(base, DynamicValueType.NUMBER)])
 
+    def is_null(self) -> tuple:
+        return ("is null", [])
+
 class StringField(Field):
     """Valid text comparisons/operations in Rulebricks"""
     def __init__(self, name: str, description: str = "", default: str = ""):
@@ -194,7 +202,15 @@ class StringField(Field):
                 [OperatorArg("value", "string", "The value to search for within the string", validate=lambda x: len(x) > 0)]
             ),
             "equals": OperatorDef("equals", [OperatorArg("value", "string", "The value to compare against")]),
+            "equals_case_insensitive": OperatorDef(
+                "equals (case-insensitive)",
+                [OperatorArg("value", "string", "The value to compare against")]
+            ),
             "does_not_equal": OperatorDef("does not equal", [OperatorArg("value", "string", "The value to compare against")]),
+            "does_not_equal_case_insensitive": OperatorDef(
+                "does not equal (case-insensitive)",
+                [OperatorArg("value", "string", "The value to compare against")]
+            ),
             "is_empty": OperatorDef("is empty", [], "Check if string is empty"),
             "is_not_empty": OperatorDef("is not empty", [], "Check if string is not empty"),
             "starts_with": OperatorDef(
@@ -212,6 +228,50 @@ class StringField(Field):
             "is_not_included_in": OperatorDef(
                 "is not included in",
                 [OperatorArg("value", "list", "A list of values the string should not be in", validate=lambda v: len(v) > 0)]
+            ),
+            "contains_any_of": OperatorDef(
+                "contains any of",
+                [OperatorArg("value", "list", "A list of values the string should contain at least one of", validate=lambda v: len(v) > 0)]
+            ),
+            "does_not_contain_any_of": OperatorDef(
+                "does not contain any of",
+                [OperatorArg("value", "list", "A list of values the string should not contain", validate=lambda v: len(v) > 0)]
+            ),
+            "is_of_length": OperatorDef(
+                "is of length",
+                [OperatorArg("length", "number", "The length the string should be", validate=lambda v: v > 0)]
+            ),
+            "is_not_of_length": OperatorDef(
+                "is not of length",
+                [OperatorArg("length", "number", "The length the string should not be", validate=lambda v: v > 0)]
+            ),
+            "is_longer_than": OperatorDef(
+                "is longer than",
+                [OperatorArg("length", "number", "The length the string should be longer than", validate=lambda v: v > 0)]
+            ),
+            "is_shorter_than": OperatorDef(
+                "is shorter than",
+                [OperatorArg("length", "number", "The length the string should be shorter than", validate=lambda v: v > 0)]
+            ),
+            "is_longer_than_or_equal": OperatorDef(
+                "is longer than or equal to",
+                [OperatorArg("length", "number", "The length the string should be longer than or equal to", validate=lambda v: v > 0)]
+            ),
+            "is_shorter_than_or_equal": OperatorDef(
+                "is shorter than or equal to",
+                [OperatorArg("length", "number", "The length the string should be shorter than or equal to", validate=lambda v: v > 0)]
+            ),
+            "starts_with_case_insensitive": OperatorDef(
+                "starts with (case-insensitive)",
+                [OperatorArg("prefix", "string", "The string that the value should start with (case-insensitive)")]
+            ),
+            "ends_with_case_insensitive": OperatorDef(
+                "ends with (case-insensitive)",
+                [OperatorArg("suffix", "string", "The string that the value should end with (case-insensitive)")]
+            ),
+            "contains_case_insensitive": OperatorDef(
+                "contains (case-insensitive)",
+                [OperatorArg("substring", "string", "The string that should be contained within the value (case-insensitive)")]
             ),
             "matches_regex": OperatorDef(
                 "matches RegEx",
@@ -236,7 +296,8 @@ class StringField(Field):
                 "contains only digits and letters",
                 [],
                 "Check if string contains only digits and letters"
-            )
+            ),
+            "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
     def contains(self, value: Union[str, DynamicValue]) -> tuple:
@@ -258,8 +319,14 @@ class StringField(Field):
     def equals(self, value: Union[str, DynamicValue]) -> tuple:
         return ("equals", [Argument(value, DynamicValueType.STRING)])
 
+    def equals_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
+        return ("equals (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+
     def not_equals(self, value: Union[str, DynamicValue]) -> tuple:
         return ("does not equal", [Argument(value, DynamicValueType.STRING)])
+
+    def not_equals_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
+        return ("does not equal (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
 
     def is_empty(self) -> tuple:
         return ("is empty", [])
@@ -283,6 +350,15 @@ class StringField(Field):
                 raise ValueError(f"Invalid value for ends with: {value}")
         return ("ends with", [arg])
 
+    def contains_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
+        return ("contains (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+
+    def starts_with_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
+        return ("starts with (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+
+    def ends_with_case_insensitive(self, value: Union[str, DynamicValue]) -> tuple:
+        return ("ends with (case-insensitive)", [Argument(value, DynamicValueType.STRING)])
+
     def is_included_in(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
         if isinstance(values, DynamicValue):
             if values.value_type != DynamicValueType.LIST:
@@ -297,6 +373,90 @@ class StringField(Field):
             raise ValueError("List must not be empty")
 
         return ("is included in", [[Argument(v, DynamicValueType.STRING) for v in values]])
+
+    def is_not_included_in(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
+        if isinstance(values, DynamicValue):
+            if values.value_type != DynamicValueType.LIST:
+                raise TypeMismatchError(
+                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"but list was expected"
+                )
+            return ("is not included in", [Argument(values, DynamicValueType.LIST)])
+
+        op = self.operators["is_not_included_in"]
+        if op.args[0].validate and not op.args[0].validate(values):
+            raise ValueError("List must not be empty")
+
+        return ("is not included in", [[Argument(v, DynamicValueType.STRING) for v in values]])
+
+    def contains_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
+        if isinstance(values, DynamicValue):
+            if values.value_type != DynamicValueType.LIST:
+                raise TypeMismatchError(
+                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"but list was expected"
+                )
+            return ("contains any of", [Argument(values, DynamicValueType.LIST)])
+
+        op = self.operators["contains_any_of"]
+        if op.args[0].validate and not op.args[0].validate(values):
+            raise ValueError("List must not be empty")
+
+        return ("contains any of", [[Argument(v, DynamicValueType.STRING) for v in values]])
+
+    def not_contains_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
+        if isinstance(values, DynamicValue):
+            if values.value_type != DynamicValueType.LIST:
+                raise TypeMismatchError(
+                    f"Dynamic value '{values.name}' has type {values.value_type.value}, "
+                    f"but list was expected"
+                )
+            return ("does not contain any of", [Argument(values, DynamicValueType.LIST)])
+
+        op = self.operators["does_not_contain_any_of"]
+        if op.args[0].validate and not op.args[0].validate(values):
+            raise ValueError("List must not be empty")
+
+        return ("does not contain any of", [[Argument(v, DynamicValueType.STRING) for v in values]])
+
+    def does_not_contain_any_of(self, values: Union[List[str], List[DynamicValue], DynamicValue]) -> tuple:
+        return self.not_contains_any_of(values)
+
+    def length_equals(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is of length", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_of_length(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.length_equals(length)
+
+    def length_not_equals(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is not of length", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_not_of_length(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.length_not_equals(length)
+
+    def longer_than(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is longer than", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_longer_than(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.longer_than(length)
+
+    def shorter_than(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is shorter than", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_shorter_than(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.shorter_than(length)
+
+    def longer_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is longer than or equal to", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_longer_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.longer_than_or_equal(length)
+
+    def shorter_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+        return ("is shorter than or equal to", [Argument(length, DynamicValueType.NUMBER)])
+
+    def is_shorter_than_or_equal(self, length: Union[int, DynamicValue]) -> tuple:
+        return self.shorter_than_or_equal(length)
 
     def matches_regex(self, pattern: Union[str, DynamicValue]) -> tuple:
         arg = Argument(pattern, DynamicValueType.STRING)
@@ -350,6 +510,9 @@ class StringField(Field):
     def contains_only_digits_and_letters(self) -> tuple:
         return ("contains only digits and letters", [])
 
+    def is_null(self) -> tuple:
+        return ("is null", [])
+
 class DateField(Field):
     """Valid date comparisons/operations in Rulebricks"""
     def __init__(self, name: str, description: str = "", default: Optional[datetime] = None):
@@ -370,6 +533,13 @@ class DateField(Field):
                 "is more than N days ago",
                 [OperatorArg("days", "number", "Number of days ago that the date is more than or equal to")]
             ),
+            "between_n_and_m_days_ago": OperatorDef(
+                "is between N and M days ago",
+                [
+                    OperatorArg("minDays", "number", "Minimum number of days ago", placeholder="Min days"),
+                    OperatorArg("maxDays", "number", "Maximum number of days ago", placeholder="Max days")
+                ]
+            ),
             "days_from_now": OperatorDef(
                 "days from now",
                 [OperatorArg("days", "number", "Number of days from now that the date is equal to")]
@@ -381,6 +551,37 @@ class DateField(Field):
             "more_than_days_from_now": OperatorDef(
                 "is more than N days from now",
                 [OperatorArg("days", "number", "Number of days from now that the date is more than or equal to")]
+            ),
+            "months_ago": OperatorDef(
+                "months ago",
+                [OperatorArg("months", "number", "Number of months ago that the date is equal to")]
+            ),
+            "less_than_months_ago": OperatorDef(
+                "is less than N months ago",
+                [OperatorArg("months", "number", "Number of months ago that the date is less than or equal to")]
+            ),
+            "more_than_months_ago": OperatorDef(
+                "is more than N months ago",
+                [OperatorArg("months", "number", "Number of months ago that the date is more than or equal to")]
+            ),
+            "between_n_and_m_months_ago": OperatorDef(
+                "is between N and M months ago",
+                [
+                    OperatorArg("minMonths", "number", "Minimum number of months ago", placeholder="Min months"),
+                    OperatorArg("maxMonths", "number", "Maximum number of months ago", placeholder="Max months")
+                ]
+            ),
+            "months_from_now": OperatorDef(
+                "months from now",
+                [OperatorArg("months", "number", "Number of months from now that the date is equal to")]
+            ),
+            "less_than_months_from_now": OperatorDef(
+                "is less than N months from now",
+                [OperatorArg("months", "number", "Number of months from now that the date is less than or equal to")]
+            ),
+            "more_than_months_from_now": OperatorDef(
+                "is more than N months from now",
+                [OperatorArg("months", "number", "Number of months from now that the date is more than or equal to")]
             ),
             "is_today": OperatorDef("is today", [], "Date is today"),
             "is_this_week": OperatorDef("is this week", [], "Date is in the current week"),
@@ -408,6 +609,14 @@ class DateField(Field):
                 "on or before",
                 [OperatorArg("date", "date", "Date that value must be on or before")]
             ),
+            "equals": OperatorDef(
+                "equals",
+                [OperatorArg("date", "date", "Date that value must be equal to")]
+            ),
+            "does_not_equal": OperatorDef(
+                "does not equal",
+                [OperatorArg("date", "date", "Date that value must not be equal to")]
+            ),
             "between": OperatorDef(
                 "between",
                 [
@@ -421,7 +630,8 @@ class DateField(Field):
                     OperatorArg("start", "date", "Date that value must be before", placeholder="From"),
                     OperatorArg("end", "date", "Date that value must be after", placeholder="To")
                 ]
-            )
+            ),
+            "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
     def is_past(self) -> tuple:
@@ -439,6 +649,12 @@ class DateField(Field):
     def more_than_days_ago(self, days: Union[int, DynamicValue]) -> tuple:
         return ("is more than N days ago", [Argument(days, DynamicValueType.NUMBER)])
 
+    def between_n_and_m_days_ago(self, min_days: Union[int, DynamicValue], max_days: Union[int, DynamicValue]) -> tuple:
+        return (
+            "is between N and M days ago",
+            [Argument(min_days, DynamicValueType.NUMBER), Argument(max_days, DynamicValueType.NUMBER)]
+        )
+
     def days_from_now(self, days: Union[int, DynamicValue]) -> tuple:
         return ("days from now", [Argument(days, DynamicValueType.NUMBER)])
 
@@ -447,6 +663,30 @@ class DateField(Field):
 
     def more_than_days_from_now(self, days: Union[int, DynamicValue]) -> tuple:
         return ("is more than N days from now", [Argument(days, DynamicValueType.NUMBER)])
+
+    def months_ago(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("months ago", [Argument(months, DynamicValueType.NUMBER)])
+
+    def less_than_months_ago(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("is less than N months ago", [Argument(months, DynamicValueType.NUMBER)])
+
+    def more_than_months_ago(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("is more than N months ago", [Argument(months, DynamicValueType.NUMBER)])
+
+    def between_n_and_m_months_ago(self, min_months: Union[int, DynamicValue], max_months: Union[int, DynamicValue]) -> tuple:
+        return (
+            "is between N and M months ago",
+            [Argument(min_months, DynamicValueType.NUMBER), Argument(max_months, DynamicValueType.NUMBER)]
+        )
+
+    def months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("months from now", [Argument(months, DynamicValueType.NUMBER)])
+
+    def less_than_months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("is less than N months from now", [Argument(months, DynamicValueType.NUMBER)])
+
+    def more_than_months_from_now(self, months: Union[int, DynamicValue]) -> tuple:
+        return ("is more than N months from now", [Argument(months, DynamicValueType.NUMBER)])
 
     def is_today(self) -> tuple:
         return ("is today", [])
@@ -490,11 +730,20 @@ class DateField(Field):
     def on_or_before(self, date: Union[datetime, str, DynamicValue]) -> tuple:
         return ("on or before", [Argument(date, DynamicValueType.DATE)])
 
+    def equals(self, date: Union[datetime, str, DynamicValue]) -> tuple:
+        return ("equals", [Argument(date, DynamicValueType.DATE)])
+
+    def not_equals(self, date: Union[datetime, str, DynamicValue]) -> tuple:
+        return ("does not equal", [Argument(date, DynamicValueType.DATE)])
+
     def between(self, start: Union[datetime, str, DynamicValue], end: Union[datetime, str, DynamicValue]) -> tuple:
         return ("between", [Argument(start, DynamicValueType.DATE), Argument(end, DynamicValueType.DATE)])
 
     def not_between(self, start: Union[datetime, str, DynamicValue], end: Union[datetime, str, DynamicValue]) -> tuple:
         return ("not between", [Argument(start, DynamicValueType.DATE), Argument(end, DynamicValueType.DATE)])
+
+    def is_null(self) -> tuple:
+        return ("is null", [])
 
 class ListField(Field):
     """Valid list comparisons/operations in Rulebricks"""
@@ -556,7 +805,32 @@ class ListField(Field):
                     OperatorArg("key", "string", "Key of any object contained in the list"),
                     OperatorArg("value", "generic", "Value that the key must be equal to")
                 ]
-            )
+            ),
+            "does_not_contain_object_with_key_value": OperatorDef(
+                "does not contain object with key & value",
+                [
+                    OperatorArg("key", "string", "Key of any object contained in the list"),
+                    OperatorArg("value", "generic", "Value that the key must not be equal to")
+                ]
+            ),
+            "contains_object_with_key": OperatorDef(
+                "contains object with key",
+                [OperatorArg("key", "string", "Key of any object contained in the list")]
+            ),
+            "does_not_contain_object_with_key": OperatorDef(
+                "does not contain object with key",
+                [OperatorArg("key", "string", "Key of any object contained in the list")]
+            ),
+            "has_unique_elements": OperatorDef("has unique elements", [], "Check if all elements in the list are unique"),
+            "is_sublist_of": OperatorDef(
+                "is a sublist of",
+                [OperatorArg("superlist", "list", "List that must contain this list as a sublist")]
+            ),
+            "is_superlist_of": OperatorDef(
+                "is a superlist of",
+                [OperatorArg("sublist", "list", "List that must be contained as a sublist within this list")]
+            ),
+            "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
     def contains(self, value: Union[Any, DynamicValue]) -> tuple:
@@ -636,6 +910,21 @@ class ListField(Field):
             Argument(value, DynamicValueType.OBJECT)
         ])
 
+    def does_not_contain_object_with_key_value(self, key: Union[str, DynamicValue], value: Union[Any, DynamicValue]) -> tuple:
+        """Check if list does not contain an object with specified key and value"""
+        return ("does not contain object with key & value", [
+            Argument(key, DynamicValueType.STRING),
+            Argument(value, DynamicValueType.OBJECT)
+        ])
+
+    def contains_object_with_key(self, key: Union[str, DynamicValue]) -> tuple:
+        """Check if list contains an object with specified key"""
+        return ("contains object with key", [Argument(key, DynamicValueType.STRING)])
+
+    def does_not_contain_object_with_key(self, key: Union[str, DynamicValue]) -> tuple:
+        """Check if list does not contain an object with specified key"""
+        return ("does not contain object with key", [Argument(key, DynamicValueType.STRING)])
+
     def has_unique_elements(self) -> tuple:
         """Check if all elements in the list are unique"""
         return ("has unique elements", [])
@@ -655,3 +944,6 @@ class ListField(Field):
                 raise TypeMismatchError(f"Dynamic value '{sublist.name}' has type {sublist.value_type.value}, but list was expected")
             return ("is a superlist of", [Argument(sublist, DynamicValueType.LIST)])
         return ("is a superlist of", [[Argument(v, DynamicValueType.OBJECT) for v in sublist]])
+
+    def is_null(self) -> tuple:
+        return ("is null", [])

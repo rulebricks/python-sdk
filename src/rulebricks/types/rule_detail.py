@@ -22,6 +22,26 @@ class RuleDetail(RuleBase):
     The date this rule was last updated.
     """
 
+    published: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the rule is currently published.
+    """
+
+    no_conditions: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The number of condition rows configured for the rule. Uses the published condition count when the rule is published, otherwise the draft condition count.
+    """
+
+    metadata: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Optional user-defined metadata for API-first integrations.
+    """
+
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    User groups that can access this rule.
+    """
+
     folder: typing.Optional[Folder] = None
     context: typing.Optional[RuleDetailContext] = pydantic.Field(default=None)
     """
@@ -30,12 +50,12 @@ class RuleDetail(RuleBase):
 
     request_schema: typing.Optional[typing.List[SchemaField]] = pydantic.Field(default=None)
     """
-    The published request schema for the rule.
+    The request schema for the rule. Uses published schema when published, otherwise draft schema.
     """
 
     response_schema: typing.Optional[typing.List[SchemaField]] = pydantic.Field(default=None)
     """
-    The published response schema for the rule.
+    The response schema for the rule. Uses published schema when published, otherwise draft schema.
     """
 
     if IS_PYDANTIC_V2:

@@ -9,7 +9,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 class ExportManifestResponseManifest(UniversalBaseModel):
     """
-    The exported manifest data.
+    The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility.
     """
 
     version: typing.Optional[str] = pydantic.Field(default=None)

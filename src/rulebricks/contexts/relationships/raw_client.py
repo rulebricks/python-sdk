@@ -6,7 +6,8 @@ from json.decoder import JSONDecodeError
 from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.http_response import AsyncHttpResponse, HttpResponse
-from ...core.jsonable_encoder import jsonable_encoder
+from ...core.jsonable_encoder import encode_path_param
+from ...core.parse_error import ParsingError
 from ...core.pydantic_utilities import parse_obj_as
 from ...core.request_options import RequestOptions
 from ...errors.bad_request_error import BadRequestError
@@ -15,7 +16,9 @@ from ...errors.not_found_error import NotFoundError
 from ...types.context_relationships_response import ContextRelationshipsResponse
 from ...types.create_relationship_response import CreateRelationshipResponse
 from ...types.delete_relationship_response import DeleteRelationshipResponse
+from ...types.error import Error
 from .types.create_relationship_request_relation_type import CreateRelationshipRequestRelationType
+from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -45,7 +48,7 @@ class RawRelationshipsClient:
             Success
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships",
+            f"admin/contexts/{encode_path_param(id)}/relationships",
             method="GET",
             request_options=request_options,
         )
@@ -63,9 +66,9 @@ class RawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -74,9 +77,9 @@ class RawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -84,6 +87,10 @@ class RawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def create(
@@ -129,7 +136,7 @@ class RawRelationshipsClient:
             Relationship created successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships",
+            f"admin/contexts/{encode_path_param(id)}/relationships",
             method="POST",
             json={
                 "to_context_id": to_context_id,
@@ -158,9 +165,9 @@ class RawRelationshipsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -169,9 +176,9 @@ class RawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -180,9 +187,9 @@ class RawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -190,6 +197,10 @@ class RawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete(
@@ -215,7 +226,7 @@ class RawRelationshipsClient:
             Relationship deleted successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships/{jsonable_encoder(relationship)}",
+            f"admin/contexts/{encode_path_param(id)}/relationships/{encode_path_param(relationship)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -233,9 +244,9 @@ class RawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -244,9 +255,9 @@ class RawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -254,6 +265,10 @@ class RawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
@@ -281,7 +296,7 @@ class AsyncRawRelationshipsClient:
             Success
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships",
+            f"admin/contexts/{encode_path_param(id)}/relationships",
             method="GET",
             request_options=request_options,
         )
@@ -299,9 +314,9 @@ class AsyncRawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -310,9 +325,9 @@ class AsyncRawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -320,6 +335,10 @@ class AsyncRawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def create(
@@ -365,7 +384,7 @@ class AsyncRawRelationshipsClient:
             Relationship created successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships",
+            f"admin/contexts/{encode_path_param(id)}/relationships",
             method="POST",
             json={
                 "to_context_id": to_context_id,
@@ -394,9 +413,9 @@ class AsyncRawRelationshipsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -405,9 +424,9 @@ class AsyncRawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -416,9 +435,9 @@ class AsyncRawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -426,6 +445,10 @@ class AsyncRawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete(
@@ -451,7 +474,7 @@ class AsyncRawRelationshipsClient:
             Relationship deleted successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"admin/contexts/{jsonable_encoder(id)}/relationships/{jsonable_encoder(relationship)}",
+            f"admin/contexts/{encode_path_param(id)}/relationships/{encode_path_param(relationship)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -469,9 +492,9 @@ class AsyncRawRelationshipsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -480,9 +503,9 @@ class AsyncRawRelationshipsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -490,4 +513,8 @@ class AsyncRawRelationshipsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)

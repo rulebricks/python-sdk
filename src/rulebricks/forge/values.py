@@ -1,5 +1,5 @@
 from .types import DynamicValueNotFoundError, DynamicValueType
-from typing import Dict, Any, Type, List
+from typing import Dict, Any, Type, List, Optional
 from datetime import datetime
 
 class DynamicValue:
@@ -26,7 +26,8 @@ class DynamicValue:
             DynamicValueType.BOOLEAN: bool,
             DynamicValueType.DATE: datetime,
             DynamicValueType.LIST: list,
-            DynamicValueType.OBJECT: dict
+            DynamicValueType.OBJECT: dict,
+            DynamicValueType.FUNCTION: object
         }
         return type_mapping[value_type]
 
@@ -90,13 +91,19 @@ class DynamicValues:
         return dynamic_value
 
     @classmethod
-    def set(cls, dynamic_values: Dict = {}, access_groups: List[str] = []) -> None:
+    def set(
+        cls,
+        dynamic_values: Optional[Dict] = None,
+        user_groups: Optional[List[str]] = None,
+        metadata_by_name: Optional[Dict[str, Dict[str, Any]]] = None
+    ) -> None:
         """
         Upsert one or more dynamic values in your Rulebricks workspace using a dictionary.
 
         Args:
             values: A dictionary of dynamic values to set containing name-value pairs
-            access_groups: A list of access groups to assign to the dynamic values (optional)
+            user_groups: A list of user groups to assign to the dynamic values (optional)
+            metadata_by_name: Optional metadata keyed by dynamic value name
 
         Returns:
             None
@@ -114,9 +121,14 @@ class DynamicValues:
             raise ValueError("DynamicValues not configured. Call DynamicValues.configure(workspace) first")
 
         # Upsert the values dictionary
-        cls._workspace.values.update(
-            request={"values": dynamic_values, "access_groups": access_groups}
-        )
+        request = {
+            "values": dynamic_values or {},
+            "user_groups": user_groups or []
+        }
+        if metadata_by_name is not None:
+            request["metadata_by_name"] = metadata_by_name
+
+        cls._workspace.values.update(**request)
 
     @classmethod
     def clear_cache(cls) -> None:

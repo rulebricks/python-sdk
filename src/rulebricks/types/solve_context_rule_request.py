@@ -3,3 +3,6 @@
 import typing
 
 SolveContextRuleRequest = typing.Dict[str, typing.Any]
+"""
+Optional request body for solving a rule against context. The entire body is merged with the instance state before rule evaluation.
+"""

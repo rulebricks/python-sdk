@@ -16,7 +16,9 @@ from .context_schema import ContextSchema
 
 
 class ContextDetail(ContextBase):
-    schema_: typing_extensions.Annotated[typing.Optional[ContextSchema], FieldMetadata(alias="schema")] = None
+    schema_: typing_extensions.Annotated[
+        typing.Optional[ContextSchema], FieldMetadata(alias="schema"), pydantic.Field(alias="schema")
+    ] = None
     identity_fact: typing.Optional[str] = pydantic.Field(default=None)
     """
     The field key used as the unique identifier for instances.

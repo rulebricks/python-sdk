@@ -15,7 +15,7 @@ class ExportManifestPreviewResponse(UniversalBaseModel):
 
     preview: typing.Optional[ExportManifestPreviewResponsePreview] = pydantic.Field(default=None)
     """
-    Preview of assets that would be exported.
+    Preview of assets that would be exported. The preview wrapper uses snake_case, while asset items intentionally preserve `.rbm`/database casing (for example, `valueType` and `updatedAt`) because the same items feed manifest preview/import UI.
     """
 
     error: typing.Optional[str] = pydantic.Field(default=None)

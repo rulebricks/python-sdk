@@ -3,3 +3,6 @@
 import typing
 
 CascadeContextRequest = typing.Dict[str, typing.Any]
+"""
+Optional request body for triggering a cascade. Currently no properties are used.
+"""

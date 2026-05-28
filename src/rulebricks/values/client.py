@@ -72,6 +72,7 @@ class ValuesClient:
         *,
         values: typing.Dict[str, typing.Any],
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
@@ -84,6 +85,9 @@ class ValuesClient:
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -110,7 +114,9 @@ class ValuesClient:
             user_groups=["marketing", "developers"],
         )
         """
-        _response = self._raw_client.update(values=values, user_groups=user_groups, request_options=request_options)
+        _response = self._raw_client.update(
+            values=values, user_groups=user_groups, metadata_by_name=metadata_by_name, request_options=request_options
+        )
         return _response.data
 
     def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
@@ -213,6 +219,7 @@ class AsyncValuesClient:
         *,
         values: typing.Dict[str, typing.Any],
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicValueListResponse:
         """
@@ -225,6 +232,9 @@ class AsyncValuesClient:
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -260,7 +270,7 @@ class AsyncValuesClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.update(
-            values=values, user_groups=user_groups, request_options=request_options
+            values=values, user_groups=user_groups, metadata_by_name=metadata_by_name, request_options=request_options
         )
         return _response.data
 

@@ -6,7 +6,8 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
-from ..core.jsonable_encoder import jsonable_encoder
+from ..core.jsonable_encoder import encode_path_param
+from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
@@ -18,12 +19,14 @@ from ..types.context_instance_history import ContextInstanceHistory
 from ..types.context_instance_pending_response import ContextInstancePendingResponse
 from ..types.context_instance_state import ContextInstanceState
 from ..types.delete_context_instance_response import DeleteContextInstanceResponse
+from ..types.error import Error
 from ..types.solve_context_flow_request import SolveContextFlowRequest
 from ..types.solve_context_flow_response import SolveContextFlowResponse
 from ..types.solve_context_rule_request import SolveContextRuleRequest
 from ..types.solve_context_rule_response import SolveContextRuleResponse
 from ..types.submit_context_data_request import SubmitContextDataRequest
 from ..types.submit_context_data_response import SubmitContextDataResponse
+from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -56,7 +59,7 @@ class RawContextsClient:
             Success
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="GET",
             request_options=request_options,
         )
@@ -74,9 +77,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -85,9 +88,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -95,6 +98,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def submit(
@@ -127,7 +134,7 @@ class RawContextsClient:
             Data submitted successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="POST",
             json=request,
             headers={
@@ -150,9 +157,9 @@ class RawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -161,9 +168,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -172,9 +179,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -182,6 +189,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def delete(
@@ -207,7 +218,7 @@ class RawContextsClient:
             Instance deleted successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -225,9 +236,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -236,9 +247,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -246,6 +257,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_history(
@@ -283,7 +298,7 @@ class RawContextsClient:
             Success
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/history",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/history",
             method="GET",
             params={
                 "field": field,
@@ -305,9 +320,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -316,9 +331,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -326,6 +341,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_pending(
@@ -351,7 +370,7 @@ class RawContextsClient:
             Success
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/pending",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/pending",
             method="GET",
             request_options=request_options,
         )
@@ -369,9 +388,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -380,9 +399,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -390,6 +409,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def solve(
@@ -426,7 +449,7 @@ class RawContextsClient:
             Rule executed successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/solve/{jsonable_encoder(rule_slug)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/solve/{encode_path_param(rule_slug)}",
             method="POST",
             json=request,
             headers={
@@ -449,9 +472,9 @@ class RawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -460,9 +483,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -471,9 +494,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -481,6 +504,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def cascade(
@@ -513,7 +540,7 @@ class RawContextsClient:
             Cascade completed successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/cascade",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/cascade",
             method="POST",
             json=request,
             headers={
@@ -536,9 +563,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -547,9 +574,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -557,6 +584,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def execute(
@@ -593,7 +624,7 @@ class RawContextsClient:
             Flow executed successfully
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/flows/{jsonable_encoder(flow_slug)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/flows/{encode_path_param(flow_slug)}",
             method="POST",
             json=request,
             headers={
@@ -616,9 +647,9 @@ class RawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -627,9 +658,9 @@ class RawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -638,9 +669,9 @@ class RawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -648,6 +679,10 @@ class RawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
@@ -678,7 +713,7 @@ class AsyncRawContextsClient:
             Success
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="GET",
             request_options=request_options,
         )
@@ -696,9 +731,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -707,9 +742,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -717,6 +752,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def submit(
@@ -749,7 +788,7 @@ class AsyncRawContextsClient:
             Data submitted successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="POST",
             json=request,
             headers={
@@ -772,9 +811,9 @@ class AsyncRawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -783,9 +822,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -794,9 +833,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -804,6 +843,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def delete(
@@ -829,7 +872,7 @@ class AsyncRawContextsClient:
             Instance deleted successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="DELETE",
             request_options=request_options,
         )
@@ -847,9 +890,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -858,9 +901,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -868,6 +911,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_history(
@@ -905,7 +952,7 @@ class AsyncRawContextsClient:
             Success
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/history",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/history",
             method="GET",
             params={
                 "field": field,
@@ -927,9 +974,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -938,9 +985,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -948,6 +995,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_pending(
@@ -973,7 +1024,7 @@ class AsyncRawContextsClient:
             Success
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/pending",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/pending",
             method="GET",
             request_options=request_options,
         )
@@ -991,9 +1042,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1002,9 +1053,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1012,6 +1063,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def solve(
@@ -1048,7 +1103,7 @@ class AsyncRawContextsClient:
             Rule executed successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/solve/{jsonable_encoder(rule_slug)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/solve/{encode_path_param(rule_slug)}",
             method="POST",
             json=request,
             headers={
@@ -1071,9 +1126,9 @@ class AsyncRawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1082,9 +1137,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1093,9 +1148,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1103,6 +1158,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def cascade(
@@ -1135,7 +1194,7 @@ class AsyncRawContextsClient:
             Cascade completed successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/cascade",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/cascade",
             method="POST",
             json=request,
             headers={
@@ -1158,9 +1217,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1169,9 +1228,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1179,6 +1238,10 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def execute(
@@ -1215,7 +1278,7 @@ class AsyncRawContextsClient:
             Flow executed successfully
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{jsonable_encoder(slug)}/{jsonable_encoder(instance)}/flows/{jsonable_encoder(flow_slug)}",
+            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/flows/{encode_path_param(flow_slug)}",
             method="POST",
             json=request,
             headers={
@@ -1238,9 +1301,9 @@ class AsyncRawContextsClient:
                 raise BadRequestError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1249,9 +1312,9 @@ class AsyncRawContextsClient:
                 raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1260,9 +1323,9 @@ class AsyncRawContextsClient:
                 raise InternalServerError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        typing.Any,
+                        Error,
                         parse_obj_as(
-                            type_=typing.Any,  # type: ignore
+                            type_=Error,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -1270,4 +1333,8 @@ class AsyncRawContextsClient:
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)

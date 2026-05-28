@@ -83,7 +83,7 @@ class AssetsClient:
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import.
+            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads.
 
         conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
             How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
@@ -289,7 +289,7 @@ class AsyncAssetsClient:
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import.
+            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads.
 
         conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
             How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.

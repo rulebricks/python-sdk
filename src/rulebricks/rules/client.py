@@ -60,13 +60,7 @@ class RulesClient:
         )
         client.rules.solve(
             slug="slug",
-            request={
-                "body": {
-                    "name": "Alice Johnson",
-                    "age": 28,
-                    "email": "alice.johnson@example.com",
-                }
-            },
+            request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
         _response = self._raw_client.solve(slug, request=request, request_options=request_options)
@@ -141,7 +135,14 @@ class RulesClient:
             api_key="YOUR_API_KEY",
         )
         client.rules.parallel_solve(
-            request={"body": ParallelSolveRequestValue()},
+            request={
+                "eligibility": ParallelSolveRequestValue(
+                    rule="1ef03ms",
+                ),
+                "offers": ParallelSolveRequestValue(
+                    flow="OvmsYwn",
+                ),
+            },
         )
         """
         _response = self._raw_client.parallel_solve(request=request, request_options=request_options)
@@ -198,13 +199,7 @@ class AsyncRulesClient:
         async def main() -> None:
             await client.rules.solve(
                 slug="slug",
-                request={
-                    "body": {
-                        "name": "Alice Johnson",
-                        "age": 28,
-                        "email": "alice.johnson@example.com",
-                    }
-                },
+                request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
             )
 
 
@@ -295,7 +290,14 @@ class AsyncRulesClient:
 
         async def main() -> None:
             await client.rules.parallel_solve(
-                request={"body": ParallelSolveRequestValue()},
+                request={
+                    "eligibility": ParallelSolveRequestValue(
+                        rule="1ef03ms",
+                    ),
+                    "offers": ParallelSolveRequestValue(
+                        flow="OvmsYwn",
+                    ),
+                },
             )
 
 

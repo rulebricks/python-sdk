@@ -13,33 +13,26 @@ class ValueLimits(UniversalBaseModel):
     System limits for dynamic values
     """
 
-    max_keys: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="MAX_KEYS")] = pydantic.Field(
-        default=None
-    )
-    """
-    Maximum number of value keys per user
-    """
-
-    max_value_length: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="MAX_VALUE_LENGTH")] = (
-        pydantic.Field(default=None)
-    )
-    """
-    Maximum length of a single value in characters
-    """
-
-    max_total_size: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="MAX_TOTAL_SIZE")] = (
-        pydantic.Field(default=None)
-    )
-    """
-    Maximum total size of all values in bytes
-    """
-
-    max_key_length: typing_extensions.Annotated[typing.Optional[int], FieldMetadata(alias="MAX_KEY_LENGTH")] = (
-        pydantic.Field(default=None)
-    )
-    """
-    Maximum length of a key name
-    """
+    max_keys: typing_extensions.Annotated[
+        typing.Optional[int],
+        FieldMetadata(alias="MAX_KEYS"),
+        pydantic.Field(alias="MAX_KEYS", description="Maximum number of value keys per user"),
+    ] = None
+    max_value_length: typing_extensions.Annotated[
+        typing.Optional[int],
+        FieldMetadata(alias="MAX_VALUE_LENGTH"),
+        pydantic.Field(alias="MAX_VALUE_LENGTH", description="Maximum length of a single value in characters"),
+    ] = None
+    max_total_size: typing_extensions.Annotated[
+        typing.Optional[int],
+        FieldMetadata(alias="MAX_TOTAL_SIZE"),
+        pydantic.Field(alias="MAX_TOTAL_SIZE", description="Maximum total size of all values in bytes"),
+    ] = None
+    max_key_length: typing_extensions.Annotated[
+        typing.Optional[int],
+        FieldMetadata(alias="MAX_KEY_LENGTH"),
+        pydantic.Field(alias="MAX_KEY_LENGTH", description="Maximum length of a key name"),
+    ] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

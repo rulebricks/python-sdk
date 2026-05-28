@@ -57,13 +57,7 @@ class FlowsClient:
         )
         client.flows.execute(
             slug="slug",
-            request={
-                "body": {
-                    "name": "Alice Johnson",
-                    "age": 28,
-                    "email": "alice.johnson@example.com",
-                }
-            },
+            request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
         _response = self._raw_client.execute(slug, request=request, request_options=request_options)
@@ -120,13 +114,7 @@ class AsyncFlowsClient:
         async def main() -> None:
             await client.flows.execute(
                 slug="slug",
-                request={
-                    "body": {
-                        "name": "Alice Johnson",
-                        "age": 28,
-                        "email": "alice.johnson@example.com",
-                    }
-                },
+                request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
             )
 
 

@@ -23,11 +23,6 @@ class UserGroup(UniversalBaseModel):
     Description of the user group.
     """
 
-    members: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
-    """
-    List of member emails in the user group.
-    """
-
     created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
     """
     When the user group was created.

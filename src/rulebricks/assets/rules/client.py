@@ -5,6 +5,7 @@ import typing
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.request_options import RequestOptions
 from ...types.rule_export import RuleExport
+from ...types.rule_import_payload import RuleImportPayload
 from ...types.rule_list_response import RuleListResponse
 from ...types.success_message import SuccessMessage
 from .raw_client import AsyncRawRulesClient, RawRulesClient
@@ -61,7 +62,7 @@ class RulesClient:
 
     def pull(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> RuleExport:
         """
-        Export a specific rule by its ID.
+        Export a specific rule by its ID. This response preserves the raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
 
         Parameters
         ----------
@@ -90,16 +91,13 @@ class RulesClient:
         _response = self._raw_client.pull(id=id, request_options=request_options)
         return _response.data
 
-    def push(
-        self, *, rule: typing.Dict[str, typing.Any], request_options: typing.Optional[RequestOptions] = None
-    ) -> RuleExport:
+    def push(self, *, rule: RuleImportPayload, request_options: typing.Optional[RequestOptions] = None) -> RuleExport:
         """
-        Import a rule into the user's account.
+        Create or update a rule. If `id` is provided, the matching rule is partially updated (all other fields optional). If `id` is omitted, a new rule is created (`id` and `slug` are auto-generated; all other fields required).
 
         Parameters
         ----------
-        rule : typing.Dict[str, typing.Any]
-            The rule data to import.
+        rule : RuleImportPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -111,28 +109,161 @@ class RulesClient:
 
         Examples
         --------
-        from rulebricks import Rulebricks
+        import datetime
+
+        from rulebricks import (
+            Rulebricks,
+            RuleImportConditionRow,
+            RuleImportPayload,
+            RuleImportRequestCell,
+            RuleImportResponseCell,
+            RuleImportRowSettings,
+            RuleImportSchemaField,
+        )
 
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
         client.assets.rules.push(
-            rule={"name": "Imported Rule", "description": "A rule imported via API"},
+            rule=RuleImportPayload(
+                name="Basic Pricing Rule",
+                description="",
+                created_at=datetime.datetime.fromisoformat(
+                    "2026-02-12 01:29:23+00:00",
+                ),
+                updated_at=datetime.datetime.fromisoformat(
+                    "2026-02-12 01:29:23+00:00",
+                ),
+                published=False,
+                test_request={
+                    "customer_tier": "STANDARD",
+                    "order_total": 250,
+                    "expedited": False,
+                },
+                sample_request={
+                    "customer_tier": "STANDARD",
+                    "order_total": 250,
+                    "expedited": False,
+                },
+                sample_response={"discount_rate": 0, "approval_status": "standard"},
+                request_schema=[
+                    RuleImportSchemaField(
+                        key="customer_tier",
+                        show=True,
+                        name="Customer Tier",
+                        type="string",
+                    ),
+                    RuleImportSchemaField(
+                        key="order_total",
+                        show=True,
+                        name="Order Total",
+                        type="number",
+                    ),
+                    RuleImportSchemaField(
+                        key="expedited",
+                        show=True,
+                        name="Expedited",
+                        type="boolean",
+                    ),
+                ],
+                response_schema=[
+                    RuleImportSchemaField(
+                        key="discount_rate",
+                        show=True,
+                        name="Discount Rate",
+                        type="number",
+                    ),
+                    RuleImportSchemaField(
+                        key="approval_status",
+                        show=True,
+                        name="Approval Status",
+                        type="string",
+                    ),
+                ],
+                conditions=[
+                    RuleImportConditionRow(
+                        request={
+                            "customer_tier": RuleImportRequestCell(
+                                op="equals",
+                                args=["VIP"],
+                            )
+                        },
+                        response={
+                            "discount_rate": RuleImportResponseCell(
+                                value=0.2,
+                            ),
+                            "approval_status": RuleImportResponseCell(
+                                value="priority",
+                            ),
+                        },
+                        settings=RuleImportRowSettings(
+                            enabled=True,
+                            priority=0.0,
+                            schedule=[],
+                        ),
+                    ),
+                    RuleImportConditionRow(
+                        request={
+                            "expedited": RuleImportRequestCell(
+                                op="equals",
+                                args=[True],
+                            )
+                        },
+                        response={
+                            "discount_rate": RuleImportResponseCell(
+                                value=0.05,
+                            ),
+                            "approval_status": RuleImportResponseCell(
+                                value="expedited",
+                            ),
+                        },
+                        settings=RuleImportRowSettings(
+                            enabled=True,
+                            priority=1.0,
+                            schedule=[],
+                        ),
+                    ),
+                    RuleImportConditionRow(
+                        request={},
+                        response={
+                            "discount_rate": RuleImportResponseCell(
+                                value=0,
+                            ),
+                            "approval_status": RuleImportResponseCell(
+                                value="standard",
+                            ),
+                        },
+                        settings=RuleImportRowSettings(
+                            enabled=True,
+                            priority=2.0,
+                            schedule=[],
+                        ),
+                    ),
+                ],
+                history=[],
+            ),
         )
         """
         _response = self._raw_client.push(rule=rule, request_options=request_options)
         return _response.data
 
     def list(
-        self, *, folder: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> RuleListResponse:
         """
-        List all rules in the organization. Optionally filter by folder name or ID.
+        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, or by user group name or ID when the API key has access to that group.
 
         Parameters
         ----------
         folder : typing.Optional[str]
             Filter rules by folder name or folder ID
+
+        user_group : typing.Optional[str]
+            Filter rules by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -153,7 +284,7 @@ class RulesClient:
             folder="Marketing Rules",
         )
         """
-        _response = self._raw_client.list(folder=folder, request_options=request_options)
+        _response = self._raw_client.list(folder=folder, user_group=user_group, request_options=request_options)
         return _response.data
 
 
@@ -213,7 +344,7 @@ class AsyncRulesClient:
 
     async def pull(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> RuleExport:
         """
-        Export a specific rule by its ID.
+        Export a specific rule by its ID. This response preserves the raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
 
         Parameters
         ----------
@@ -251,15 +382,14 @@ class AsyncRulesClient:
         return _response.data
 
     async def push(
-        self, *, rule: typing.Dict[str, typing.Any], request_options: typing.Optional[RequestOptions] = None
+        self, *, rule: RuleImportPayload, request_options: typing.Optional[RequestOptions] = None
     ) -> RuleExport:
         """
-        Import a rule into the user's account.
+        Create or update a rule. If `id` is provided, the matching rule is partially updated (all other fields optional). If `id` is omitted, a new rule is created (`id` and `slug` are auto-generated; all other fields required).
 
         Parameters
         ----------
-        rule : typing.Dict[str, typing.Any]
-            The rule data to import.
+        rule : RuleImportPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -272,8 +402,17 @@ class AsyncRulesClient:
         Examples
         --------
         import asyncio
+        import datetime
 
-        from rulebricks import AsyncRulebricks
+        from rulebricks import (
+            AsyncRulebricks,
+            RuleImportConditionRow,
+            RuleImportPayload,
+            RuleImportRequestCell,
+            RuleImportResponseCell,
+            RuleImportRowSettings,
+            RuleImportSchemaField,
+        )
 
         client = AsyncRulebricks(
             api_key="YOUR_API_KEY",
@@ -282,10 +421,123 @@ class AsyncRulesClient:
 
         async def main() -> None:
             await client.assets.rules.push(
-                rule={
-                    "name": "Imported Rule",
-                    "description": "A rule imported via API",
-                },
+                rule=RuleImportPayload(
+                    name="Basic Pricing Rule",
+                    description="",
+                    created_at=datetime.datetime.fromisoformat(
+                        "2026-02-12 01:29:23+00:00",
+                    ),
+                    updated_at=datetime.datetime.fromisoformat(
+                        "2026-02-12 01:29:23+00:00",
+                    ),
+                    published=False,
+                    test_request={
+                        "customer_tier": "STANDARD",
+                        "order_total": 250,
+                        "expedited": False,
+                    },
+                    sample_request={
+                        "customer_tier": "STANDARD",
+                        "order_total": 250,
+                        "expedited": False,
+                    },
+                    sample_response={"discount_rate": 0, "approval_status": "standard"},
+                    request_schema=[
+                        RuleImportSchemaField(
+                            key="customer_tier",
+                            show=True,
+                            name="Customer Tier",
+                            type="string",
+                        ),
+                        RuleImportSchemaField(
+                            key="order_total",
+                            show=True,
+                            name="Order Total",
+                            type="number",
+                        ),
+                        RuleImportSchemaField(
+                            key="expedited",
+                            show=True,
+                            name="Expedited",
+                            type="boolean",
+                        ),
+                    ],
+                    response_schema=[
+                        RuleImportSchemaField(
+                            key="discount_rate",
+                            show=True,
+                            name="Discount Rate",
+                            type="number",
+                        ),
+                        RuleImportSchemaField(
+                            key="approval_status",
+                            show=True,
+                            name="Approval Status",
+                            type="string",
+                        ),
+                    ],
+                    conditions=[
+                        RuleImportConditionRow(
+                            request={
+                                "customer_tier": RuleImportRequestCell(
+                                    op="equals",
+                                    args=["VIP"],
+                                )
+                            },
+                            response={
+                                "discount_rate": RuleImportResponseCell(
+                                    value=0.2,
+                                ),
+                                "approval_status": RuleImportResponseCell(
+                                    value="priority",
+                                ),
+                            },
+                            settings=RuleImportRowSettings(
+                                enabled=True,
+                                priority=0.0,
+                                schedule=[],
+                            ),
+                        ),
+                        RuleImportConditionRow(
+                            request={
+                                "expedited": RuleImportRequestCell(
+                                    op="equals",
+                                    args=[True],
+                                )
+                            },
+                            response={
+                                "discount_rate": RuleImportResponseCell(
+                                    value=0.05,
+                                ),
+                                "approval_status": RuleImportResponseCell(
+                                    value="expedited",
+                                ),
+                            },
+                            settings=RuleImportRowSettings(
+                                enabled=True,
+                                priority=1.0,
+                                schedule=[],
+                            ),
+                        ),
+                        RuleImportConditionRow(
+                            request={},
+                            response={
+                                "discount_rate": RuleImportResponseCell(
+                                    value=0,
+                                ),
+                                "approval_status": RuleImportResponseCell(
+                                    value="standard",
+                                ),
+                            },
+                            settings=RuleImportRowSettings(
+                                enabled=True,
+                                priority=2.0,
+                                schedule=[],
+                            ),
+                        ),
+                    ],
+                    history=[],
+                ),
             )
 
 
@@ -295,15 +547,22 @@ class AsyncRulesClient:
         return _response.data
 
     async def list(
-        self, *, folder: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> RuleListResponse:
         """
-        List all rules in the organization. Optionally filter by folder name or ID.
+        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, or by user group name or ID when the API key has access to that group.
 
         Parameters
         ----------
         folder : typing.Optional[str]
             Filter rules by folder name or folder ID
+
+        user_group : typing.Optional[str]
+            Filter rules by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -332,5 +591,5 @@ class AsyncRulesClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(folder=folder, request_options=request_options)
+        _response = await self._raw_client.list(folder=folder, user_group=user_group, request_options=request_options)
         return _response.data

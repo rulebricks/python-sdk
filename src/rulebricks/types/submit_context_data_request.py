@@ -3,3 +3,6 @@
 import typing
 
 SubmitContextDataRequest = typing.Dict[str, typing.Any]
+"""
+Data to submit to a context instance. Keys should match the context schema fields.
+"""

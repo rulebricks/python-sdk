@@ -4,20 +4,14 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .create_user_response_user import CreateUserResponseUser
 
 
-class CreateUserResponse(UniversalBaseModel):
+class RuleImportResponseCell(UniversalBaseModel):
     """
-    Response after successfully creating a user.
-    """
-
-    message: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Success message.
+    A response cell in a condition row.
     """
 
-    user: typing.Optional[CreateUserResponseUser] = None
+    value: typing.Any
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

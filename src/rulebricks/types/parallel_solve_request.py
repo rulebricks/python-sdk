@@ -5,3 +5,6 @@ import typing
 from .parallel_solve_request_value import ParallelSolveRequestValue
 
 ParallelSolveRequest = typing.Dict[str, ParallelSolveRequestValue]
+"""
+A request containing multiple rule/flow executions to be run in parallel.
+"""

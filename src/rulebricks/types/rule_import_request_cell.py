@@ -4,20 +4,22 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .create_user_response_user import CreateUserResponseUser
 
 
-class CreateUserResponse(UniversalBaseModel):
+class RuleImportRequestCell(UniversalBaseModel):
     """
-    Response after successfully creating a user.
-    """
-
-    message: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Success message.
+    A request cell in a condition row.
     """
 
-    user: typing.Optional[CreateUserResponseUser] = None
+    op: str = pydantic.Field()
+    """
+    Operator name for this request comparison.
+    """
+
+    args: typing.List[typing.Any] = pydantic.Field()
+    """
+    Operator arguments.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

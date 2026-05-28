@@ -8,7 +8,7 @@ from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 class ImportManifestRequestManifest(UniversalBaseModel):
     """
-    The RBM manifest object containing assets to import.
+    The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads.
     """
 
     version: typing.Optional[str] = pydantic.Field(default=None)
