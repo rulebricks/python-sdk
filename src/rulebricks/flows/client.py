@@ -28,15 +28,23 @@ class FlowsClient:
         return self._raw_client
 
     def execute(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicResponsePayload:
         """
-        Execute a flow by its slug.
+        Execute a flow by its slug. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -57,10 +65,11 @@ class FlowsClient:
         )
         client.flows.execute(
             slug="slug",
+            version="version",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
-        _response = self._raw_client.execute(slug, request=request, request_options=request_options)
+        _response = self._raw_client.execute(slug, version=version, request=request, request_options=request_options)
         return _response.data
 
 
@@ -80,15 +89,23 @@ class AsyncFlowsClient:
         return self._raw_client
 
     async def execute(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicResponsePayload:
         """
-        Execute a flow by its slug.
+        Execute a flow by its slug. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -114,11 +131,14 @@ class AsyncFlowsClient:
         async def main() -> None:
             await client.flows.execute(
                 slug="slug",
+                version="version",
                 request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.execute(slug, request=request, request_options=request_options)
+        _response = await self._raw_client.execute(
+            slug, version=version, request=request, request_options=request_options
+        )
         return _response.data

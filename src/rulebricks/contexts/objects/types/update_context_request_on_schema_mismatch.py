@@ -2,4 +2,4 @@
 
 import typing
 
-UpdateContextRequestOnSchemaMismatch = typing.Union[typing.Literal["ignore", "reject"], typing.Any]
+UpdateContextRequestOnSchemaMismatch = typing.Union[typing.Literal["ignore", "reject", "store"], typing.Any]

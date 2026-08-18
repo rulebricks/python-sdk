@@ -20,7 +20,7 @@ class DecisionLogResponse(UniversalBaseModel):
 
     cursor: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Pagination cursor for fetching the next page. Null if no more results. Only present when count parameter is not 'true'.
+    Opaque pagination token for fetching the next page - pass it back verbatim via the cursor parameter. Null if no more results. Only present when count parameter is not 'true'.
     """
 
     count: typing.Optional[int] = pydantic.Field(default=None)

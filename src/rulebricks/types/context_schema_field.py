@@ -29,7 +29,7 @@ class ContextSchemaField(UniversalBaseModel):
 
     type: typing.Optional[ContextSchemaFieldType] = pydantic.Field(default=None)
     """
-    Data type of this field. 'function' type fields compute values dynamically.
+    Data type of this field. `object` fields are parent nodes for dotted child facts; `function` fields are output-only.
     """
 
     default_value: typing.Optional[typing.Any] = pydantic.Field(default=None)
@@ -37,24 +37,34 @@ class ContextSchemaField(UniversalBaseModel):
     Default value for this field.
     """
 
-    derived: typing.Optional[bool] = pydantic.Field(default=None)
+    required: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Whether this field is derived from rule/flow outputs.
-    """
-
-    source_rule: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    The rule ID that derives this field (if derived).
+    Whether this base fact is required for overall context completeness.
     """
 
-    source_flow: typing.Optional[str] = pydantic.Field(default=None)
+    output_only: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    The flow ID that derives this field (if derived).
+    Whether external submissions are rejected for this base fact. Rule writebacks may still set it.
     """
 
-    source_field: typing.Optional[str] = pydantic.Field(default=None)
+    track_history: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    The source field key in the rule/flow output.
+    Whether changed values for this base fact are retained for history expressions and the history endpoint.
+    """
+
+    values_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether values must come from the configured vocabulary collection.
+    """
+
+    values_collection: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Vocabulary collection identifier, when configured.
+    """
+
+    expression: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Required for derived facts: the expression evaluated from base, history, and relation values.
     """
 
     if IS_PYDANTIC_V2:

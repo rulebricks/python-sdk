@@ -30,15 +30,23 @@ class RawRulesClient:
         self._client_wrapper = client_wrapper
 
     def solve(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DynamicResponsePayload]:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -51,7 +59,7 @@ class RawRulesClient:
             Rule execution successful. The response structure depends on the rule configuration.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"solve/{encode_path_param(slug)}",
+            f"solve/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={
@@ -105,16 +113,20 @@ class RawRulesClient:
         self,
         slug: str,
         *,
+        version: str = "latest",
         request: typing.Sequence[DynamicRequestPayload],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[typing.List[BulkRuleResponseItem]]:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Executes a particular rule against multiple request data payloads provided in a list. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : typing.Sequence[DynamicRequestPayload]
 
@@ -127,7 +139,7 @@ class RawRulesClient:
             Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"bulk-solve/{encode_path_param(slug)}",
+            f"bulk-solve/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={
@@ -193,7 +205,7 @@ class RawRulesClient:
         Returns
         -------
         HttpResponse[ParallelSolveResponse]
-            Parallel execution successful. The response is an object mirroring the request structure, but providing each rule/flow's results instead.
+            Parallel execution completed. The response is an object mirroring the request structure, providing each rule/flow's results instead. Each entry is evaluated independently: any rule/flow that cannot be executed (e.g. not found, not published, invalid input, or an internal evaluation error) reports a reserved `$error` object in its slot, while every other entry still returns its results. A 200 is returned as long as the request itself is well-formed, even if some (or all) individual entries fail.
         """
         _response = self._client_wrapper.httpx_client.request(
             "parallel-solve",
@@ -251,15 +263,23 @@ class AsyncRawRulesClient:
         self._client_wrapper = client_wrapper
 
     async def solve(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DynamicResponsePayload]:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -272,7 +292,7 @@ class AsyncRawRulesClient:
             Rule execution successful. The response structure depends on the rule configuration.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"solve/{encode_path_param(slug)}",
+            f"solve/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={
@@ -326,16 +346,20 @@ class AsyncRawRulesClient:
         self,
         slug: str,
         *,
+        version: str = "latest",
         request: typing.Sequence[DynamicRequestPayload],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[typing.List[BulkRuleResponseItem]]:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Executes a particular rule against multiple request data payloads provided in a list. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : typing.Sequence[DynamicRequestPayload]
 
@@ -348,7 +372,7 @@ class AsyncRawRulesClient:
             Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"bulk-solve/{encode_path_param(slug)}",
+            f"bulk-solve/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={
@@ -414,7 +438,7 @@ class AsyncRawRulesClient:
         Returns
         -------
         AsyncHttpResponse[ParallelSolveResponse]
-            Parallel execution successful. The response is an object mirroring the request structure, but providing each rule/flow's results instead.
+            Parallel execution completed. The response is an object mirroring the request structure, providing each rule/flow's results instead. Each entry is evaluated independently: any rule/flow that cannot be executed (e.g. not found, not published, invalid input, or an internal evaluation error) reports a reserved `$error` object in its slot, while every other entry still returns its results. A 200 is returned as long as the request itself is well-formed, even if some (or all) individual entries fail.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "parallel-solve",

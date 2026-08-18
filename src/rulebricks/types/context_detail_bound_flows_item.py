@@ -12,6 +12,11 @@ class ContextDetailBoundFlowsItem(UniversalBaseModel):
     name: typing.Optional[str] = None
     slug: typing.Optional[str] = None
     published: typing.Optional[bool] = None
+    context_version: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Version target for this binding: `null` or `latest` follows the current published version, a version number (e.g. `3`) pins that published version, and any other value is a release environment slug resolved at execution time.
+    """
+
     origin_rule: typing.Optional[ContextDetailBoundFlowsItemOriginRule] = None
 
     if IS_PYDANTIC_V2:

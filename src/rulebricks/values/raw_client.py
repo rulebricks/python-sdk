@@ -10,12 +10,16 @@ from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
+from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
 from ..errors.internal_server_error import InternalServerError
 from ..errors.not_found_error import NotFoundError
-from ..types.dynamic_value_list_response import DynamicValueListResponse
+from ..errors.service_unavailable_error import ServiceUnavailableError
+from ..types.delete_value_response import DeleteValueResponse
 from ..types.error import Error
-from ..types.success_message import SuccessMessage
+from ..types.sync_values_response import SyncValuesResponse
+from .types.list_values_response import ListValuesResponse
+from .types.update_values_response import UpdateValuesResponse
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -30,43 +34,73 @@ class RawValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        type: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
         include: typing.Optional[str] = None,
+        resolve: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DynamicValueListResponse]:
+    ) -> HttpResponse[ListValuesResponse]:
         """
-        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
+        Retrieve vocabulary values for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by user group name or ID when the API key has access to that group. Use the 'include' parameter to control whether usage information is returned. Small workspaces may omit pagination to receive the full catalog as an array (legacy behavior); workspaces above the catalog threshold must paginate with 'limit'/'cursor', which returns { data, next_cursor, total? } ordered by name. The 'prefix' and 'type' filters narrow results to a collection or value type.
 
         Parameters
         ----------
         name : typing.Optional[str]
-            Query all dynamic values containing a specific name
+            Query all vocabulary values containing a specific name
+
+        prefix : typing.Optional[str]
+            Only return values whose name starts with this collection prefix (e.g. 'Countries.').
+
+        type : typing.Optional[str]
+            Only return values of this type (string, number, boolean, list, date, function).
+
+        limit : typing.Optional[int]
+            Page size (default 100, max 1000). Providing limit or cursor switches the response to the paginated { data, next_cursor } envelope.
+
+        cursor : typing.Optional[str]
+            Opaque pagination cursor from a previous page's next_cursor.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         include : typing.Optional[str]
             Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
+
+        resolve : typing.Optional[bool]
+            By default, payloads containing value-to-value references are returned materialized (references replaced with their resolved values). Pass 'false' to return stored payloads as-is, with { "$rb": "globalValue", "id": "..." } reference markers intact, so the reference graph round-trips.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[DynamicValueListResponse]
-            Success
+        HttpResponse[ListValuesResponse]
+            Success. Non-paginated requests return an array; requests with 'limit' or 'cursor' return the paginated envelope.
         """
         _response = self._client_wrapper.httpx_client.request(
             "values",
             method="GET",
             params={
                 "name": name,
+                "prefix": prefix,
+                "type": type,
+                "limit": limit,
+                "cursor": cursor,
+                "user_group": user_group,
                 "include": include,
+                "resolve": resolve,
             },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicValueListResponse,
+                    ListValuesResponse,
                     parse_obj_as(
-                        type_=DynamicValueListResponse,  # type: ignore
+                        type_=ListValuesResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -109,28 +143,28 @@ class RawValuesClient:
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DynamicValueListResponse]:
+    ) -> HttpResponse[UpdateValuesResponse]:
         """
-        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
-            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
+            Optional metadata keyed by vocabulary value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`. System-owned keys (managedBy, source, lockedReason, previousTokens, and archive/tombstone fields) are stripped from user payloads - managed provenance and archive state cannot be forged.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[DynamicValueListResponse]
-            Success
+        HttpResponse[UpdateValuesResponse]
+            Success. Workspaces at or below the catalog threshold receive the full value list; larger workspaces receive summary counts.
         """
         _response = self._client_wrapper.httpx_client.request(
             "values",
@@ -149,9 +183,9 @@ class RawValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicValueListResponse,
+                    UpdateValuesResponse,
                     parse_obj_as(
-                        type_=DynamicValueListResponse,  # type: ignore
+                        type_=UpdateValuesResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -200,21 +234,21 @@ class RawValuesClient:
 
     def delete(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[SuccessMessage]:
+    ) -> HttpResponse[DeleteValueResponse]:
         """
-        Delete a specific dynamic value for the authenticated user by its ID.
+        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
 
         Parameters
         ----------
         id : str
-            ID of the dynamic value to delete
+            ID of the vocabulary value to delete
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[SuccessMessage]
+        HttpResponse[DeleteValueResponse]
             Success
         """
         _response = self._client_wrapper.httpx_client.request(
@@ -228,9 +262,9 @@ class RawValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SuccessMessage,
+                    DeleteValueResponse,
                     parse_obj_as(
-                        type_=SuccessMessage,  # type: ignore
+                        type_=DeleteValueResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -277,6 +311,149 @@ class RawValuesClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def sync(
+        self,
+        *,
+        collection: str,
+        values: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        sync_id: typing.Optional[str] = OMIT,
+        complete: typing.Optional[bool] = OMIT,
+        permanently_delete: typing.Optional[bool] = OMIT,
+        dry_run: typing.Optional[bool] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[SyncValuesResponse]:
+        """
+        Declaratively makes a collection exactly equal to the payload. Values in the payload are upserted (Existing values keep their IDs), and values under the collection that are absent from the payload are archived by default. The `sync` endpoint supports uploading a particularly large amount of values (100k+) in chunks, using the `sync_id` parameter to track the run.
+
+        Parameters
+        ----------
+        collection : str
+            Collection path to sync (e.g. 'Medical Codes'). Only values under this path are affected.
+
+        values : typing.Optional[typing.Dict[str, typing.Any]]
+            Desired members of the collection, keyed relative to the collection path ('A123' becomes 'Medical Codes.A123'). Nested objects flatten with dot notation, and payloads may use ValueReference markers. An empty object empties the collection. May be omitted on a pure finalize call (sync_id + complete).
+
+        sync_id : typing.Optional[str]
+            Identifier for a chunked run. Repeat the call with the same sync_id for each chunk of the desired state; nothing is removed until a call with complete: true. Abandoned runs are purged after 24 hours without removing anything.
+
+        complete : typing.Optional[bool]
+            Marks the run as complete, triggering the removal sweep. Implicitly true when sync_id is omitted (single-request syncs), false otherwise.
+
+        permanently_delete : typing.Optional[bool]
+            Hard-delete removed values instead of archiving them. Removals still referenced by a rule, flow, or surviving value are archived instead and reported in 'blocked'. Self-hosted deployments retain tombstones regardless.
+
+        dry_run : typing.Optional[bool]
+            Compute and return the full diff without writing anything. Only supported for single-request syncs (omit sync_id).
+
+        user_groups : typing.Optional[typing.Sequence[str]]
+            Optional array of user group names to assign to written values, matching POST /values.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by FULL value name (including the collection prefix).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[SyncValuesResponse]
+            Synced (no new values created).
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "values/sync",
+            method="POST",
+            json={
+                "collection": collection,
+                "values": values,
+                "sync_id": sync_id,
+                "complete": complete,
+                "permanently_delete": permanently_delete,
+                "dry_run": dry_run,
+                "user_groups": user_groups,
+                "metadata_by_name": metadata_by_name,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SyncValuesResponse,
+                    parse_obj_as(
+                        type_=SyncValuesResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
 
 class AsyncRawValuesClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -286,43 +463,73 @@ class AsyncRawValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        type: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
         include: typing.Optional[str] = None,
+        resolve: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DynamicValueListResponse]:
+    ) -> AsyncHttpResponse[ListValuesResponse]:
         """
-        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
+        Retrieve vocabulary values for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by user group name or ID when the API key has access to that group. Use the 'include' parameter to control whether usage information is returned. Small workspaces may omit pagination to receive the full catalog as an array (legacy behavior); workspaces above the catalog threshold must paginate with 'limit'/'cursor', which returns { data, next_cursor, total? } ordered by name. The 'prefix' and 'type' filters narrow results to a collection or value type.
 
         Parameters
         ----------
         name : typing.Optional[str]
-            Query all dynamic values containing a specific name
+            Query all vocabulary values containing a specific name
+
+        prefix : typing.Optional[str]
+            Only return values whose name starts with this collection prefix (e.g. 'Countries.').
+
+        type : typing.Optional[str]
+            Only return values of this type (string, number, boolean, list, date, function).
+
+        limit : typing.Optional[int]
+            Page size (default 100, max 1000). Providing limit or cursor switches the response to the paginated { data, next_cursor } envelope.
+
+        cursor : typing.Optional[str]
+            Opaque pagination cursor from a previous page's next_cursor.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         include : typing.Optional[str]
             Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
+
+        resolve : typing.Optional[bool]
+            By default, payloads containing value-to-value references are returned materialized (references replaced with their resolved values). Pass 'false' to return stored payloads as-is, with { "$rb": "globalValue", "id": "..." } reference markers intact, so the reference graph round-trips.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[DynamicValueListResponse]
-            Success
+        AsyncHttpResponse[ListValuesResponse]
+            Success. Non-paginated requests return an array; requests with 'limit' or 'cursor' return the paginated envelope.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "values",
             method="GET",
             params={
                 "name": name,
+                "prefix": prefix,
+                "type": type,
+                "limit": limit,
+                "cursor": cursor,
+                "user_group": user_group,
                 "include": include,
+                "resolve": resolve,
             },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicValueListResponse,
+                    ListValuesResponse,
                     parse_obj_as(
-                        type_=DynamicValueListResponse,  # type: ignore
+                        type_=ListValuesResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -365,28 +572,28 @@ class AsyncRawValuesClient:
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DynamicValueListResponse]:
+    ) -> AsyncHttpResponse[UpdateValuesResponse]:
         """
-        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
-            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
+            Optional metadata keyed by vocabulary value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`. System-owned keys (managedBy, source, lockedReason, previousTokens, and archive/tombstone fields) are stripped from user payloads - managed provenance and archive state cannot be forged.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[DynamicValueListResponse]
-            Success
+        AsyncHttpResponse[UpdateValuesResponse]
+            Success. Workspaces at or below the catalog threshold receive the full value list; larger workspaces receive summary counts.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "values",
@@ -405,9 +612,9 @@ class AsyncRawValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicValueListResponse,
+                    UpdateValuesResponse,
                     parse_obj_as(
-                        type_=DynamicValueListResponse,  # type: ignore
+                        type_=UpdateValuesResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -456,21 +663,21 @@ class AsyncRawValuesClient:
 
     async def delete(
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[SuccessMessage]:
+    ) -> AsyncHttpResponse[DeleteValueResponse]:
         """
-        Delete a specific dynamic value for the authenticated user by its ID.
+        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
 
         Parameters
         ----------
         id : str
-            ID of the dynamic value to delete
+            ID of the vocabulary value to delete
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[SuccessMessage]
+        AsyncHttpResponse[DeleteValueResponse]
             Success
         """
         _response = await self._client_wrapper.httpx_client.request(
@@ -484,9 +691,9 @@ class AsyncRawValuesClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SuccessMessage,
+                    DeleteValueResponse,
                     parse_obj_as(
-                        type_=SuccessMessage,  # type: ignore
+                        type_=DeleteValueResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -520,6 +727,149 @@ class AsyncRawValuesClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def sync(
+        self,
+        *,
+        collection: str,
+        values: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        sync_id: typing.Optional[str] = OMIT,
+        complete: typing.Optional[bool] = OMIT,
+        permanently_delete: typing.Optional[bool] = OMIT,
+        dry_run: typing.Optional[bool] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[SyncValuesResponse]:
+        """
+        Declaratively makes a collection exactly equal to the payload. Values in the payload are upserted (Existing values keep their IDs), and values under the collection that are absent from the payload are archived by default. The `sync` endpoint supports uploading a particularly large amount of values (100k+) in chunks, using the `sync_id` parameter to track the run.
+
+        Parameters
+        ----------
+        collection : str
+            Collection path to sync (e.g. 'Medical Codes'). Only values under this path are affected.
+
+        values : typing.Optional[typing.Dict[str, typing.Any]]
+            Desired members of the collection, keyed relative to the collection path ('A123' becomes 'Medical Codes.A123'). Nested objects flatten with dot notation, and payloads may use ValueReference markers. An empty object empties the collection. May be omitted on a pure finalize call (sync_id + complete).
+
+        sync_id : typing.Optional[str]
+            Identifier for a chunked run. Repeat the call with the same sync_id for each chunk of the desired state; nothing is removed until a call with complete: true. Abandoned runs are purged after 24 hours without removing anything.
+
+        complete : typing.Optional[bool]
+            Marks the run as complete, triggering the removal sweep. Implicitly true when sync_id is omitted (single-request syncs), false otherwise.
+
+        permanently_delete : typing.Optional[bool]
+            Hard-delete removed values instead of archiving them. Removals still referenced by a rule, flow, or surviving value are archived instead and reported in 'blocked'. Self-hosted deployments retain tombstones regardless.
+
+        dry_run : typing.Optional[bool]
+            Compute and return the full diff without writing anything. Only supported for single-request syncs (omit sync_id).
+
+        user_groups : typing.Optional[typing.Sequence[str]]
+            Optional array of user group names to assign to written values, matching POST /values.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by FULL value name (including the collection prefix).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[SyncValuesResponse]
+            Synced (no new values created).
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "values/sync",
+            method="POST",
+            json={
+                "collection": collection,
+                "values": values,
+                "sync_id": sync_id,
+                "complete": complete,
+                "permanently_delete": permanently_delete,
+                "dry_run": dry_run,
+                "user_groups": user_groups,
+                "metadata_by_name": metadata_by_name,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    SyncValuesResponse,
+                    parse_obj_as(
+                        type_=SyncValuesResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),

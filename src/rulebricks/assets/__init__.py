@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
         ImportManifestRequestManifest,
     )
     from . import flows, folders, rules
+    from .folders import UpsertFolderRequestType
 _dynamic_imports: typing.Dict[str, str] = {
     "ExportManifestRequestRootType": ".types",
     "ExportRbmAssetsResponse": ".types",
@@ -22,6 +23,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ImportManifestRequestLegacyRuleMappingValue": ".types",
     "ImportManifestRequestLegacyRuleMappingValueAction": ".types",
     "ImportManifestRequestManifest": ".types",
+    "UpsertFolderRequestType": ".folders",
     "flows": ".flows",
     "folders": ".folders",
     "rules": ".rules",
@@ -56,6 +58,7 @@ __all__ = [
     "ImportManifestRequestLegacyRuleMappingValue",
     "ImportManifestRequestLegacyRuleMappingValueAction",
     "ImportManifestRequestManifest",
+    "UpsertFolderRequestType",
     "flows",
     "folders",
     "rules",

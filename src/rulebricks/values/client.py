@@ -4,9 +4,11 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
-from ..types.dynamic_value_list_response import DynamicValueListResponse
-from ..types.success_message import SuccessMessage
+from ..types.delete_value_response import DeleteValueResponse
+from ..types.sync_values_response import SyncValuesResponse
 from .raw_client import AsyncRawValuesClient, RawValuesClient
+from .types.list_values_response import ListValuesResponse
+from .types.update_values_response import UpdateValuesResponse
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -31,27 +33,51 @@ class ValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        type: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
         include: typing.Optional[str] = None,
+        resolve: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicValueListResponse:
+    ) -> ListValuesResponse:
         """
-        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
+        Retrieve vocabulary values for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by user group name or ID when the API key has access to that group. Use the 'include' parameter to control whether usage information is returned. Small workspaces may omit pagination to receive the full catalog as an array (legacy behavior); workspaces above the catalog threshold must paginate with 'limit'/'cursor', which returns { data, next_cursor, total? } ordered by name. The 'prefix' and 'type' filters narrow results to a collection or value type.
 
         Parameters
         ----------
         name : typing.Optional[str]
-            Query all dynamic values containing a specific name
+            Query all vocabulary values containing a specific name
+
+        prefix : typing.Optional[str]
+            Only return values whose name starts with this collection prefix (e.g. 'Countries.').
+
+        type : typing.Optional[str]
+            Only return values of this type (string, number, boolean, list, date, function).
+
+        limit : typing.Optional[int]
+            Page size (default 100, max 1000). Providing limit or cursor switches the response to the paginated { data, next_cursor } envelope.
+
+        cursor : typing.Optional[str]
+            Opaque pagination cursor from a previous page's next_cursor.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         include : typing.Optional[str]
             Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
+
+        resolve : typing.Optional[bool]
+            By default, payloads containing value-to-value references are returned materialized (references replaced with their resolved values). Pass 'false' to return stored payloads as-is, with { "$rb": "globalValue", "id": "..." } reference markers intact, so the reference graph round-trips.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicValueListResponse
-            Success
+        ListValuesResponse
+            Success. Non-paginated requests return an array; requests with 'limit' or 'cursor' return the paginated envelope.
 
         Examples
         --------
@@ -64,7 +90,17 @@ class ValuesClient:
             include="usage",
         )
         """
-        _response = self._raw_client.list(name=name, include=include, request_options=request_options)
+        _response = self._raw_client.list(
+            name=name,
+            prefix=prefix,
+            type=type,
+            limit=limit,
+            cursor=cursor,
+            user_group=user_group,
+            include=include,
+            resolve=resolve,
+            request_options=request_options,
+        )
         return _response.data
 
     def update(
@@ -74,28 +110,28 @@ class ValuesClient:
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicValueListResponse:
+    ) -> UpdateValuesResponse:
         """
-        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
-            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
+            Optional metadata keyed by vocabulary value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`. System-owned keys (managedBy, source, lockedReason, previousTokens, and archive/tombstone fields) are stripped from user payloads - managed provenance and archive state cannot be forged.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicValueListResponse
-            Success
+        UpdateValuesResponse
+            Success. Workspaces at or below the catalog threshold receive the full value list; larger workspaces receive summary counts.
 
         Examples
         --------
@@ -119,21 +155,21 @@ class ValuesClient:
         )
         return _response.data
 
-    def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
+    def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> DeleteValueResponse:
         """
-        Delete a specific dynamic value for the authenticated user by its ID.
+        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
 
         Parameters
         ----------
         id : str
-            ID of the dynamic value to delete
+            ID of the vocabulary value to delete
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        SuccessMessage
+        DeleteValueResponse
             Success
 
         Examples
@@ -148,6 +184,81 @@ class ValuesClient:
         )
         """
         _response = self._raw_client.delete(id=id, request_options=request_options)
+        return _response.data
+
+    def sync(
+        self,
+        *,
+        collection: str,
+        values: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        sync_id: typing.Optional[str] = OMIT,
+        complete: typing.Optional[bool] = OMIT,
+        permanently_delete: typing.Optional[bool] = OMIT,
+        dry_run: typing.Optional[bool] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SyncValuesResponse:
+        """
+        Declaratively makes a collection exactly equal to the payload. Values in the payload are upserted (Existing values keep their IDs), and values under the collection that are absent from the payload are archived by default. The `sync` endpoint supports uploading a particularly large amount of values (100k+) in chunks, using the `sync_id` parameter to track the run.
+
+        Parameters
+        ----------
+        collection : str
+            Collection path to sync (e.g. 'Medical Codes'). Only values under this path are affected.
+
+        values : typing.Optional[typing.Dict[str, typing.Any]]
+            Desired members of the collection, keyed relative to the collection path ('A123' becomes 'Medical Codes.A123'). Nested objects flatten with dot notation, and payloads may use ValueReference markers. An empty object empties the collection. May be omitted on a pure finalize call (sync_id + complete).
+
+        sync_id : typing.Optional[str]
+            Identifier for a chunked run. Repeat the call with the same sync_id for each chunk of the desired state; nothing is removed until a call with complete: true. Abandoned runs are purged after 24 hours without removing anything.
+
+        complete : typing.Optional[bool]
+            Marks the run as complete, triggering the removal sweep. Implicitly true when sync_id is omitted (single-request syncs), false otherwise.
+
+        permanently_delete : typing.Optional[bool]
+            Hard-delete removed values instead of archiving them. Removals still referenced by a rule, flow, or surviving value are archived instead and reported in 'blocked'. Self-hosted deployments retain tombstones regardless.
+
+        dry_run : typing.Optional[bool]
+            Compute and return the full diff without writing anything. Only supported for single-request syncs (omit sync_id).
+
+        user_groups : typing.Optional[typing.Sequence[str]]
+            Optional array of user group names to assign to written values, matching POST /values.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by FULL value name (including the collection prefix).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SyncValuesResponse
+            Synced (no new values created).
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.values.sync(
+            collection="Medical Codes",
+            values={"A123": "A123", "B456": "B456", "C789": "C789"},
+        )
+        """
+        _response = self._raw_client.sync(
+            collection=collection,
+            values=values,
+            sync_id=sync_id,
+            complete=complete,
+            permanently_delete=permanently_delete,
+            dry_run=dry_run,
+            user_groups=user_groups,
+            metadata_by_name=metadata_by_name,
+            request_options=request_options,
+        )
         return _response.data
 
 
@@ -170,27 +281,51 @@ class AsyncValuesClient:
         self,
         *,
         name: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        type: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+        cursor: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
         include: typing.Optional[str] = None,
+        resolve: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicValueListResponse:
+    ) -> ListValuesResponse:
         """
-        Retrieve all dynamic values for the authenticated user. Use the 'include' parameter to control whether usage information is returned.
+        Retrieve vocabulary values for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by user group name or ID when the API key has access to that group. Use the 'include' parameter to control whether usage information is returned. Small workspaces may omit pagination to receive the full catalog as an array (legacy behavior); workspaces above the catalog threshold must paginate with 'limit'/'cursor', which returns { data, next_cursor, total? } ordered by name. The 'prefix' and 'type' filters narrow results to a collection or value type.
 
         Parameters
         ----------
         name : typing.Optional[str]
-            Query all dynamic values containing a specific name
+            Query all vocabulary values containing a specific name
+
+        prefix : typing.Optional[str]
+            Only return values whose name starts with this collection prefix (e.g. 'Countries.').
+
+        type : typing.Optional[str]
+            Only return values of this type (string, number, boolean, list, date, function).
+
+        limit : typing.Optional[int]
+            Page size (default 100, max 1000). Providing limit or cursor switches the response to the paginated { data, next_cursor } envelope.
+
+        cursor : typing.Optional[str]
+            Opaque pagination cursor from a previous page's next_cursor.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
 
         include : typing.Optional[str]
             Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
+
+        resolve : typing.Optional[bool]
+            By default, payloads containing value-to-value references are returned materialized (references replaced with their resolved values). Pass 'false' to return stored payloads as-is, with { "$rb": "globalValue", "id": "..." } reference markers intact, so the reference graph round-trips.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicValueListResponse
-            Success
+        ListValuesResponse
+            Success. Non-paginated requests return an array; requests with 'limit' or 'cursor' return the paginated envelope.
 
         Examples
         --------
@@ -211,7 +346,17 @@ class AsyncValuesClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(name=name, include=include, request_options=request_options)
+        _response = await self._raw_client.list(
+            name=name,
+            prefix=prefix,
+            type=type,
+            limit=limit,
+            cursor=cursor,
+            user_group=user_group,
+            include=include,
+            resolve=resolve,
+            request_options=request_options,
+        )
         return _response.data
 
     async def update(
@@ -221,28 +366,28 @@ class AsyncValuesClient:
         user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
         metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicValueListResponse:
+    ) -> UpdateValuesResponse:
         """
-        Update existing dynamic values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation and keys are converted to readable format (e.g., 'user_name' becomes 'User Name', nested 'user.contact_info.email' becomes 'User.Contact Info.Email').
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects will be automatically flattened using dot notation with readable key names (e.g., 'user.contact_info.email' becomes 'User.Contact Info.Email').
+            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
 
         metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
-            Optional metadata keyed by dynamic value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`.
+            Optional metadata keyed by vocabulary value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`. System-owned keys (managedBy, source, lockedReason, previousTokens, and archive/tombstone fields) are stripped from user payloads - managed provenance and archive state cannot be forged.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicValueListResponse
-            Success
+        UpdateValuesResponse
+            Success. Workspaces at or below the catalog threshold receive the full value list; larger workspaces receive summary counts.
 
         Examples
         --------
@@ -274,21 +419,21 @@ class AsyncValuesClient:
         )
         return _response.data
 
-    async def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
+    async def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> DeleteValueResponse:
         """
-        Delete a specific dynamic value for the authenticated user by its ID.
+        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
 
         Parameters
         ----------
         id : str
-            ID of the dynamic value to delete
+            ID of the vocabulary value to delete
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        SuccessMessage
+        DeleteValueResponse
             Success
 
         Examples
@@ -311,4 +456,87 @@ class AsyncValuesClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.delete(id=id, request_options=request_options)
+        return _response.data
+
+    async def sync(
+        self,
+        *,
+        collection: str,
+        values: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
+        sync_id: typing.Optional[str] = OMIT,
+        complete: typing.Optional[bool] = OMIT,
+        permanently_delete: typing.Optional[bool] = OMIT,
+        dry_run: typing.Optional[bool] = OMIT,
+        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
+        metadata_by_name: typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SyncValuesResponse:
+        """
+        Declaratively makes a collection exactly equal to the payload. Values in the payload are upserted (Existing values keep their IDs), and values under the collection that are absent from the payload are archived by default. The `sync` endpoint supports uploading a particularly large amount of values (100k+) in chunks, using the `sync_id` parameter to track the run.
+
+        Parameters
+        ----------
+        collection : str
+            Collection path to sync (e.g. 'Medical Codes'). Only values under this path are affected.
+
+        values : typing.Optional[typing.Dict[str, typing.Any]]
+            Desired members of the collection, keyed relative to the collection path ('A123' becomes 'Medical Codes.A123'). Nested objects flatten with dot notation, and payloads may use ValueReference markers. An empty object empties the collection. May be omitted on a pure finalize call (sync_id + complete).
+
+        sync_id : typing.Optional[str]
+            Identifier for a chunked run. Repeat the call with the same sync_id for each chunk of the desired state; nothing is removed until a call with complete: true. Abandoned runs are purged after 24 hours without removing anything.
+
+        complete : typing.Optional[bool]
+            Marks the run as complete, triggering the removal sweep. Implicitly true when sync_id is omitted (single-request syncs), false otherwise.
+
+        permanently_delete : typing.Optional[bool]
+            Hard-delete removed values instead of archiving them. Removals still referenced by a rule, flow, or surviving value are archived instead and reported in 'blocked'. Self-hosted deployments retain tombstones regardless.
+
+        dry_run : typing.Optional[bool]
+            Compute and return the full diff without writing anything. Only supported for single-request syncs (omit sync_id).
+
+        user_groups : typing.Optional[typing.Sequence[str]]
+            Optional array of user group names to assign to written values, matching POST /values.
+
+        metadata_by_name : typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]
+            Optional metadata keyed by FULL value name (including the collection prefix).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SyncValuesResponse
+            Synced (no new values created).
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.values.sync(
+                collection="Medical Codes",
+                values={"A123": "A123", "B456": "B456", "C789": "C789"},
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.sync(
+            collection=collection,
+            values=values,
+            sync_id=sync_id,
+            complete=complete,
+            permanently_delete=permanently_delete,
+            dry_run=dry_run,
+            user_groups=user_groups,
+            metadata_by_name=metadata_by_name,
+            request_options=request_options,
+        )
         return _response.data

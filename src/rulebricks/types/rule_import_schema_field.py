@@ -55,7 +55,7 @@ class RuleImportSchemaField(UniversalBaseModel):
         typing.Optional[str],
         FieldMetadata(alias="valuesPrefix"),
         pydantic.Field(
-            alias="valuesPrefix", description="Prefix used to scope available dynamic values for this field."
+            alias="valuesPrefix", description="Prefix used to scope available vocabulary values for this field."
         ),
     ] = None
 

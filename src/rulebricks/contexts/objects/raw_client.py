@@ -12,18 +12,18 @@ from ...core.pydantic_utilities import parse_obj_as
 from ...core.request_options import RequestOptions
 from ...core.serialization import convert_and_respect_annotation_metadata
 from ...errors.bad_request_error import BadRequestError
+from ...errors.conflict_error import ConflictError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
 from ...types.context_detail import ContextDetail
 from ...types.context_list_response import ContextListResponse
+from ...types.context_schema import ContextSchema
 from ...types.create_context_response import CreateContextResponse
 from ...types.delete_context_response import DeleteContextResponse
 from ...types.error import Error
 from ...types.update_context_response import UpdateContextResponse
 from .types.create_context_request_on_schema_mismatch import CreateContextRequestOnSchemaMismatch
-from .types.create_context_request_schema_item import CreateContextRequestSchemaItem
 from .types.update_context_request_on_schema_mismatch import UpdateContextRequestOnSchemaMismatch
-from .types.update_context_request_schema_item import UpdateContextRequestSchemaItem
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -34,12 +34,28 @@ class RawObjectsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> HttpResponse[ContextListResponse]:
+    def list(
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[ContextListResponse]:
         """
-        Retrieve all contexts for the authenticated user.
+        Retrieve all contexts for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
+        folder : typing.Optional[str]
+            Filter results by folder name or folder ID.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -51,6 +67,11 @@ class RawObjectsClient:
         _response = self._client_wrapper.httpx_client.request(
             "admin/contexts",
             method="GET",
+            params={
+                "folder": folder,
+                "user_group": user_group,
+                "name": name,
+            },
             request_options=request_options,
         )
         try:
@@ -87,16 +108,13 @@ class RawObjectsClient:
         self,
         *,
         name: str,
-        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        schema: ContextSchema,
         identity_fact: str,
-        slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
         on_schema_mismatch: typing.Optional[CreateContextRequestOnSchemaMismatch] = OMIT,
-        webhook_on_solve: typing.Optional[str] = OMIT,
-        webhook_on_expire: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[CreateContextResponse]:
         """
@@ -105,16 +123,13 @@ class RawObjectsClient:
         Parameters
         ----------
         name : str
-            The name of the context.
+            The name of the context. The context's slug is generated from it (suffixed on collision).
 
-        schema : typing.Sequence[CreateContextRequestSchemaItem]
-            Initial schema fields for the context. At least one field must be defined.
+        schema : ContextSchema
+            The context's schema: an object with `base` (stored facts; at least one required) and optional `derived` (expression-computed facts) field arrays.
 
         identity_fact : str
-            The field key to use as the unique identifier for instances. Must be a key from the schema.
-
-        slug : typing.Optional[str]
-            Optional custom slug. Auto-generated if not provided.
+            The fact key to use as the unique identifier for instances. Must be a key from schema.base.
 
         description : typing.Optional[str]
             The description of the context.
@@ -123,19 +138,13 @@ class RawObjectsClient:
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
 
         ttl_seconds : typing.Optional[int]
-            Time-to-live in seconds for live context instances. Instances expire after this duration.
+            Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration; each write extends the expiry.
 
         history_limit : typing.Optional[int]
             Maximum number of history entries to retain per field.
 
         on_schema_mismatch : typing.Optional[CreateContextRequestOnSchemaMismatch]
-            How to handle fields that don't match the schema.
-
-        webhook_on_solve : typing.Optional[str]
-            Webhook URL called when a rule or flow successfully solves.
-
-        webhook_on_expire : typing.Optional[str]
-            Webhook URL called when a live context expires due to TTL.
+            How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -150,18 +159,15 @@ class RawObjectsClient:
             method="POST",
             json={
                 "name": name,
-                "slug": slug,
                 "description": description,
                 "schema": convert_and_respect_annotation_metadata(
-                    object_=schema, annotation=typing.Sequence[CreateContextRequestSchemaItem], direction="write"
+                    object_=schema, annotation=ContextSchema, direction="write"
                 ),
                 "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
                 "on_schema_mismatch": on_schema_mismatch,
-                "webhook_on_solve": webhook_on_solve,
-                "webhook_on_expire": webhook_on_expire,
             },
             headers={
                 "content-type": "application/json",
@@ -181,6 +187,17 @@ class RawObjectsClient:
                 return HttpResponse(response=_response, data=_data)
             if _response.status_code == 400:
                 raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -278,15 +295,13 @@ class RawObjectsClient:
         id: str,
         *,
         name: typing.Optional[str] = OMIT,
-        slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[UpdateContextRequestSchemaItem]] = OMIT,
+        schema: typing.Optional[ContextSchema] = OMIT,
+        identity_fact: typing.Optional[str] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
         on_schema_mismatch: typing.Optional[UpdateContextRequestOnSchemaMismatch] = OMIT,
-        webhook_on_solve: typing.Optional[str] = OMIT,
-        webhook_on_expire: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[UpdateContextResponse]:
         """
@@ -298,34 +313,28 @@ class RawObjectsClient:
             The unique identifier for the context.
 
         name : typing.Optional[str]
-            The name of the context.
-
-        slug : typing.Optional[str]
-            The slug of the context.
+            The name of the context. Changing it regenerates the context's slug.
 
         description : typing.Optional[str]
             The description of the context.
 
-        schema : typing.Optional[typing.Sequence[UpdateContextRequestSchemaItem]]
-            Updated schema fields for the context.
+        schema : typing.Optional[ContextSchema]
+            Updated schema for the context: an object with `base` and optional `derived` field arrays.
+
+        identity_fact : typing.Optional[str]
+            The fact key to use as the unique identifier for instances. Must be a key from schema.base. Caution: changing this on a context with live instances changes how future writes resolve instances.
 
         auto_execute_decisions : typing.Optional[bool]
             When true, bound rules and flows automatically execute when their inputs are satisfied.
 
         ttl_seconds : typing.Optional[int]
-            Time-to-live in seconds for live context instances. Instances expire after this duration.
+            Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration.
 
         history_limit : typing.Optional[int]
             Maximum number of history entries to retain per field.
 
         on_schema_mismatch : typing.Optional[UpdateContextRequestOnSchemaMismatch]
-            How to handle fields that don't match the schema.
-
-        webhook_on_solve : typing.Optional[str]
-            Webhook URL called when a rule or flow successfully solves.
-
-        webhook_on_expire : typing.Optional[str]
-            Webhook URL called when a live context expires due to TTL.
+            How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -340,17 +349,15 @@ class RawObjectsClient:
             method="PUT",
             json={
                 "name": name,
-                "slug": slug,
                 "description": description,
                 "schema": convert_and_respect_annotation_metadata(
-                    object_=schema, annotation=typing.Sequence[UpdateContextRequestSchemaItem], direction="write"
+                    object_=schema, annotation=ContextSchema, direction="write"
                 ),
+                "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
                 "on_schema_mismatch": on_schema_mismatch,
-                "webhook_on_solve": webhook_on_solve,
-                "webhook_on_expire": webhook_on_expire,
             },
             headers={
                 "content-type": "application/json",
@@ -481,13 +488,27 @@ class AsyncRawObjectsClient:
         self._client_wrapper = client_wrapper
 
     async def list(
-        self, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContextListResponse]:
         """
-        Retrieve all contexts for the authenticated user.
+        Retrieve all contexts for the authenticated user. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
+        folder : typing.Optional[str]
+            Filter results by folder name or folder ID.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -499,6 +520,11 @@ class AsyncRawObjectsClient:
         _response = await self._client_wrapper.httpx_client.request(
             "admin/contexts",
             method="GET",
+            params={
+                "folder": folder,
+                "user_group": user_group,
+                "name": name,
+            },
             request_options=request_options,
         )
         try:
@@ -535,16 +561,13 @@ class AsyncRawObjectsClient:
         self,
         *,
         name: str,
-        schema: typing.Sequence[CreateContextRequestSchemaItem],
+        schema: ContextSchema,
         identity_fact: str,
-        slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
         on_schema_mismatch: typing.Optional[CreateContextRequestOnSchemaMismatch] = OMIT,
-        webhook_on_solve: typing.Optional[str] = OMIT,
-        webhook_on_expire: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[CreateContextResponse]:
         """
@@ -553,16 +576,13 @@ class AsyncRawObjectsClient:
         Parameters
         ----------
         name : str
-            The name of the context.
+            The name of the context. The context's slug is generated from it (suffixed on collision).
 
-        schema : typing.Sequence[CreateContextRequestSchemaItem]
-            Initial schema fields for the context. At least one field must be defined.
+        schema : ContextSchema
+            The context's schema: an object with `base` (stored facts; at least one required) and optional `derived` (expression-computed facts) field arrays.
 
         identity_fact : str
-            The field key to use as the unique identifier for instances. Must be a key from the schema.
-
-        slug : typing.Optional[str]
-            Optional custom slug. Auto-generated if not provided.
+            The fact key to use as the unique identifier for instances. Must be a key from schema.base.
 
         description : typing.Optional[str]
             The description of the context.
@@ -571,19 +591,13 @@ class AsyncRawObjectsClient:
             When true (default), bound rules and flows automatically execute when their inputs are satisfied.
 
         ttl_seconds : typing.Optional[int]
-            Time-to-live in seconds for live context instances. Instances expire after this duration.
+            Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration; each write extends the expiry.
 
         history_limit : typing.Optional[int]
             Maximum number of history entries to retain per field.
 
         on_schema_mismatch : typing.Optional[CreateContextRequestOnSchemaMismatch]
-            How to handle fields that don't match the schema.
-
-        webhook_on_solve : typing.Optional[str]
-            Webhook URL called when a rule or flow successfully solves.
-
-        webhook_on_expire : typing.Optional[str]
-            Webhook URL called when a live context expires due to TTL.
+            How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -598,18 +612,15 @@ class AsyncRawObjectsClient:
             method="POST",
             json={
                 "name": name,
-                "slug": slug,
                 "description": description,
                 "schema": convert_and_respect_annotation_metadata(
-                    object_=schema, annotation=typing.Sequence[CreateContextRequestSchemaItem], direction="write"
+                    object_=schema, annotation=ContextSchema, direction="write"
                 ),
                 "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
                 "on_schema_mismatch": on_schema_mismatch,
-                "webhook_on_solve": webhook_on_solve,
-                "webhook_on_expire": webhook_on_expire,
             },
             headers={
                 "content-type": "application/json",
@@ -629,6 +640,17 @@ class AsyncRawObjectsClient:
                 return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 400:
                 raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -728,15 +750,13 @@ class AsyncRawObjectsClient:
         id: str,
         *,
         name: typing.Optional[str] = OMIT,
-        slug: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
-        schema: typing.Optional[typing.Sequence[UpdateContextRequestSchemaItem]] = OMIT,
+        schema: typing.Optional[ContextSchema] = OMIT,
+        identity_fact: typing.Optional[str] = OMIT,
         auto_execute_decisions: typing.Optional[bool] = OMIT,
         ttl_seconds: typing.Optional[int] = OMIT,
         history_limit: typing.Optional[int] = OMIT,
         on_schema_mismatch: typing.Optional[UpdateContextRequestOnSchemaMismatch] = OMIT,
-        webhook_on_solve: typing.Optional[str] = OMIT,
-        webhook_on_expire: typing.Optional[str] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[UpdateContextResponse]:
         """
@@ -748,34 +768,28 @@ class AsyncRawObjectsClient:
             The unique identifier for the context.
 
         name : typing.Optional[str]
-            The name of the context.
-
-        slug : typing.Optional[str]
-            The slug of the context.
+            The name of the context. Changing it regenerates the context's slug.
 
         description : typing.Optional[str]
             The description of the context.
 
-        schema : typing.Optional[typing.Sequence[UpdateContextRequestSchemaItem]]
-            Updated schema fields for the context.
+        schema : typing.Optional[ContextSchema]
+            Updated schema for the context: an object with `base` and optional `derived` field arrays.
+
+        identity_fact : typing.Optional[str]
+            The fact key to use as the unique identifier for instances. Must be a key from schema.base. Caution: changing this on a context with live instances changes how future writes resolve instances.
 
         auto_execute_decisions : typing.Optional[bool]
             When true, bound rules and flows automatically execute when their inputs are satisfied.
 
         ttl_seconds : typing.Optional[int]
-            Time-to-live in seconds for live context instances. Instances expire after this duration.
+            Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration.
 
         history_limit : typing.Optional[int]
             Maximum number of history entries to retain per field.
 
         on_schema_mismatch : typing.Optional[UpdateContextRequestOnSchemaMismatch]
-            How to handle fields that don't match the schema.
-
-        webhook_on_solve : typing.Optional[str]
-            Webhook URL called when a rule or flow successfully solves.
-
-        webhook_on_expire : typing.Optional[str]
-            Webhook URL called when a live context expires due to TTL.
+            How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -790,17 +804,15 @@ class AsyncRawObjectsClient:
             method="PUT",
             json={
                 "name": name,
-                "slug": slug,
                 "description": description,
                 "schema": convert_and_respect_annotation_metadata(
-                    object_=schema, annotation=typing.Sequence[UpdateContextRequestSchemaItem], direction="write"
+                    object_=schema, annotation=ContextSchema, direction="write"
                 ),
+                "identity_fact": identity_fact,
                 "auto_execute_decisions": auto_execute_decisions,
                 "ttl_seconds": ttl_seconds,
                 "history_limit": history_limit,
                 "on_schema_mismatch": on_schema_mismatch,
-                "webhook_on_solve": webhook_on_solve,
-                "webhook_on_expire": webhook_on_expire,
             },
             headers={
                 "content-type": "application/json",

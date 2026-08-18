@@ -8,14 +8,12 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.cascade_context_request import CascadeContextRequest
 from ..types.cascade_context_response import CascadeContextResponse
+from ..types.context_batch_response import ContextBatchResponse
 from ..types.context_instance_history import ContextInstanceHistory
 from ..types.context_instance_pending_response import ContextInstancePendingResponse
 from ..types.context_instance_state import ContextInstanceState
 from ..types.delete_context_instance_response import DeleteContextInstanceResponse
-from ..types.solve_context_flow_request import SolveContextFlowRequest
-from ..types.solve_context_flow_response import SolveContextFlowResponse
-from ..types.solve_context_rule_request import SolveContextRuleRequest
-from ..types.solve_context_rule_response import SolveContextRuleResponse
+from ..types.dynamic_request_payload import DynamicRequestPayload
 from ..types.submit_context_data_request import SubmitContextDataRequest
 from ..types.submit_context_data_response import SubmitContextDataResponse
 from .raw_client import AsyncRawContextsClient, RawContextsClient
@@ -46,7 +44,12 @@ class ContextsClient:
         return self._raw_client
 
     def get(
-        self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        instance: str,
+        *,
+        include_relations: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> ContextInstanceState:
         """
         Retrieve the current state of a context instance.
@@ -58,6 +61,9 @@ class ContextsClient:
 
         instance : str
             The unique identifier for the context instance.
+
+        include_relations : typing.Optional[str]
+            Comma-separated relationship names to include in the response under a 'relations' key (has_many relations return a list of related instance states; has_one/belongs_to return a single state or null). Use '*' for all relationships. Omitted by default - related instances are never fetched into the payload unrequested.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -79,7 +85,9 @@ class ContextsClient:
             instance="cust-12345",
         )
         """
-        _response = self._raw_client.get(slug, instance, request_options=request_options)
+        _response = self._raw_client.get(
+            slug, instance, include_relations=include_relations, request_options=request_options
+        )
         return _response.data
 
     def submit(
@@ -252,56 +260,6 @@ class ContextsClient:
         _response = self._raw_client.get_pending(slug, instance, request_options=request_options)
         return _response.data
 
-    def solve(
-        self,
-        slug: str,
-        instance: str,
-        rule_slug: str,
-        *,
-        request: SolveContextRuleRequest,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SolveContextRuleResponse:
-        """
-        Execute a specific rule using the context instance's state as input.
-
-        Parameters
-        ----------
-        slug : str
-            The unique slug for the context.
-
-        instance : str
-            The unique identifier for the context instance.
-
-        rule_slug : str
-            The unique slug for the rule.
-
-        request : SolveContextRuleRequest
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SolveContextRuleResponse
-            Rule executed successfully
-
-        Examples
-        --------
-        from rulebricks import Rulebricks
-
-        client = Rulebricks(
-            api_key="YOUR_API_KEY",
-        )
-        client.contexts.solve(
-            slug="customer",
-            instance="cust-12345",
-            rule_slug="eligibility-check",
-            request={},
-        )
-        """
-        _response = self._raw_client.solve(slug, instance, rule_slug, request=request, request_options=request_options)
-        return _response.data
-
     def cascade(
         self,
         slug: str,
@@ -311,7 +269,7 @@ class ContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CascadeContextResponse:
         """
-        Trigger re-evaluation of all bound rules and flows for the instance.
+        Re-evaluate registered pending rule and flow executions for this instance after their fact or relationship dependencies may have become available. This does not run every bound asset.
 
         Parameters
         ----------
@@ -347,38 +305,34 @@ class ContextsClient:
         _response = self._raw_client.cascade(slug, instance, request=request, request_options=request_options)
         return _response.data
 
-    def execute(
+    def bulk_ingest(
         self,
         slug: str,
-        instance: str,
-        flow_slug: str,
         *,
-        request: SolveContextFlowRequest,
+        request: typing.Sequence[DynamicRequestPayload],
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> SolveContextFlowResponse:
+    ) -> ContextBatchResponse:
         """
-        Execute a specific flow using the context instance's state as input.
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
 
         Parameters
         ----------
         slug : str
             The unique slug for the context.
 
-        instance : str
-            The unique identifier for the context instance.
+        request : typing.Sequence[DynamicRequestPayload]
 
-        flow_slug : str
-            The unique slug for the flow.
-
-        request : SolveContextFlowRequest
+        include : typing.Optional[str]
+            Comma-separated list of per-instance fields to include in results (instance_id is always present). Omit to include everything. Valid fields: positions, is_new, status, have, need, state, expires_at, executions, executed, triggered, reason. Useful for keeping response size proportional to outcomes rather than data volume, e.g. include=status,executed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        SolveContextFlowResponse
-            Flow executed successfully
+        ContextBatchResponse
+            Batch processed. Per-record validation failures appear in rejections with their array position; execution outcomes appear per instance.
 
         Examples
         --------
@@ -387,15 +341,16 @@ class ContextsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.execute(
-            slug="customer",
-            instance="cust-12345",
-            flow_slug="onboarding-flow",
-            request={},
+        client.contexts.bulk_ingest(
+            slug="loan-application",
+            request=[
+                {"loan_id": "APP-1", "amount": 12000},
+                {"loan_id": "APP-2", "amount": 7300},
+            ],
         )
         """
-        _response = self._raw_client.execute(
-            slug, instance, flow_slug, request=request, request_options=request_options
+        _response = self._raw_client.bulk_ingest(
+            slug, request=request, include=include, request_options=request_options
         )
         return _response.data
 
@@ -435,7 +390,12 @@ class AsyncContextsClient:
         return self._raw_client
 
     async def get(
-        self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        instance: str,
+        *,
+        include_relations: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> ContextInstanceState:
         """
         Retrieve the current state of a context instance.
@@ -447,6 +407,9 @@ class AsyncContextsClient:
 
         instance : str
             The unique identifier for the context instance.
+
+        include_relations : typing.Optional[str]
+            Comma-separated relationship names to include in the response under a 'relations' key (has_many relations return a list of related instance states; has_one/belongs_to return a single state or null). Use '*' for all relationships. Omitted by default - related instances are never fetched into the payload unrequested.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -476,7 +439,9 @@ class AsyncContextsClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.get(slug, instance, request_options=request_options)
+        _response = await self._raw_client.get(
+            slug, instance, include_relations=include_relations, request_options=request_options
+        )
         return _response.data
 
     async def submit(
@@ -681,66 +646,6 @@ class AsyncContextsClient:
         _response = await self._raw_client.get_pending(slug, instance, request_options=request_options)
         return _response.data
 
-    async def solve(
-        self,
-        slug: str,
-        instance: str,
-        rule_slug: str,
-        *,
-        request: SolveContextRuleRequest,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SolveContextRuleResponse:
-        """
-        Execute a specific rule using the context instance's state as input.
-
-        Parameters
-        ----------
-        slug : str
-            The unique slug for the context.
-
-        instance : str
-            The unique identifier for the context instance.
-
-        rule_slug : str
-            The unique slug for the rule.
-
-        request : SolveContextRuleRequest
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SolveContextRuleResponse
-            Rule executed successfully
-
-        Examples
-        --------
-        import asyncio
-
-        from rulebricks import AsyncRulebricks
-
-        client = AsyncRulebricks(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.contexts.solve(
-                slug="customer",
-                instance="cust-12345",
-                rule_slug="eligibility-check",
-                request={},
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.solve(
-            slug, instance, rule_slug, request=request, request_options=request_options
-        )
-        return _response.data
-
     async def cascade(
         self,
         slug: str,
@@ -750,7 +655,7 @@ class AsyncContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> CascadeContextResponse:
         """
-        Trigger re-evaluation of all bound rules and flows for the instance.
+        Re-evaluate registered pending rule and flow executions for this instance after their fact or relationship dependencies may have become available. This does not run every bound asset.
 
         Parameters
         ----------
@@ -794,38 +699,34 @@ class AsyncContextsClient:
         _response = await self._raw_client.cascade(slug, instance, request=request, request_options=request_options)
         return _response.data
 
-    async def execute(
+    async def bulk_ingest(
         self,
         slug: str,
-        instance: str,
-        flow_slug: str,
         *,
-        request: SolveContextFlowRequest,
+        request: typing.Sequence[DynamicRequestPayload],
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> SolveContextFlowResponse:
+    ) -> ContextBatchResponse:
         """
-        Execute a specific flow using the context instance's state as input.
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
 
         Parameters
         ----------
         slug : str
             The unique slug for the context.
 
-        instance : str
-            The unique identifier for the context instance.
+        request : typing.Sequence[DynamicRequestPayload]
 
-        flow_slug : str
-            The unique slug for the flow.
-
-        request : SolveContextFlowRequest
+        include : typing.Optional[str]
+            Comma-separated list of per-instance fields to include in results (instance_id is always present). Omit to include everything. Valid fields: positions, is_new, status, have, need, state, expires_at, executions, executed, triggered, reason. Useful for keeping response size proportional to outcomes rather than data volume, e.g. include=status,executed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        SolveContextFlowResponse
-            Flow executed successfully
+        ContextBatchResponse
+            Batch processed. Per-record validation failures appear in rejections with their array position; execution outcomes appear per instance.
 
         Examples
         --------
@@ -839,18 +740,19 @@ class AsyncContextsClient:
 
 
         async def main() -> None:
-            await client.contexts.execute(
-                slug="customer",
-                instance="cust-12345",
-                flow_slug="onboarding-flow",
-                request={},
+            await client.contexts.bulk_ingest(
+                slug="loan-application",
+                request=[
+                    {"loan_id": "APP-1", "amount": 12000},
+                    {"loan_id": "APP-2", "amount": 7300},
+                ],
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.execute(
-            slug, instance, flow_slug, request=request, request_options=request_options
+        _response = await self._raw_client.bulk_ingest(
+            slug, request=request, include=include, request_options=request_options
         )
         return _response.data
 

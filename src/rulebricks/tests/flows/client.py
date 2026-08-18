@@ -4,6 +4,7 @@ import typing
 
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.request_options import RequestOptions
+from ...types.run_tests_response import RunTestsResponse
 from ...types.test import Test
 from ...types.test_list_response import TestListResponse
 from .raw_client import AsyncRawFlowsClient, RawFlowsClient
@@ -149,6 +150,47 @@ class FlowsClient:
         )
         """
         _response = self._raw_client.delete(slug, test_id, request_options=request_options)
+        return _response.data
+
+    def run(
+        self,
+        slug: str,
+        *,
+        critical_only: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RunTestsResponse:
+        """
+        Executes every test in the flow's test suite (or only the critical tests when `critical_only` is true) against the flow's current graph and returns a summary of which passed, which failed, and whether any CRITICAL test failed. Tests always run against the latest draft of the flow; version targeting does not apply.
+
+        Parameters
+        ----------
+        slug : str
+            The unique identifier for the resource.
+
+        critical_only : typing.Optional[bool]
+            When true, run only the tests flagged as critical (a smoke test). Defaults to false (run the entire suite).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RunTestsResponse
+            The test run summary.
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.tests.flows.run(
+            slug="slug",
+            critical_only=False,
+        )
+        """
+        _response = self._raw_client.run(slug, critical_only=critical_only, request_options=request_options)
         return _response.data
 
 
@@ -313,4 +355,53 @@ class AsyncFlowsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.delete(slug, test_id, request_options=request_options)
+        return _response.data
+
+    async def run(
+        self,
+        slug: str,
+        *,
+        critical_only: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> RunTestsResponse:
+        """
+        Executes every test in the flow's test suite (or only the critical tests when `critical_only` is true) against the flow's current graph and returns a summary of which passed, which failed, and whether any CRITICAL test failed. Tests always run against the latest draft of the flow; version targeting does not apply.
+
+        Parameters
+        ----------
+        slug : str
+            The unique identifier for the resource.
+
+        critical_only : typing.Optional[bool]
+            When true, run only the tests flagged as critical (a smoke test). Defaults to false (run the entire suite).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RunTestsResponse
+            The test run summary.
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.tests.flows.run(
+                slug="slug",
+                critical_only=False,
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.run(slug, critical_only=critical_only, request_options=request_options)
         return _response.data

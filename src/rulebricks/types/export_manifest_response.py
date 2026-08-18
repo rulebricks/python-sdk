@@ -15,7 +15,7 @@ class ExportManifestResponse(UniversalBaseModel):
 
     manifest: typing.Optional[ExportManifestResponseManifest] = pydantic.Field(default=None)
     """
-    The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility.
+    The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility. When the request sets `compress: true`, this field is instead the compress-json array encoding of the same manifest (a JSON array, not the object described below).
     """
 
     error: typing.Optional[str] = pydantic.Field(default=None)

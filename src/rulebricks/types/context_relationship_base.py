@@ -5,7 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .context_relationship_base_type import ContextRelationshipBaseType
+from .context_relationship_base_relation_type import ContextRelationshipBaseRelationType
 
 
 class ContextRelationshipBase(UniversalBaseModel):
@@ -14,19 +14,19 @@ class ContextRelationshipBase(UniversalBaseModel):
     The unique identifier for the relationship.
     """
 
-    type: typing.Optional[ContextRelationshipBaseType] = pydantic.Field(default=None)
+    relation_type: typing.Optional[ContextRelationshipBaseRelationType] = pydantic.Field(default=None)
     """
     The type of relationship.
     """
 
-    foreign_key: typing.Optional[str] = pydantic.Field(default=None)
+    foreign_key_fact: typing.Optional[str] = pydantic.Field(default=None)
     """
     The field key used as the foreign key.
     """
 
     name: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Display name for the relationship.
+    Runtime relationship key used by derived expressions. It is normalized to lowercase snake_case.
     """
 
     description: typing.Optional[str] = pydantic.Field(default=None)

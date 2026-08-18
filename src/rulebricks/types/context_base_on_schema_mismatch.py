@@ -2,4 +2,4 @@
 
 import typing
 
-ContextBaseOnSchemaMismatch = typing.Union[typing.Literal["ignore", "reject"], typing.Any]
+ContextBaseOnSchemaMismatch = typing.Union[typing.Literal["ignore", "reject", "store"], typing.Any]

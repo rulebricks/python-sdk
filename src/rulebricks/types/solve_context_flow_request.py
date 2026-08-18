@@ -4,5 +4,5 @@ import typing
 
 SolveContextFlowRequest = typing.Dict[str, typing.Any]
 """
-Optional request body for executing a flow against context. The entire body is merged with instance state before flow execution.
+Optional request body for executing a flow against context. The entire body is merged into (and persisted to) the instance state before flow execution.
 """

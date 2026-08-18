@@ -89,7 +89,7 @@ class RelationshipsClient:
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
-            Display name for the relationship.
+            Optional runtime relationship key. It is normalized to lowercase snake_case; the target context slug is used when omitted.
 
         description : typing.Optional[str]
             Description of the relationship.
@@ -114,7 +114,7 @@ class RelationshipsClient:
             to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
             relation_type="has_many",
             foreign_key_fact="customer_id",
-            name="Customer Orders",
+            name="customer_orders",
         )
         """
         _response = self._raw_client.create(
@@ -251,7 +251,7 @@ class AsyncRelationshipsClient:
             The field key to use as the foreign key.
 
         name : typing.Optional[str]
-            Display name for the relationship.
+            Optional runtime relationship key. It is normalized to lowercase snake_case; the target context slug is used when omitted.
 
         description : typing.Optional[str]
             Description of the relationship.
@@ -281,7 +281,7 @@ class AsyncRelationshipsClient:
                 to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
                 relation_type="has_many",
                 foreign_key_fact="customer_id",
-                name="Customer Orders",
+                name="customer_orders",
             )
 
 

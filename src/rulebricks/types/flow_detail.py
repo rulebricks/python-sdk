@@ -8,6 +8,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2
 from .flow_base import FlowBase
 from .flow_detail_context import FlowDetailContext
 from .flow_detail_origin_rule import FlowDetailOriginRule
+from .folder import Folder
 
 
 class FlowDetail(FlowBase):
@@ -29,6 +30,16 @@ class FlowDetail(FlowBase):
     context: typing.Optional[FlowDetailContext] = pydantic.Field(default=None)
     """
     The context this flow is bound to (via its origin rule). Flows inherit context binding from their origin rule.
+    """
+
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    The user groups this flow is assigned to.
+    """
+
+    folder: typing.Optional[Folder] = pydantic.Field(default=None)
+    """
+    The folder this flow belongs to, if any.
     """
 
     if IS_PYDANTIC_V2:

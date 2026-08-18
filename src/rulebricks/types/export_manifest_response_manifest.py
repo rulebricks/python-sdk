@@ -9,7 +9,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 class ExportManifestResponseManifest(UniversalBaseModel):
     """
-    The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility.
+    The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility. When the request sets `compress: true`, this field is instead the compress-json array encoding of the same manifest (a JSON array, not the object described below).
     """
 
     version: typing.Optional[str] = pydantic.Field(default=None)
@@ -35,7 +35,7 @@ class ExportManifestResponseManifest(UniversalBaseModel):
 
     values: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Exported dynamic values.
+    Exported vocabulary values.
     """
 
     rules: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)

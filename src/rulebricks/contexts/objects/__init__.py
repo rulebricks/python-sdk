@@ -6,17 +6,10 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import (
-        CreateContextRequestOnSchemaMismatch,
-        CreateContextRequestSchemaItem,
-        UpdateContextRequestOnSchemaMismatch,
-        UpdateContextRequestSchemaItem,
-    )
+    from .types import CreateContextRequestOnSchemaMismatch, UpdateContextRequestOnSchemaMismatch
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateContextRequestOnSchemaMismatch": ".types",
-    "CreateContextRequestSchemaItem": ".types",
     "UpdateContextRequestOnSchemaMismatch": ".types",
-    "UpdateContextRequestSchemaItem": ".types",
 }
 
 
@@ -41,9 +34,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = [
-    "CreateContextRequestOnSchemaMismatch",
-    "CreateContextRequestSchemaItem",
-    "UpdateContextRequestOnSchemaMismatch",
-    "UpdateContextRequestSchemaItem",
-]
+__all__ = ["CreateContextRequestOnSchemaMismatch", "UpdateContextRequestOnSchemaMismatch"]

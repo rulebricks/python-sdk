@@ -6,5 +6,5 @@ from .dynamic_response_payload import DynamicResponsePayload
 
 ParallelSolveResponse = typing.Dict[str, DynamicResponsePayload]
 """
-Response from parallel rule/flow execution with results from each execution.
+Response from parallel rule/flow execution with results from each execution. Each value is either the rule/flow's result payload or, if that entry could not be executed, an object containing a reserved `$error` field (see ParallelSolveEntityError) describing the failure. Entries are independent: a failure in one entry never prevents the others from returning results.
 """

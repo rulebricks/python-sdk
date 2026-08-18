@@ -10,28 +10,31 @@ from ..core.serialization import FieldMetadata
 
 class ValueLimits(UniversalBaseModel):
     """
-    System limits for dynamic values
+    System limits for vocabulary values
     """
 
     max_keys: typing_extensions.Annotated[
         typing.Optional[int],
         FieldMetadata(alias="MAX_KEYS"),
-        pydantic.Field(alias="MAX_KEYS", description="Maximum number of value keys per user"),
+        pydantic.Field(
+            alias="MAX_KEYS",
+            description="Maximum number of vocabulary values per workspace (a guardrail against runaway imports; the system is designed to operate at this scale)",
+        ),
     ] = None
     max_value_length: typing_extensions.Annotated[
         typing.Optional[int],
         FieldMetadata(alias="MAX_VALUE_LENGTH"),
-        pydantic.Field(alias="MAX_VALUE_LENGTH", description="Maximum length of a single value in characters"),
-    ] = None
-    max_total_size: typing_extensions.Annotated[
-        typing.Optional[int],
-        FieldMetadata(alias="MAX_TOTAL_SIZE"),
-        pydantic.Field(alias="MAX_TOTAL_SIZE", description="Maximum total size of all values in bytes"),
+        pydantic.Field(
+            alias="MAX_VALUE_LENGTH", description="Maximum serialized length of a single value payload in characters"
+        ),
     ] = None
     max_key_length: typing_extensions.Annotated[
         typing.Optional[int],
         FieldMetadata(alias="MAX_KEY_LENGTH"),
-        pydantic.Field(alias="MAX_KEY_LENGTH", description="Maximum length of a key name"),
+        pydantic.Field(
+            alias="MAX_KEY_LENGTH",
+            description="Maximum length of a value name in characters, including collection prefixes",
+        ),
     ] = None
 
     if IS_PYDANTIC_V2:

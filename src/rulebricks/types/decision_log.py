@@ -7,6 +7,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel, update_forward_refs
+from .decision_log_path_trace import DecisionLogPathTrace
 from .decision_log_request import DecisionLogRequest
 
 
@@ -47,7 +48,22 @@ class DecisionLog(UniversalBaseModel):
 
     decision: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    Decision details including matched conditions, rows, and evaluation metadata. API-owned metadata keys are normalized to snake_case where known, such as `rule_id`, `rule_slug`, `rule_version`, `success_idxs`, `total_usage`, and `entity_count`; user-defined request/response schema keys are preserved.
+    Decision details including matched conditions, rows, and evaluation metadata. API-owned metadata keys are normalized to snake_case where known, including rule, flow, context, item, and correlation fields such as `rule_id`, `flow_execution_id`, `root_flow_execution_id`, `parallel_execution_id`, `context_instance_id`, `item_indexes`, and `item_execution_ids` (bulk flow runs' per-item execution ids, aligned 1:1 with the request array). Rule decisions also expose the bounded execution-time vocabulary snapshot under `referenced_values`; `referenced_values_truncated` indicates that one or more payloads or entries were omitted. Executions backed by a frozen published vocabulary include its asset/version pointer under `value_world`. User-defined request/response schema keys are preserved.
+    """
+
+    trace_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Observability (OpenTelemetry) trace ID for this execution. Populated on self-hosted deployments only; always null on cloud.
+    """
+
+    path_trace: typing.Optional[DecisionLogPathTrace] = pydantic.Field(default=None)
+    """
+    Decompressed execution path trace for flow records: the executed steps with their inputs and outputs. An object for single flow runs, or a null-aligned array (1:1 with the request array) for bulk runs. Only present when `include_traces=true`; null for non-flow records, runs without a stored trace, and traces dropped by the size cap (see the decision's `path_trace_omitted`).
+    """
+
+    matched_items: typing.Optional[typing.List[int]] = pydantic.Field(default=None)
+    """
+    Only present when `item_filter` was supplied and this record is bulk-shaped: the original zero-based positions (within this record's stored request array) of the items that matched the filter, in order. The record's `request`, `response`, and index-aligned decision fields are sliced to these items; `decision.item_count` keeps the original total. Empty when no items matched. On self-hosted deployments where large bulk runs are logged in chunks, the absolute position within the original API call is `decision.logChunk.offset` plus this value.
     """
 
     error: typing.Optional[str] = pydantic.Field(default=None)
@@ -57,7 +73,7 @@ class DecisionLog(UniversalBaseModel):
 
     abbreviated: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Whether the request/response data was truncated due to size limits.
+    Whether the request/response data was truncated due to size limits or unavailable payload columns. Responses carry full payloads whenever they were stored.
     """
 
     if IS_PYDANTIC_V2:

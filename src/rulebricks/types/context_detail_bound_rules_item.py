@@ -11,6 +11,10 @@ class ContextDetailBoundRulesItem(UniversalBaseModel):
     name: typing.Optional[str] = None
     slug: typing.Optional[str] = None
     published: typing.Optional[bool] = None
+    context_version: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Version target for this binding: `null` or `latest` follows the current published version, a version number (e.g. `3`) pins that published version, and any other value is a release environment slug resolved at execution time.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

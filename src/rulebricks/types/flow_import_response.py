@@ -6,20 +6,24 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class ContextInstancePendingEvaluationWaitingOnItemField(UniversalBaseModel):
-    field: typing.Optional[str] = pydantic.Field(default=None)
+class FlowImportResponse(UniversalBaseModel):
     """
-    Field key this evaluation is waiting for.
-    """
-
-    relation: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Related context name if waiting on a relationship.
+    Summary of the imported flow.
     """
 
-    instance: typing.Optional[str] = pydantic.Field(default=None)
+    name: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Instance ID of the related context (if applicable).
+    The flow name.
+    """
+
+    id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The flow id.
+    """
+
+    slug: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The flow slug used in API requests.
     """
 
     if IS_PYDANTIC_V2:

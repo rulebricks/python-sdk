@@ -2,4 +2,4 @@
 
 import typing
 
-CascadeResultStatus = typing.Union[typing.Literal["solved", "error"], typing.Any]
+CascadeResultStatus = typing.Union[typing.Literal["solved", "error", "pending", "skipped_already_run"], typing.Any]

@@ -1,6 +1,8 @@
 from .types.operators import RuleType
 from .operators import BooleanField, NumberField, StringField, DateField, ListField, Argument
 from .vocabulary import VocabularyValue
+from ..core.api_error import ApiError
+from ..core.request_options import RequestOptions
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from datetime import datetime
 import json
@@ -12,6 +14,39 @@ import re
 
 if TYPE_CHECKING:
     from ..client import Rulebricks
+
+
+class RulePublishError(Exception):
+    """
+    Raised when the workspace rejects a rule update or publish -- for example,
+    when a publish is blocked because critical tests are failing.
+
+    The exception message is the human-readable error returned by the API;
+    the HTTP status code and response body are preserved for programmatic
+    handling via the `status_code` and `body` attributes.
+    """
+
+    def __init__(self, message: str, status_code: Optional[int] = None, body: Any = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
+
+
+def _to_rule_publish_error(error: ApiError) -> RulePublishError:
+    """
+    Convert an API error from the rule import endpoint into a RulePublishError
+    carrying the API's human-readable message. Declared error statuses carry a
+    parsed model body (with an `error` attribute); undeclared statuses carry
+    the raw JSON body as a dict.
+    """
+    body = error.body
+    candidate = body.get("error") if isinstance(body, dict) else getattr(body, "error", None)
+    if isinstance(candidate, str) and candidate:
+        message = candidate
+    else:
+        message = f"Request failed with status code {error.status_code}: {body}"
+    return RulePublishError(message, status_code=error.status_code, body=body)
+
 
 def process_vocabulary_values(arg: Any) -> Any:
     """
@@ -42,6 +77,27 @@ def process_vocabulary_values(arg: Any) -> Any:
     elif isinstance(arg, dict):
         return {k: process_vocabulary_values(v) for k, v in arg.items()}
     return arg
+
+def format_table_value(value: Any) -> str:
+    """
+    Format a condition argument or response value for tabular display.
+
+    Vocabulary value references (dictionaries containing "$rb") are rendered
+    as their uppercased name, and lists are formatted item by item so
+    references nested inside list payloads (which may mix literal values and
+    references) stay readable.
+
+    Args:
+        value (Any): The argument or response value to format.
+
+    Returns:
+        str: A human-readable representation of the value.
+    """
+    if isinstance(value, dict) and "$rb" in value:
+        return str(value.get("name", "")).upper()
+    if isinstance(value, list):
+        return "[" + ", ".join(format_table_value(item) for item in value) + "]"
+    return str(value)
 
 class Condition:
     """
@@ -255,7 +311,7 @@ class Condition:
             if field_name in condition["request"]:
                 rule = condition["request"][field_name]
                 op_name = rule["op"]
-                args_str = ", ".join(map(str, rule["args"]))
+                args_str = ", ".join(format_table_value(arg) for arg in rule["args"])
                 row.append(f"{op_name}\n({args_str})")
             else:
                 row.append("-")
@@ -263,7 +319,11 @@ class Condition:
         # Add response field values
         for field_name in self.rule.response_fields.keys():
             if field_name in condition["response"]:
-                row.append(condition["response"][field_name]["value"])
+                response_value = condition["response"][field_name]["value"]
+                if isinstance(response_value, (dict, list)):
+                    row.append(format_table_value(response_value))
+                else:
+                    row.append(response_value)
             else:
                 row.append("-")
 
@@ -619,31 +679,45 @@ class Rule:
         rule_data = self.workspace.assets.rules.pull(id=rule_id)
         return Rule.from_json(rule_data)
 
-    def update(self) -> 'Rule':
+    def update(self, request_options: Optional[RequestOptions] = None) -> 'Rule':
         """
         Push local changes to this rule to the connected workspace.
 
+        Args:
+            request_options: Optional request-specific configuration for the
+                underlying import call (e.g. {"max_retries": 0}).
+
         Returns:
             Rule: The current rule instance for method chaining.
 
         Raises:
-            ValueError: If the workspace client is missing or the rule cannot be pushed.
+            ValueError: If the workspace client is missing.
+            RulePublishError: If the workspace rejects the update.
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to push a rule to the workspace. See Rule.set_workspace()")
-        self.workspace.assets.rules.push(rule=self.to_dict())
+        try:
+            self.workspace.assets.rules.push(rule=self.to_dict(), request_options=request_options)
+        except ApiError as e:
+            raise _to_rule_publish_error(e) from None
         self = self.from_workspace(rule_id=self.id)
         return self
 
-    def publish(self) -> 'Rule':
+    def publish(self, request_options: Optional[RequestOptions] = None) -> 'Rule':
         """
         Publish a new version of this rule in the connected workspace.
+
+        Args:
+            request_options: Optional request-specific configuration for the
+                underlying import call (e.g. {"max_retries": 0}).
 
         Returns:
             Rule: The current rule instance for method chaining.
 
         Raises:
-            ValueError: If the workspace client is missing or the rule cannot be published.
+            ValueError: If the workspace client is missing.
+            RulePublishError: If the rule cannot be published, e.g. because
+                critical tests are failing.
         """
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to publish a rule. See Rule.set_workspace()")
@@ -651,7 +725,10 @@ class Rule:
         # Flag the rule to publish a *new* version
         # Note this is different from self.published
         rule_dict["_publish"] = True
-        self.workspace.assets.rules.push(rule=rule_dict)
+        try:
+            self.workspace.assets.rules.push(rule=rule_dict, request_options=request_options)
+        except ApiError as e:
+            raise _to_rule_publish_error(e) from None
         self = self.from_workspace(rule_id=self.id)
         return self
 
@@ -1483,13 +1560,7 @@ class Rule:
                 if field_name in condition["request"]:
                     rule = condition["request"][field_name]
                     op_name = rule["op"]
-                    arguments_repr = []
-                    for arg in rule["args"]:
-                        if isinstance(arg, Dict) and "$rb" in arg:
-                            arguments_repr.append(arg["name"].upper())
-                        else:
-                            arguments_repr.append(str(arg))
-                    args_str = ", ".join(arguments_repr)
+                    args_str = ", ".join(format_table_value(arg) for arg in rule["args"])
                     row.append(f"{op_name}\n({args_str})")
                 else:
                     row.append("-")
@@ -1497,7 +1568,11 @@ class Rule:
             # Add response field values
             for field_name in self.response_fields.keys():
                 if field_name in condition["response"]:
-                    row.append(condition["response"][field_name]["value"])
+                    response_value = condition["response"][field_name]["value"]
+                    if isinstance(response_value, (dict, list)):
+                        row.append(format_table_value(response_value))
+                    else:
+                        row.append(response_value)
                 else:
                     row.append("-")
 

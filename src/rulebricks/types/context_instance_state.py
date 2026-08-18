@@ -20,12 +20,12 @@ class ContextInstanceState(UniversalBaseModel):
 
     state: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    The current base field values for this instance.
+    The current base fact values for this instance (derived facts are reported separately under `derived`; note that POST responses combine both under `state`).
     """
 
     derived: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    Computed/derived field values from bound rules.
+    Expression-computed derived fact values (recomputed on read from base facts, relations, and history).
     """
 
     status: typing.Optional[ContextInstanceStateStatus] = pydantic.Field(default=None)
@@ -41,6 +41,16 @@ class ContextInstanceState(UniversalBaseModel):
     need: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
     List of required field keys that are missing (empty when status is 'complete').
+    """
+
+    relations: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Related instance data, present only when include_relations was requested. Keys are relationship names; has_many relations map to a list of related instance states, has_one/belongs_to to a single state or null.
+    """
+
+    executions: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
+    """
+    Per-asset execution metadata, present after a bound rule or flow has run for this instance.
     """
 
     created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)

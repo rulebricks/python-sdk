@@ -6,8 +6,18 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .types import QueryDecisionsRequestCount
-_dynamic_imports: typing.Dict[str, str] = {"QueryDecisionsRequestCount": ".types"}
+    from .types import (
+        QueryDecisionsRequestCount,
+        QueryDecisionsRequestIncludeTraces,
+        QueryDecisionsRequestOrder,
+        QueryDecisionsRequestSort,
+    )
+_dynamic_imports: typing.Dict[str, str] = {
+    "QueryDecisionsRequestCount": ".types",
+    "QueryDecisionsRequestIncludeTraces": ".types",
+    "QueryDecisionsRequestOrder": ".types",
+    "QueryDecisionsRequestSort": ".types",
+}
 
 
 def __getattr__(attr_name: str) -> typing.Any:
@@ -31,4 +41,9 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["QueryDecisionsRequestCount"]
+__all__ = [
+    "QueryDecisionsRequestCount",
+    "QueryDecisionsRequestIncludeTraces",
+    "QueryDecisionsRequestOrder",
+    "QueryDecisionsRequestSort",
+]

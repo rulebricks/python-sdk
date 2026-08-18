@@ -11,19 +11,19 @@ from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..errors.bad_request_error import BadRequestError
+from ..errors.content_too_large_error import ContentTooLargeError
 from ..errors.internal_server_error import InternalServerError
 from ..errors.not_found_error import NotFoundError
+from ..errors.payment_required_error import PaymentRequiredError
 from ..types.cascade_context_request import CascadeContextRequest
 from ..types.cascade_context_response import CascadeContextResponse
+from ..types.context_batch_response import ContextBatchResponse
 from ..types.context_instance_history import ContextInstanceHistory
 from ..types.context_instance_pending_response import ContextInstancePendingResponse
 from ..types.context_instance_state import ContextInstanceState
 from ..types.delete_context_instance_response import DeleteContextInstanceResponse
+from ..types.dynamic_request_payload import DynamicRequestPayload
 from ..types.error import Error
-from ..types.solve_context_flow_request import SolveContextFlowRequest
-from ..types.solve_context_flow_response import SolveContextFlowResponse
-from ..types.solve_context_rule_request import SolveContextRuleRequest
-from ..types.solve_context_rule_response import SolveContextRuleResponse
 from ..types.submit_context_data_request import SubmitContextDataRequest
 from ..types.submit_context_data_response import SubmitContextDataResponse
 from pydantic import ValidationError
@@ -37,7 +37,12 @@ class RawContextsClient:
         self._client_wrapper = client_wrapper
 
     def get(
-        self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        instance: str,
+        *,
+        include_relations: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ContextInstanceState]:
         """
         Retrieve the current state of a context instance.
@@ -50,6 +55,9 @@ class RawContextsClient:
         instance : str
             The unique identifier for the context instance.
 
+        include_relations : typing.Optional[str]
+            Comma-separated relationship names to include in the response under a 'relations' key (has_many relations return a list of related instance states; has_one/belongs_to return a single state or null). Use '*' for all relationships. Omitted by default - related instances are never fetched into the payload unrequested.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -61,6 +69,9 @@ class RawContextsClient:
         _response = self._client_wrapper.httpx_client.request(
             f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="GET",
+            params={
+                "include_relations": include_relations,
+            },
             request_options=request_options,
         )
         try:
@@ -415,101 +426,6 @@ class RawContextsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def solve(
-        self,
-        slug: str,
-        instance: str,
-        rule_slug: str,
-        *,
-        request: SolveContextRuleRequest,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[SolveContextRuleResponse]:
-        """
-        Execute a specific rule using the context instance's state as input.
-
-        Parameters
-        ----------
-        slug : str
-            The unique slug for the context.
-
-        instance : str
-            The unique identifier for the context instance.
-
-        rule_slug : str
-            The unique slug for the rule.
-
-        request : SolveContextRuleRequest
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[SolveContextRuleResponse]
-            Rule executed successfully
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/solve/{encode_path_param(rule_slug)}",
-            method="POST",
-            json=request,
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    SolveContextRuleResponse,
-                    parse_obj_as(
-                        type_=SolveContextRuleResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     def cascade(
         self,
         slug: str,
@@ -519,7 +435,7 @@ class RawContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[CascadeContextResponse]:
         """
-        Trigger re-evaluation of all bound rules and flows for the instance.
+        Re-evaluate registered pending rule and flow executions for this instance after their fact or relationship dependencies may have become available. This does not run every bound asset.
 
         Parameters
         ----------
@@ -590,42 +506,41 @@ class RawContextsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def execute(
+    def bulk_ingest(
         self,
         slug: str,
-        instance: str,
-        flow_slug: str,
         *,
-        request: SolveContextFlowRequest,
+        request: typing.Sequence[DynamicRequestPayload],
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[SolveContextFlowResponse]:
+    ) -> HttpResponse[ContextBatchResponse]:
         """
-        Execute a specific flow using the context instance's state as input.
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
 
         Parameters
         ----------
         slug : str
             The unique slug for the context.
 
-        instance : str
-            The unique identifier for the context instance.
+        request : typing.Sequence[DynamicRequestPayload]
 
-        flow_slug : str
-            The unique slug for the flow.
-
-        request : SolveContextFlowRequest
+        include : typing.Optional[str]
+            Comma-separated list of per-instance fields to include in results (instance_id is always present). Omit to include everything. Valid fields: positions, is_new, status, have, need, state, expires_at, executions, executed, triggered, reason. Useful for keeping response size proportional to outcomes rather than data volume, e.g. include=status,executed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[SolveContextFlowResponse]
-            Flow executed successfully
+        HttpResponse[ContextBatchResponse]
+            Batch processed. Per-record validation failures appear in rejections with their array position; execution outcomes appear per instance.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/flows/{encode_path_param(flow_slug)}",
+            f"contexts/batch/{encode_path_param(slug)}",
             method="POST",
+            params={
+                "include": include,
+            },
             json=request,
             headers={
                 "content-type": "application/json",
@@ -636,9 +551,9 @@ class RawContextsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SolveContextFlowResponse,
+                    ContextBatchResponse,
                     parse_obj_as(
-                        type_=SolveContextFlowResponse,  # type: ignore
+                        type_=ContextBatchResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -654,8 +569,30 @@ class RawContextsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
@@ -691,7 +628,12 @@ class AsyncRawContextsClient:
         self._client_wrapper = client_wrapper
 
     async def get(
-        self, slug: str, instance: str, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        instance: str,
+        *,
+        include_relations: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ContextInstanceState]:
         """
         Retrieve the current state of a context instance.
@@ -704,6 +646,9 @@ class AsyncRawContextsClient:
         instance : str
             The unique identifier for the context instance.
 
+        include_relations : typing.Optional[str]
+            Comma-separated relationship names to include in the response under a 'relations' key (has_many relations return a list of related instance states; has_one/belongs_to return a single state or null). Use '*' for all relationships. Omitted by default - related instances are never fetched into the payload unrequested.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -715,6 +660,9 @@ class AsyncRawContextsClient:
         _response = await self._client_wrapper.httpx_client.request(
             f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}",
             method="GET",
+            params={
+                "include_relations": include_relations,
+            },
             request_options=request_options,
         )
         try:
@@ -1069,101 +1017,6 @@ class AsyncRawContextsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def solve(
-        self,
-        slug: str,
-        instance: str,
-        rule_slug: str,
-        *,
-        request: SolveContextRuleRequest,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[SolveContextRuleResponse]:
-        """
-        Execute a specific rule using the context instance's state as input.
-
-        Parameters
-        ----------
-        slug : str
-            The unique slug for the context.
-
-        instance : str
-            The unique identifier for the context instance.
-
-        rule_slug : str
-            The unique slug for the rule.
-
-        request : SolveContextRuleRequest
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[SolveContextRuleResponse]
-            Rule executed successfully
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/solve/{encode_path_param(rule_slug)}",
-            method="POST",
-            json=request,
-            headers={
-                "content-type": "application/json",
-            },
-            request_options=request_options,
-            omit=OMIT,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    SolveContextRuleResponse,
-                    parse_obj_as(
-                        type_=SolveContextRuleResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 400:
-                raise BadRequestError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 404:
-                raise NotFoundError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 500:
-                raise InternalServerError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        Error,
-                        parse_obj_as(
-                            type_=Error,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
     async def cascade(
         self,
         slug: str,
@@ -1173,7 +1026,7 @@ class AsyncRawContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[CascadeContextResponse]:
         """
-        Trigger re-evaluation of all bound rules and flows for the instance.
+        Re-evaluate registered pending rule and flow executions for this instance after their fact or relationship dependencies may have become available. This does not run every bound asset.
 
         Parameters
         ----------
@@ -1244,42 +1097,41 @@ class AsyncRawContextsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def execute(
+    async def bulk_ingest(
         self,
         slug: str,
-        instance: str,
-        flow_slug: str,
         *,
-        request: SolveContextFlowRequest,
+        request: typing.Sequence[DynamicRequestPayload],
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[SolveContextFlowResponse]:
+    ) -> AsyncHttpResponse[ContextBatchResponse]:
         """
-        Execute a specific flow using the context instance's state as input.
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
 
         Parameters
         ----------
         slug : str
             The unique slug for the context.
 
-        instance : str
-            The unique identifier for the context instance.
+        request : typing.Sequence[DynamicRequestPayload]
 
-        flow_slug : str
-            The unique slug for the flow.
-
-        request : SolveContextFlowRequest
+        include : typing.Optional[str]
+            Comma-separated list of per-instance fields to include in results (instance_id is always present). Omit to include everything. Valid fields: positions, is_new, status, have, need, state, expires_at, executions, executed, triggered, reason. Useful for keeping response size proportional to outcomes rather than data volume, e.g. include=status,executed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[SolveContextFlowResponse]
-            Flow executed successfully
+        AsyncHttpResponse[ContextBatchResponse]
+            Batch processed. Per-record validation failures appear in rejections with their array position; execution outcomes appear per instance.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"contexts/{encode_path_param(slug)}/{encode_path_param(instance)}/flows/{encode_path_param(flow_slug)}",
+            f"contexts/batch/{encode_path_param(slug)}",
             method="POST",
+            params={
+                "include": include,
+            },
             json=request,
             headers={
                 "content-type": "application/json",
@@ -1290,9 +1142,9 @@ class AsyncRawContextsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    SolveContextFlowResponse,
+                    ContextBatchResponse,
                     parse_obj_as(
-                        type_=SolveContextFlowResponse,  # type: ignore
+                        type_=ContextBatchResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1308,8 +1160,30 @@ class AsyncRawContextsClient:
                         ),
                     ),
                 )
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 404:
                 raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,

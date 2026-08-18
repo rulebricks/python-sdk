@@ -12,12 +12,18 @@ class ParallelSolveRequestValue(UniversalBaseModel):
     rule: typing_extensions.Annotated[
         typing.Optional[str],
         FieldMetadata(alias="$rule"),
-        pydantic.Field(alias="$rule", description="Slug of the rule to execute"),
+        pydantic.Field(
+            alias="$rule",
+            description="Slug of the rule to execute, optionally suffixed with a published version number or release environment slug (e.g. `my-rule`, `my-rule/3`, or `my-rule/production`). A bare slug executes the current published version.",
+        ),
     ] = None
     flow: typing_extensions.Annotated[
         typing.Optional[str],
         FieldMetadata(alias="$flow"),
-        pydantic.Field(alias="$flow", description="Slug of the flow to execute"),
+        pydantic.Field(
+            alias="$flow",
+            description="Slug of the flow to execute, optionally suffixed with a published version number or release environment slug (e.g. `my-flow`, `my-flow/3`, or `my-flow/production`). A bare slug executes the current published version.",
+        ),
     ] = None
 
     if IS_PYDANTIC_V2:

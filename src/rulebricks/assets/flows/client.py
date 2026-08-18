@@ -4,8 +4,14 @@ import typing
 
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.request_options import RequestOptions
+from ...types.flow_import_payload import FlowImportPayload
+from ...types.flow_import_response import FlowImportResponse
 from ...types.flow_list_response import FlowListResponse
+from ...types.success_message import SuccessMessage
 from .raw_client import AsyncRawFlowsClient, RawFlowsClient
+
+# this is used as the default value for optional parameters
+OMIT = typing.cast(typing.Any, ...)
 
 
 class FlowsClient:
@@ -23,12 +29,28 @@ class FlowsClient:
         """
         return self._raw_client
 
-    def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> FlowListResponse:
+    def list(
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FlowListResponse:
         """
-        List all flows in the organization.
+        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
+        folder : typing.Optional[str]
+            Filter results by folder name or folder ID.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -46,7 +68,175 @@ class FlowsClient:
         )
         client.assets.flows.list()
         """
-        _response = self._raw_client.list(request_options=request_options)
+        _response = self._raw_client.list(
+            folder=folder, user_group=user_group, name=name, request_options=request_options
+        )
+        return _response.data
+
+    def push(
+        self, *, flow: FlowImportPayload, request_options: typing.Optional[RequestOptions] = None
+    ) -> FlowImportResponse:
+        """
+        Create or update a flow from the Rulebricks Flow Schema (a list of `nodes` and `connections`). The server expands the Rulebricks Flow Schema definition into the full flow graph - laying it out, wiring property/control handles, resolving referenced published rules, and backfilling node defaults - so the result both renders in the editor and executes via `/flows/{slug}` without any manual editing. If `id` is provided the matching flow is updated; otherwise a new flow is created (`id`/`slug` auto-generated). Flows auto-publish unless `_publish` is set to `false`.
+
+        Parameters
+        ----------
+        flow : FlowImportPayload
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FlowImportResponse
+            Flow imported successfully
+
+        Examples
+        --------
+        from rulebricks import (
+            FlowImportPayload,
+            Rulebricks,
+            RulebricksFlowConnection,
+            RulebricksFlowNode,
+            RulebricksFlowNodeCondition,
+            RulebricksFlowNodeOutputsItem,
+        )
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.assets.flows.push(
+            flow=FlowImportPayload(
+                name="Underwriting Flow",
+                publish=True,
+                nodes=[
+                    RulebricksFlowNode(
+                        ref="input",
+                        type="origin",
+                        rule="customer-eligibility",
+                    ),
+                    RulebricksFlowNode(
+                        ref="gate",
+                        type="continue_if",
+                        condition=RulebricksFlowNodeCondition(
+                            property="approved",
+                            operator="equals",
+                            args=[True],
+                        ),
+                    ),
+                    RulebricksFlowNode(
+                        ref="enrich",
+                        type="code",
+                        code="outputs.tier = inputs.score > 700 ? 'A' : 'B'",
+                        outputs=[
+                            RulebricksFlowNodeOutputsItem(
+                                key="tier",
+                                type="string",
+                            )
+                        ],
+                    ),
+                    RulebricksFlowNode(
+                        ref="out",
+                        type="result",
+                        key="data",
+                    ),
+                ],
+                connections=[
+                    RulebricksFlowConnection(
+                        from_="input",
+                        output="approved",
+                        to="gate",
+                    ),
+                    RulebricksFlowConnection(
+                        from_="input",
+                        output="score",
+                        to="enrich",
+                        input="score",
+                    ),
+                    RulebricksFlowConnection(
+                        from_="gate",
+                        to="out",
+                        control=True,
+                    ),
+                    RulebricksFlowConnection(
+                        from_="enrich",
+                        output="tier",
+                        to="out",
+                    ),
+                ],
+            ),
+        )
+        """
+        _response = self._raw_client.push(flow=flow, request_options=request_options)
+        return _response.data
+
+    def pull(
+        self,
+        *,
+        id: typing.Optional[str] = None,
+        slug: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FlowImportPayload:
+        """
+        Export a flow into the Rulebricks Flow Schema (nodes + connections), the same shape accepted by `/admin/flows/import`. Works for flows built entirely by hand in the editor, so they can be round-tripped or version-controlled. This is distinct from the top-level `/admin/export`, which produces `.rbm` manifests.
+
+        Parameters
+        ----------
+        id : typing.Optional[str]
+            The ID of the flow to export (provide `id` or `slug`).
+
+        slug : typing.Optional[str]
+            The slug of the flow to export (provide `id` or `slug`).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FlowImportPayload
+            The flow's Rulebricks Flow Schema.
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.assets.flows.pull()
+        """
+        _response = self._raw_client.pull(id=id, slug=slug, request_options=request_options)
+        return _response.data
+
+    def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
+        """
+        Delete a specific flow by its ID.
+
+        Parameters
+        ----------
+        id : str
+            The ID of the flow to delete.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SuccessMessage
+            Flow deleted successfully
+
+        Examples
+        --------
+        from rulebricks import Rulebricks
+
+        client = Rulebricks(
+            api_key="YOUR_API_KEY",
+        )
+        client.assets.flows.delete(
+            id="3855f8da-2654-4df9-8903-8f797cbfe8ec",
+        )
+        """
+        _response = self._raw_client.delete(id=id, request_options=request_options)
         return _response.data
 
 
@@ -65,12 +255,28 @@ class AsyncFlowsClient:
         """
         return self._raw_client
 
-    async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> FlowListResponse:
+    async def list(
+        self,
+        *,
+        folder: typing.Optional[str] = None,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FlowListResponse:
         """
-        List all flows in the organization.
+        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
+        folder : typing.Optional[str]
+            Filter results by folder name or folder ID.
+
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -96,5 +302,197 @@ class AsyncFlowsClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(request_options=request_options)
+        _response = await self._raw_client.list(
+            folder=folder, user_group=user_group, name=name, request_options=request_options
+        )
+        return _response.data
+
+    async def push(
+        self, *, flow: FlowImportPayload, request_options: typing.Optional[RequestOptions] = None
+    ) -> FlowImportResponse:
+        """
+        Create or update a flow from the Rulebricks Flow Schema (a list of `nodes` and `connections`). The server expands the Rulebricks Flow Schema definition into the full flow graph - laying it out, wiring property/control handles, resolving referenced published rules, and backfilling node defaults - so the result both renders in the editor and executes via `/flows/{slug}` without any manual editing. If `id` is provided the matching flow is updated; otherwise a new flow is created (`id`/`slug` auto-generated). Flows auto-publish unless `_publish` is set to `false`.
+
+        Parameters
+        ----------
+        flow : FlowImportPayload
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FlowImportResponse
+            Flow imported successfully
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import (
+            AsyncRulebricks,
+            FlowImportPayload,
+            RulebricksFlowConnection,
+            RulebricksFlowNode,
+            RulebricksFlowNodeCondition,
+            RulebricksFlowNodeOutputsItem,
+        )
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.assets.flows.push(
+                flow=FlowImportPayload(
+                    name="Underwriting Flow",
+                    publish=True,
+                    nodes=[
+                        RulebricksFlowNode(
+                            ref="input",
+                            type="origin",
+                            rule="customer-eligibility",
+                        ),
+                        RulebricksFlowNode(
+                            ref="gate",
+                            type="continue_if",
+                            condition=RulebricksFlowNodeCondition(
+                                property="approved",
+                                operator="equals",
+                                args=[True],
+                            ),
+                        ),
+                        RulebricksFlowNode(
+                            ref="enrich",
+                            type="code",
+                            code="outputs.tier = inputs.score > 700 ? 'A' : 'B'",
+                            outputs=[
+                                RulebricksFlowNodeOutputsItem(
+                                    key="tier",
+                                    type="string",
+                                )
+                            ],
+                        ),
+                        RulebricksFlowNode(
+                            ref="out",
+                            type="result",
+                            key="data",
+                        ),
+                    ],
+                    connections=[
+                        RulebricksFlowConnection(
+                            from_="input",
+                            output="approved",
+                            to="gate",
+                        ),
+                        RulebricksFlowConnection(
+                            from_="input",
+                            output="score",
+                            to="enrich",
+                            input="score",
+                        ),
+                        RulebricksFlowConnection(
+                            from_="gate",
+                            to="out",
+                            control=True,
+                        ),
+                        RulebricksFlowConnection(
+                            from_="enrich",
+                            output="tier",
+                            to="out",
+                        ),
+                    ],
+                ),
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.push(flow=flow, request_options=request_options)
+        return _response.data
+
+    async def pull(
+        self,
+        *,
+        id: typing.Optional[str] = None,
+        slug: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FlowImportPayload:
+        """
+        Export a flow into the Rulebricks Flow Schema (nodes + connections), the same shape accepted by `/admin/flows/import`. Works for flows built entirely by hand in the editor, so they can be round-tripped or version-controlled. This is distinct from the top-level `/admin/export`, which produces `.rbm` manifests.
+
+        Parameters
+        ----------
+        id : typing.Optional[str]
+            The ID of the flow to export (provide `id` or `slug`).
+
+        slug : typing.Optional[str]
+            The slug of the flow to export (provide `id` or `slug`).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FlowImportPayload
+            The flow's Rulebricks Flow Schema.
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.assets.flows.pull()
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.pull(id=id, slug=slug, request_options=request_options)
+        return _response.data
+
+    async def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> SuccessMessage:
+        """
+        Delete a specific flow by its ID.
+
+        Parameters
+        ----------
+        id : str
+            The ID of the flow to delete.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SuccessMessage
+            Flow deleted successfully
+
+        Examples
+        --------
+        import asyncio
+
+        from rulebricks import AsyncRulebricks
+
+        client = AsyncRulebricks(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.assets.flows.delete(
+                id="3855f8da-2654-4df9-8903-8f797cbfe8ec",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.delete(id=id, request_options=request_options)
         return _response.data

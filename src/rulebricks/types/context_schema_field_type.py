@@ -3,5 +3,5 @@
 import typing
 
 ContextSchemaFieldType = typing.Union[
-    typing.Literal["string", "number", "boolean", "date", "list", "function"], typing.Any
+    typing.Literal["string", "number", "boolean", "date", "list", "object", "function"], typing.Any
 ]

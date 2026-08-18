@@ -14,6 +14,7 @@ from ...errors.bad_request_error import BadRequestError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
 from ...types.error import Error
+from ...types.run_tests_response import RunTestsResponse
 from ...types.test import Test
 from ...types.test_list_response import TestListResponse
 from pydantic import ValidationError
@@ -264,6 +265,85 @@ class RawFlowsClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def run(
+        self,
+        slug: str,
+        *,
+        critical_only: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[RunTestsResponse]:
+        """
+        Executes every test in the flow's test suite (or only the critical tests when `critical_only` is true) against the flow's current graph and returns a summary of which passed, which failed, and whether any CRITICAL test failed. Tests always run against the latest draft of the flow; version targeting does not apply.
+
+        Parameters
+        ----------
+        slug : str
+            The unique identifier for the resource.
+
+        critical_only : typing.Optional[bool]
+            When true, run only the tests flagged as critical (a smoke test). Defaults to false (run the entire suite).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[RunTestsResponse]
+            The test run summary.
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"admin/flows/{encode_path_param(slug)}/tests/run",
+            method="POST",
+            json={
+                "critical_only": critical_only,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RunTestsResponse,
+                    parse_obj_as(
+                        type_=RunTestsResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
 
 class AsyncRawFlowsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -472,6 +552,85 @@ class AsyncRawFlowsClient:
                     Test,
                     parse_obj_as(
                         type_=Test,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 500:
+                raise InternalServerError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def run(
+        self,
+        slug: str,
+        *,
+        critical_only: typing.Optional[bool] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[RunTestsResponse]:
+        """
+        Executes every test in the flow's test suite (or only the critical tests when `critical_only` is true) against the flow's current graph and returns a summary of which passed, which failed, and whether any CRITICAL test failed. Tests always run against the latest draft of the flow; version targeting does not apply.
+
+        Parameters
+        ----------
+        slug : str
+            The unique identifier for the resource.
+
+        critical_only : typing.Optional[bool]
+            When true, run only the tests flagged as critical (a smoke test). Defaults to false (run the entire suite).
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[RunTestsResponse]
+            The test run summary.
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"admin/flows/{encode_path_param(slug)}/tests/run",
+            method="POST",
+            json={
+                "critical_only": critical_only,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    RunTestsResponse,
+                    parse_obj_as(
+                        type_=RunTestsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

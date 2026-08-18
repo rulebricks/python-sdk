@@ -11,7 +11,7 @@ from .schema_field_type import SchemaFieldType
 class SchemaField(UniversalBaseModel):
     key: typing.Optional[str] = pydantic.Field(default=None)
     """
-    The unique key for this field.
+    The unique key for this field. Nested facts use dot-separated identifiers.
     """
 
     show: typing.Optional[bool] = pydantic.Field(default=None)

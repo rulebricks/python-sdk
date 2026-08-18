@@ -7,6 +7,7 @@ from ...core.request_options import RequestOptions
 from ...types.folder import Folder
 from ...types.folder_list_response import FolderListResponse
 from .raw_client import AsyncRawFoldersClient, RawFoldersClient
+from .types.upsert_folder_request_type import UpsertFolderRequestType
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -27,12 +28,24 @@ class FoldersClient:
         """
         return self._raw_client
 
-    def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> FolderListResponse:
+    def list(
+        self,
+        *,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FolderListResponse:
         """
         Retrieve all rule folders for the authenticated user.
 
         Parameters
         ----------
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -50,7 +63,7 @@ class FoldersClient:
         )
         client.assets.folders.list()
         """
-        _response = self._raw_client.list(request_options=request_options)
+        _response = self._raw_client.list(user_group=user_group, name=name, request_options=request_options)
         return _response.data
 
     def upsert(
@@ -59,10 +72,11 @@ class FoldersClient:
         name: str,
         id: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
+        type: typing.Optional[UpsertFolderRequestType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Folder:
         """
-        Create a new rule folder or update an existing one for the authenticated user.
+        Create a new folder or update an existing one for the authenticated user. Folders are typed to organize rules (the default), flows, or contexts.
 
         Parameters
         ----------
@@ -74,6 +88,9 @@ class FoldersClient:
 
         description : typing.Optional[str]
             Description of the folder
+
+        type : typing.Optional[UpsertFolderRequestType]
+            The type of assets the folder organizes. Applies on creation; ignored when updating an existing folder.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -95,7 +112,9 @@ class FoldersClient:
             description="Rules for marketing automation workflows",
         )
         """
-        _response = self._raw_client.upsert(name=name, id=id, description=description, request_options=request_options)
+        _response = self._raw_client.upsert(
+            name=name, id=id, description=description, type=type, request_options=request_options
+        )
         return _response.data
 
     def delete(self, *, id: str, request_options: typing.Optional[RequestOptions] = None) -> Folder:
@@ -145,12 +164,24 @@ class AsyncFoldersClient:
         """
         return self._raw_client
 
-    async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> FolderListResponse:
+    async def list(
+        self,
+        *,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FolderListResponse:
         """
         Retrieve all rule folders for the authenticated user.
 
         Parameters
         ----------
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -176,7 +207,7 @@ class AsyncFoldersClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(request_options=request_options)
+        _response = await self._raw_client.list(user_group=user_group, name=name, request_options=request_options)
         return _response.data
 
     async def upsert(
@@ -185,10 +216,11 @@ class AsyncFoldersClient:
         name: str,
         id: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
+        type: typing.Optional[UpsertFolderRequestType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Folder:
         """
-        Create a new rule folder or update an existing one for the authenticated user.
+        Create a new folder or update an existing one for the authenticated user. Folders are typed to organize rules (the default), flows, or contexts.
 
         Parameters
         ----------
@@ -200,6 +232,9 @@ class AsyncFoldersClient:
 
         description : typing.Optional[str]
             Description of the folder
+
+        type : typing.Optional[UpsertFolderRequestType]
+            The type of assets the folder organizes. Applies on creation; ignored when updating an existing folder.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -230,7 +265,7 @@ class AsyncFoldersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.upsert(
-            name=name, id=id, description=description, request_options=request_options
+            name=name, id=id, description=description, type=type, request_options=request_options
         )
         return _response.data
 

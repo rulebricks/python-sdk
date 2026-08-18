@@ -3,14 +3,14 @@
 import typing
 
 import pydantic
-from ....core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 
-class CreateContextRequestSchemaItem(UniversalBaseModel):
-    key: typing.Optional[str] = None
-    name: typing.Optional[str] = None
-    type: typing.Optional[str] = None
-    default_value: typing.Optional[typing.Any] = None
+class RunTestsRequest(UniversalBaseModel):
+    critical_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    When true, run only the tests flagged as critical (a smoke test). Defaults to false (run the entire suite).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

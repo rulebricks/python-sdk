@@ -7,14 +7,10 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .create_context_request_on_schema_mismatch import CreateContextRequestOnSchemaMismatch
-    from .create_context_request_schema_item import CreateContextRequestSchemaItem
     from .update_context_request_on_schema_mismatch import UpdateContextRequestOnSchemaMismatch
-    from .update_context_request_schema_item import UpdateContextRequestSchemaItem
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateContextRequestOnSchemaMismatch": ".create_context_request_on_schema_mismatch",
-    "CreateContextRequestSchemaItem": ".create_context_request_schema_item",
     "UpdateContextRequestOnSchemaMismatch": ".update_context_request_on_schema_mismatch",
-    "UpdateContextRequestSchemaItem": ".update_context_request_schema_item",
 }
 
 
@@ -39,9 +35,4 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = [
-    "CreateContextRequestOnSchemaMismatch",
-    "CreateContextRequestSchemaItem",
-    "UpdateContextRequestOnSchemaMismatch",
-    "UpdateContextRequestSchemaItem",
-]
+__all__ = ["CreateContextRequestOnSchemaMismatch", "UpdateContextRequestOnSchemaMismatch"]

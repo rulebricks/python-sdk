@@ -219,7 +219,7 @@ class RulesClient:
                         },
                         settings=RuleImportRowSettings(
                             enabled=True,
-                            priority=1.0,
+                            priority=0.0,
                             schedule=[],
                         ),
                     ),
@@ -235,7 +235,7 @@ class RulesClient:
                         },
                         settings=RuleImportRowSettings(
                             enabled=True,
-                            priority=2.0,
+                            priority=0.0,
                             schedule=[],
                         ),
                     ),
@@ -252,18 +252,22 @@ class RulesClient:
         *,
         folder: typing.Optional[str] = None,
         user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RuleListResponse:
         """
-        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, or by user group name or ID when the API key has access to that group.
+        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
         folder : typing.Optional[str]
-            Filter rules by folder name or folder ID
+            Filter results by folder name or folder ID.
 
         user_group : typing.Optional[str]
-            Filter rules by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -284,7 +288,9 @@ class RulesClient:
             folder="Marketing Rules",
         )
         """
-        _response = self._raw_client.list(folder=folder, user_group=user_group, request_options=request_options)
+        _response = self._raw_client.list(
+            folder=folder, user_group=user_group, name=name, request_options=request_options
+        )
         return _response.data
 
 
@@ -515,7 +521,7 @@ class AsyncRulesClient:
                             },
                             settings=RuleImportRowSettings(
                                 enabled=True,
-                                priority=1.0,
+                                priority=0.0,
                                 schedule=[],
                             ),
                         ),
@@ -531,7 +537,7 @@ class AsyncRulesClient:
                             },
                             settings=RuleImportRowSettings(
                                 enabled=True,
-                                priority=2.0,
+                                priority=0.0,
                                 schedule=[],
                             ),
                         ),
@@ -551,18 +557,22 @@ class AsyncRulesClient:
         *,
         folder: typing.Optional[str] = None,
         user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RuleListResponse:
         """
-        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, or by user group name or ID when the API key has access to that group.
+        List all rules in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
         folder : typing.Optional[str]
-            Filter rules by folder name or folder ID
+            Filter results by folder name or folder ID.
 
         user_group : typing.Optional[str]
-            Filter rules by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -591,5 +601,7 @@ class AsyncRulesClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.list(folder=folder, user_group=user_group, request_options=request_options)
+        _response = await self._raw_client.list(
+            folder=folder, user_group=user_group, name=name, request_options=request_options
+        )
         return _response.data

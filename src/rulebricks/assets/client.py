@@ -78,12 +78,12 @@ class AssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
 
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads.
+            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
 
         conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
             How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
@@ -139,10 +139,11 @@ class AssetsClient:
         manifest_name: typing.Optional[str] = OMIT,
         manifest_description: typing.Optional[str] = OMIT,
         preview_only: typing.Optional[bool] = OMIT,
+        compress: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ExportRbmAssetsResponse:
         """
-        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm).
+        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array), which is much smaller and can be saved directly as a .rbm file; the import endpoint accepts both forms.
 
         Parameters
         ----------
@@ -163,6 +164,9 @@ class AssetsClient:
 
         preview_only : typing.Optional[bool]
             If true, returns a preview of what would be exported without the full data.
+
+        compress : typing.Optional[bool]
+            If true, the manifest in the response is returned in compressed form: the JSON array produced by the compress-json library instead of a plain object. Compressed manifests are substantially smaller, can be saved directly as a .rbm file, and are accepted by the import endpoint as-is. Intended for raw HTTP usage and file tooling; typed SDK clients should omit this flag, since the generated response type models the manifest as an object.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -192,6 +196,7 @@ class AssetsClient:
             manifest_name=manifest_name,
             manifest_description=manifest_description,
             preview_only=preview_only,
+            compress=compress,
             request_options=request_options,
         )
         return _response.data
@@ -284,12 +289,12 @@ class AsyncAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
 
         Parameters
         ----------
         manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads.
+            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
 
         conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
             How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
@@ -353,10 +358,11 @@ class AsyncAssetsClient:
         manifest_name: typing.Optional[str] = OMIT,
         manifest_description: typing.Optional[str] = OMIT,
         preview_only: typing.Optional[bool] = OMIT,
+        compress: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ExportRbmAssetsResponse:
         """
-        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm).
+        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array), which is much smaller and can be saved directly as a .rbm file; the import endpoint accepts both forms.
 
         Parameters
         ----------
@@ -377,6 +383,9 @@ class AsyncAssetsClient:
 
         preview_only : typing.Optional[bool]
             If true, returns a preview of what would be exported without the full data.
+
+        compress : typing.Optional[bool]
+            If true, the manifest in the response is returned in compressed form: the JSON array produced by the compress-json library instead of a plain object. Compressed manifests are substantially smaller, can be saved directly as a .rbm file, and are accepted by the import endpoint as-is. Intended for raw HTTP usage and file tooling; typed SDK clients should omit this flag, since the generated response type models the manifest as an object.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -414,6 +423,7 @@ class AsyncAssetsClient:
             manifest_name=manifest_name,
             manifest_description=manifest_description,
             preview_only=preview_only,
+            compress=compress,
             request_options=request_options,
         )
         return _response.data

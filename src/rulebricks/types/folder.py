@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .folder_type import FolderType
 
 
 class Folder(UniversalBaseModel):
@@ -21,6 +22,11 @@ class Folder(UniversalBaseModel):
     description: typing.Optional[str] = pydantic.Field(default=None)
     """
     Description of the folder.
+    """
+
+    type: typing.Optional[FolderType] = pydantic.Field(default=None)
+    """
+    The type of assets the folder organizes.
     """
 
     created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)

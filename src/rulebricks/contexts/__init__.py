@@ -7,19 +7,12 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from . import objects, relationships
-    from .objects import (
-        CreateContextRequestOnSchemaMismatch,
-        CreateContextRequestSchemaItem,
-        UpdateContextRequestOnSchemaMismatch,
-        UpdateContextRequestSchemaItem,
-    )
+    from .objects import CreateContextRequestOnSchemaMismatch, UpdateContextRequestOnSchemaMismatch
     from .relationships import CreateRelationshipRequestRelationType
 _dynamic_imports: typing.Dict[str, str] = {
     "CreateContextRequestOnSchemaMismatch": ".objects",
-    "CreateContextRequestSchemaItem": ".objects",
     "CreateRelationshipRequestRelationType": ".relationships",
     "UpdateContextRequestOnSchemaMismatch": ".objects",
-    "UpdateContextRequestSchemaItem": ".objects",
     "objects": ".objects",
     "relationships": ".relationships",
 }
@@ -48,10 +41,8 @@ def __dir__():
 
 __all__ = [
     "CreateContextRequestOnSchemaMismatch",
-    "CreateContextRequestSchemaItem",
     "CreateRelationshipRequestRelationType",
     "UpdateContextRequestOnSchemaMismatch",
-    "UpdateContextRequestSchemaItem",
     "objects",
     "relationships",
 ]

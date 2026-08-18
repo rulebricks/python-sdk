@@ -14,6 +14,8 @@ if typing.TYPE_CHECKING:
     from .contexts.client import AsyncContextsClient, ContextsClient
     from .decisions.client import AsyncDecisionsClient, DecisionsClient
     from .flows.client import AsyncFlowsClient, FlowsClient
+    from .infra.client import AsyncInfraClient, InfraClient
+    from .objects.client import AsyncObjectsClient, ObjectsClient
     from .rules.client import AsyncRulesClient, RulesClient
     from .tests.client import AsyncTestsClient, TestsClient
     from .users.client import AsyncUsersClient, UsersClient
@@ -104,11 +106,13 @@ class Rulebricks:
             logging=logging,
         )
         self._rules: typing.Optional[RulesClient] = None
+        self._infra: typing.Optional[InfraClient] = None
         self._flows: typing.Optional[FlowsClient] = None
         self._decisions: typing.Optional[DecisionsClient] = None
         self._users: typing.Optional[UsersClient] = None
         self._assets: typing.Optional[AssetsClient] = None
         self._values: typing.Optional[ValuesClient] = None
+        self._objects: typing.Optional[ObjectsClient] = None
         self._contexts: typing.Optional[ContextsClient] = None
         self._tests: typing.Optional[TestsClient] = None
 
@@ -119,6 +123,14 @@ class Rulebricks:
 
             self._rules = RulesClient(client_wrapper=self._client_wrapper)
         return self._rules
+
+    @property
+    def infra(self):
+        if self._infra is None:
+            from .infra.client import InfraClient  # noqa: E402
+
+            self._infra = InfraClient(client_wrapper=self._client_wrapper)
+        return self._infra
 
     @property
     def flows(self):
@@ -159,6 +171,14 @@ class Rulebricks:
 
             self._values = ValuesClient(client_wrapper=self._client_wrapper)
         return self._values
+
+    @property
+    def objects(self):
+        if self._objects is None:
+            from .objects.client import ObjectsClient  # noqa: E402
+
+            self._objects = ObjectsClient(client_wrapper=self._client_wrapper)
+        return self._objects
 
     @property
     def contexts(self):
@@ -277,11 +297,13 @@ class AsyncRulebricks:
             logging=logging,
         )
         self._rules: typing.Optional[AsyncRulesClient] = None
+        self._infra: typing.Optional[AsyncInfraClient] = None
         self._flows: typing.Optional[AsyncFlowsClient] = None
         self._decisions: typing.Optional[AsyncDecisionsClient] = None
         self._users: typing.Optional[AsyncUsersClient] = None
         self._assets: typing.Optional[AsyncAssetsClient] = None
         self._values: typing.Optional[AsyncValuesClient] = None
+        self._objects: typing.Optional[AsyncObjectsClient] = None
         self._contexts: typing.Optional[AsyncContextsClient] = None
         self._tests: typing.Optional[AsyncTestsClient] = None
 
@@ -292,6 +314,14 @@ class AsyncRulebricks:
 
             self._rules = AsyncRulesClient(client_wrapper=self._client_wrapper)
         return self._rules
+
+    @property
+    def infra(self):
+        if self._infra is None:
+            from .infra.client import AsyncInfraClient  # noqa: E402
+
+            self._infra = AsyncInfraClient(client_wrapper=self._client_wrapper)
+        return self._infra
 
     @property
     def flows(self):
@@ -332,6 +362,14 @@ class AsyncRulebricks:
 
             self._values = AsyncValuesClient(client_wrapper=self._client_wrapper)
         return self._values
+
+    @property
+    def objects(self):
+        if self._objects is None:
+            from .objects.client import AsyncObjectsClient  # noqa: E402
+
+            self._objects = AsyncObjectsClient(client_wrapper=self._client_wrapper)
+        return self._objects
 
     @property
     def contexts(self):

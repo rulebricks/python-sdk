@@ -19,7 +19,7 @@ class ContextSchema(UniversalBaseModel):
 
     derived: typing.Optional[typing.List[ContextSchemaField]] = pydantic.Field(default=None)
     """
-    Fields derived from bound rule/flow outputs.
+    Expression-computed fields. Each entry supplies an `expression` evaluated from base facts, tracked history, and configured relationships.
     """
 
     if IS_PYDANTIC_V2:

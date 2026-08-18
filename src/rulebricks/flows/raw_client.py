@@ -26,15 +26,23 @@ class RawFlowsClient:
         self._client_wrapper = client_wrapper
 
     def execute(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DynamicResponsePayload]:
         """
-        Execute a flow by its slug.
+        Execute a flow by its slug. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -47,7 +55,7 @@ class RawFlowsClient:
             Flow execution successful.
         """
         _response = self._client_wrapper.httpx_client.request(
-            f"flows/{encode_path_param(slug)}",
+            f"flows/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={
@@ -103,15 +111,23 @@ class AsyncRawFlowsClient:
         self._client_wrapper = client_wrapper
 
     async def execute(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DynamicResponsePayload]:
         """
-        Execute a flow by its slug.
+        Execute a flow by its slug. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -124,7 +140,7 @@ class AsyncRawFlowsClient:
             Flow execution successful.
         """
         _response = await self._client_wrapper.httpx_client.request(
-            f"flows/{encode_path_param(slug)}",
+            f"flows/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
             json=request,
             headers={

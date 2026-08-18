@@ -15,6 +15,7 @@ from ...errors.not_found_error import NotFoundError
 from ...types.error import Error
 from ...types.folder import Folder
 from ...types.folder_list_response import FolderListResponse
+from .types.upsert_folder_request_type import UpsertFolderRequestType
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -25,12 +26,24 @@ class RawFoldersClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> HttpResponse[FolderListResponse]:
+    def list(
+        self,
+        *,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[FolderListResponse]:
         """
         Retrieve all rule folders for the authenticated user.
 
         Parameters
         ----------
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -42,6 +55,10 @@ class RawFoldersClient:
         _response = self._client_wrapper.httpx_client.request(
             "admin/folders",
             method="GET",
+            params={
+                "user_group": user_group,
+                "name": name,
+            },
             request_options=request_options,
         )
         try:
@@ -80,10 +97,11 @@ class RawFoldersClient:
         name: str,
         id: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
+        type: typing.Optional[UpsertFolderRequestType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Folder]:
         """
-        Create a new rule folder or update an existing one for the authenticated user.
+        Create a new folder or update an existing one for the authenticated user. Folders are typed to organize rules (the default), flows, or contexts.
 
         Parameters
         ----------
@@ -95,6 +113,9 @@ class RawFoldersClient:
 
         description : typing.Optional[str]
             Description of the folder
+
+        type : typing.Optional[UpsertFolderRequestType]
+            The type of assets the folder organizes. Applies on creation; ignored when updating an existing folder.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -111,6 +132,7 @@ class RawFoldersClient:
                 "id": id,
                 "name": name,
                 "description": description,
+                "type": type,
             },
             headers={
                 "content-type": "application/json",
@@ -246,13 +268,23 @@ class AsyncRawFoldersClient:
         self._client_wrapper = client_wrapper
 
     async def list(
-        self, *, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        user_group: typing.Optional[str] = None,
+        name: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[FolderListResponse]:
         """
         Retrieve all rule folders for the authenticated user.
 
         Parameters
         ----------
+        user_group : typing.Optional[str]
+            Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
+
+        name : typing.Optional[str]
+            Filter results by name using a case-insensitive substring match.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -264,6 +296,10 @@ class AsyncRawFoldersClient:
         _response = await self._client_wrapper.httpx_client.request(
             "admin/folders",
             method="GET",
+            params={
+                "user_group": user_group,
+                "name": name,
+            },
             request_options=request_options,
         )
         try:
@@ -302,10 +338,11 @@ class AsyncRawFoldersClient:
         name: str,
         id: typing.Optional[str] = OMIT,
         description: typing.Optional[str] = OMIT,
+        type: typing.Optional[UpsertFolderRequestType] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Folder]:
         """
-        Create a new rule folder or update an existing one for the authenticated user.
+        Create a new folder or update an existing one for the authenticated user. Folders are typed to organize rules (the default), flows, or contexts.
 
         Parameters
         ----------
@@ -317,6 +354,9 @@ class AsyncRawFoldersClient:
 
         description : typing.Optional[str]
             Description of the folder
+
+        type : typing.Optional[UpsertFolderRequestType]
+            The type of assets the folder organizes. Applies on creation; ignored when updating an existing folder.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -333,6 +373,7 @@ class AsyncRawFoldersClient:
                 "id": id,
                 "name": name,
                 "description": description,
+                "type": type,
             },
             headers={
                 "content-type": "application/json",

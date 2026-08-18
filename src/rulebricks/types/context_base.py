@@ -34,7 +34,7 @@ class ContextBase(UniversalBaseModel):
 
     auto_execute_decisions: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    When true, bound rules and flows automatically execute when their inputs are satisfied. When false, users must manually call /solve or /flows endpoints.
+    When true, bound rules and flows automatically execute when their inputs are satisfied. When false, callers must execute them explicitly via /contexts/{slug}/{instance}/solve/{ruleSlug} or /contexts/{slug}/{instance}/flows/{flowSlug}.
     """
 
     ttl_seconds: typing.Optional[int] = pydantic.Field(default=None)
@@ -49,17 +49,7 @@ class ContextBase(UniversalBaseModel):
 
     on_schema_mismatch: typing.Optional[ContextBaseOnSchemaMismatch] = pydantic.Field(default=None)
     """
-    How to handle fields that don't match the schema: 'ignore' filters them out, 'reject' returns an error.
-    """
-
-    webhook_on_solve: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Webhook URL called when a rule or flow successfully solves for a live context.
-    """
-
-    webhook_on_expire: typing.Optional[str] = pydantic.Field(default=None)
-    """
-    Webhook URL called when a live context expires due to TTL.
+    How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or batch item), and `store` persists them alongside declared facts.
     """
 
     if IS_PYDANTIC_V2:

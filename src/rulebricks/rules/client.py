@@ -31,15 +31,23 @@ class RulesClient:
         return self._raw_client
 
     def solve(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicResponsePayload:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -60,26 +68,31 @@ class RulesClient:
         )
         client.rules.solve(
             slug="slug",
+            version="version",
             request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
         )
         """
-        _response = self._raw_client.solve(slug, request=request, request_options=request_options)
+        _response = self._raw_client.solve(slug, version=version, request=request, request_options=request_options)
         return _response.data
 
     def bulk_solve(
         self,
         slug: str,
         *,
+        version: str = "latest",
         request: typing.Sequence[DynamicRequestPayload],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[BulkRuleResponseItem]:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Executes a particular rule against multiple request data payloads provided in a list. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : typing.Sequence[DynamicRequestPayload]
 
@@ -100,13 +113,14 @@ class RulesClient:
         )
         client.rules.bulk_solve(
             slug="slug",
+            version="version",
             request=[
                 {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
                 {"name": "Jane Doe", "age": 28, "email": "jane@example.com"},
             ],
         )
         """
-        _response = self._raw_client.bulk_solve(slug, request=request, request_options=request_options)
+        _response = self._raw_client.bulk_solve(slug, version=version, request=request, request_options=request_options)
         return _response.data
 
     def parallel_solve(
@@ -125,7 +139,7 @@ class RulesClient:
         Returns
         -------
         ParallelSolveResponse
-            Parallel execution successful. The response is an object mirroring the request structure, but providing each rule/flow's results instead.
+            Parallel execution completed. The response is an object mirroring the request structure, providing each rule/flow's results instead. Each entry is evaluated independently: any rule/flow that cannot be executed (e.g. not found, not published, invalid input, or an internal evaluation error) reports a reserved `$error` object in its slot, while every other entry still returns its results. A 200 is returned as long as the request itself is well-formed, even if some (or all) individual entries fail.
 
         Examples
         --------
@@ -165,15 +179,23 @@ class AsyncRulesClient:
         return self._raw_client
 
     async def solve(
-        self, slug: str, *, request: DynamicRequestPayload, request_options: typing.Optional[RequestOptions] = None
+        self,
+        slug: str,
+        *,
+        version: str = "latest",
+        request: DynamicRequestPayload,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> DynamicResponsePayload:
         """
-        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration.
+        Executes a single rule identified by a unique slug. The request and response formats are dynamic, dependent on the rule configuration. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : DynamicRequestPayload
 
@@ -199,29 +221,36 @@ class AsyncRulesClient:
         async def main() -> None:
             await client.rules.solve(
                 slug="slug",
+                version="version",
                 request={"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.solve(slug, request=request, request_options=request_options)
+        _response = await self._raw_client.solve(
+            slug, version=version, request=request, request_options=request_options
+        )
         return _response.data
 
     async def bulk_solve(
         self,
         slug: str,
         *,
+        version: str = "latest",
         request: typing.Sequence[DynamicRequestPayload],
         request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[BulkRuleResponseItem]:
         """
-        Executes a particular rule against multiple request data payloads provided in a list.
+        Executes a particular rule against multiple request data payloads provided in a list. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
 
         Parameters
         ----------
         slug : str
             The unique identifier for the resource.
+
+        version : str
+            The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
         request : typing.Sequence[DynamicRequestPayload]
 
@@ -247,6 +276,7 @@ class AsyncRulesClient:
         async def main() -> None:
             await client.rules.bulk_solve(
                 slug="slug",
+                version="version",
                 request=[
                     {"name": "John Doe", "age": 30, "email": "jdoe@acme.co"},
                     {"name": "Jane Doe", "age": 28, "email": "jane@example.com"},
@@ -256,7 +286,9 @@ class AsyncRulesClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.bulk_solve(slug, request=request, request_options=request_options)
+        _response = await self._raw_client.bulk_solve(
+            slug, version=version, request=request, request_options=request_options
+        )
         return _response.data
 
     async def parallel_solve(
@@ -275,7 +307,7 @@ class AsyncRulesClient:
         Returns
         -------
         ParallelSolveResponse
-            Parallel execution successful. The response is an object mirroring the request structure, but providing each rule/flow's results instead.
+            Parallel execution completed. The response is an object mirroring the request structure, providing each rule/flow's results instead. Each entry is evaluated independently: any rule/flow that cannot be executed (e.g. not found, not published, invalid input, or an internal evaluation error) reports a reserved `$error` object in its slot, while every other entry still returns its results. A 200 is returned as long as the request itself is well-formed, even if some (or all) individual entries fail.
 
         Examples
         --------

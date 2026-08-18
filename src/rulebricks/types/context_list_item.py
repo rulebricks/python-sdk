@@ -25,6 +25,11 @@ class ContextListItem(ContextBase):
     schema_: typing_extensions.Annotated[
         typing.Optional[ContextSchema], FieldMetadata(alias="schema"), pydantic.Field(alias="schema")
     ] = None
+    user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    The user groups this context is assigned to.
+    """
+
     folder: typing.Optional[ContextListItemFolder] = None
     bound_rules_count: typing.Optional[int] = pydantic.Field(default=None)
     """
