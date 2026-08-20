@@ -200,9 +200,9 @@ class RawRelationshipsClient:
                 raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        Error,
+                        typing.Any,
                         parse_obj_as(
-                            type_=Error,  # type: ignore
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -481,9 +481,9 @@ class AsyncRawRelationshipsClient:
                 raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
-                        Error,
+                        typing.Any,
                         parse_obj_as(
-                            type_=Error,  # type: ignore
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),

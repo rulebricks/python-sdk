@@ -72,18 +72,40 @@ class Vocabulary:
         if name in cls._cache:
             return cls._cache[name]
 
-        # Use SDK to find value
-        values = cls._workspace.values.list()
-        value = next((v for v in values if v.name == name), None)
+        # Use the generated SDK's filtered, paginated list operation.
+        cursor = None
+        value = None
+        seen_cursors = set()
+        while True:
+            response = cls._workspace.values.list(
+                name=name,
+                limit=1000,
+                cursor=cursor
+            )
+            if isinstance(response, list):
+                values = response
+                next_cursor = None
+            else:
+                values = getattr(response, "data", None) or []
+                next_cursor = getattr(response, "next_cursor", None)
+
+            value = next((item for item in values if item.name == name), None)
+            if value or not next_cursor:
+                break
+            if next_cursor in seen_cursors:
+                break
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
 
         if not value:
             raise VocabularyValueNotFoundError(f"Vocabulary value '{name}' not found")
 
         # Convert SDK type to our VocabularyValueType
+        raw_type = getattr(value, "type", None)
         try:
-            value_type = VocabularyValueType(value.type)
-        except (ValueError, AttributeError):
-            raise ValueError(f"Invalid type '{value.type}' for vocabulary value '{name}'")
+            value_type = VocabularyValueType(raw_type)
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid type '{raw_type}' for vocabulary value '{name}'")
 
         # Create and cache the vocabulary value
         vocabulary_value = VocabularyValue(value.id, name, value_type)
@@ -129,6 +151,7 @@ class Vocabulary:
             request["metadata_by_name"] = metadata_by_name
 
         cls._workspace.values.update(**request)
+        cls.clear_cache()
 
     @classmethod
     def clear_cache(cls) -> None:

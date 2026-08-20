@@ -7,11 +7,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .asset_labels import AssetLabels
 
 
-class RuleExport(UniversalBaseModel):
-    """
-    The exported rule object containing all rule definition data. This payload intentionally preserves raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
-    """
-
+class ManifestLabeledAssetData(UniversalBaseModel):
     labels: typing.Optional[AssetLabels] = None
 
     if IS_PYDANTIC_V2:

@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .manifest_labeled_asset import ManifestLabeledAsset
 
 
 class ExportManifestResponseManifest(UniversalBaseModel):
@@ -38,12 +39,12 @@ class ExportManifestResponseManifest(UniversalBaseModel):
     Exported vocabulary values.
     """
 
-    rules: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    rules: typing.Optional[typing.List[ManifestLabeledAsset]] = pydantic.Field(default=None)
     """
     Exported rules.
     """
 
-    flows: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    flows: typing.Optional[typing.List[ManifestLabeledAsset]] = pydantic.Field(default=None)
     """
     Exported flows.
     """

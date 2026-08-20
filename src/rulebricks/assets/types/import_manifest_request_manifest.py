@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ...types.manifest_labeled_asset import ManifestLabeledAsset
 
 
 class ImportManifestRequestManifest(UniversalBaseModel):
@@ -16,12 +17,12 @@ class ImportManifestRequestManifest(UniversalBaseModel):
     Manifest format version.
     """
 
-    rules: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    rules: typing.Optional[typing.List[ManifestLabeledAsset]] = pydantic.Field(default=None)
     """
     Rules to import.
     """
 
-    flows: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    flows: typing.Optional[typing.List[ManifestLabeledAsset]] = pydantic.Field(default=None)
     """
     Flows to import.
     """
@@ -38,7 +39,7 @@ class ImportManifestRequestManifest(UniversalBaseModel):
 
     values: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Vocabulary values to import.
+    Vocabulary values to import. Entries in object-managed namespaces are skipped and reported instead of being overwritten.
     """
 
     if IS_PYDANTIC_V2:

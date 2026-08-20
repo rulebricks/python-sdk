@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
+from .asset_labels import AssetLabels
 from .flow_base import FlowBase
 from .flow_detail_context import FlowDetailContext
 from .flow_detail_origin_rule import FlowDetailOriginRule
@@ -22,6 +23,7 @@ class FlowDetail(FlowBase):
     The date this flow was last updated.
     """
 
+    labels: typing.Optional[AssetLabels] = None
     origin_rule: typing.Optional[FlowDetailOriginRule] = pydantic.Field(default=None)
     """
     The origin rule that this flow starts from. Flows execute starting from this rule's outputs.

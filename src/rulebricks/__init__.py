@@ -7,6 +7,7 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
+        AssetLabels,
         BulkRuleResponseItem,
         BulkRuleResponseItemError,
         CascadeContextRequest,
@@ -104,6 +105,10 @@ if typing.TYPE_CHECKING:
         ImportManifestResponseOrganizationCreated,
         ImportManifestResponseSkippedItem,
         ImportManifestResponseUpdatedItem,
+        ManifestLabeledAsset,
+        ManifestLabeledAssetData,
+        ObjectUpsertConflictResponse,
+        ObjectValueCollision,
         ParallelSolveEntityError,
         ParallelSolveEntityErrorError,
         ParallelSolveRequest,
@@ -169,6 +174,8 @@ if typing.TYPE_CHECKING:
         TestTestStateEvaluationError,
         UpdateContextResponse,
         UpdateValuesSummaryResponse,
+        UpsertObjectRequest,
+        UpsertObjectRequestFieldRename,
         UpsertObjectResponse,
         UpsertObjectResponseValues,
         UpsertObjectResponseValuesWouldArchiveItem,
@@ -183,6 +190,7 @@ if typing.TYPE_CHECKING:
         ValueReference,
         ValueReferenceRb,
         WorkspaceObject,
+        WorkspaceObjectParsedFieldsItem,
     )
     from .errors import (
         BadRequestError,
@@ -218,6 +226,7 @@ if typing.TYPE_CHECKING:
     from .values import ListValuesResponse, UpdateValuesResponse
     from .forge import Rule, Condition, Vocabulary, VocabularyValue
 _dynamic_imports: typing.Dict[str, str] = {
+    "AssetLabels": ".types",
     "AsyncRulebricks": ".client",
     "BadRequestError": ".errors",
     "BulkRuleResponseItem": ".types",
@@ -331,7 +340,11 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ImportManifestResponseUpdatedItem": ".types",
     "InternalServerError": ".errors",
     "ListValuesResponse": ".values",
+    "ManifestLabeledAsset": ".types",
+    "ManifestLabeledAssetData": ".types",
     "NotFoundError": ".errors",
+    "ObjectUpsertConflictResponse": ".types",
+    "ObjectValueCollision": ".types",
     "ParallelSolveEntityError": ".types",
     "ParallelSolveEntityErrorError": ".types",
     "ParallelSolveRequest": ".types",
@@ -407,6 +420,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "UpdateContextResponse": ".types",
     "UpdateValuesResponse": ".values",
     "UpdateValuesSummaryResponse": ".types",
+    "UpsertObjectRequest": ".types",
+    "UpsertObjectRequestFieldRename": ".types",
     "UpsertObjectResponse": ".types",
     "UpsertObjectResponseValues": ".types",
     "UpsertObjectResponseValuesWouldArchiveItem": ".types",
@@ -422,6 +437,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ValueReference": ".types",
     "ValueReferenceRb": ".types",
     "WorkspaceObject": ".types",
+    "WorkspaceObjectParsedFieldsItem": ".types",
     "assets": ".assets",
     "contexts": ".contexts",
     "decisions": ".decisions",
@@ -457,6 +473,7 @@ def __dir__():
 
 
 __all__ = [
+    "AssetLabels",
     "AsyncRulebricks",
     "BadRequestError",
     "BulkRuleResponseItem",
@@ -570,7 +587,11 @@ __all__ = [
     "ImportManifestResponseUpdatedItem",
     "InternalServerError",
     "ListValuesResponse",
+    "ManifestLabeledAsset",
+    "ManifestLabeledAssetData",
     "NotFoundError",
+    "ObjectUpsertConflictResponse",
+    "ObjectValueCollision",
     "ParallelSolveEntityError",
     "ParallelSolveEntityErrorError",
     "ParallelSolveRequest",
@@ -646,6 +667,8 @@ __all__ = [
     "UpdateContextResponse",
     "UpdateValuesResponse",
     "UpdateValuesSummaryResponse",
+    "UpsertObjectRequest",
+    "UpsertObjectRequestFieldRename",
     "UpsertObjectResponse",
     "UpsertObjectResponseValues",
     "UpsertObjectResponseValuesWouldArchiveItem",
@@ -661,6 +684,7 @@ __all__ = [
     "ValueReference",
     "ValueReferenceRb",
     "WorkspaceObject",
+    "WorkspaceObjectParsedFieldsItem",
     "assets",
     "contexts",
     "decisions",

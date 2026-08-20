@@ -78,7 +78,7 @@ class RawAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ImportManifestResponse]:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class RawAssetsClient:
         Returns
         -------
         HttpResponse[ImportManifestResponse]
-            Import completed successfully
+            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
         """
         _response = self._client_wrapper.httpx_client.request(
             "admin/import",
@@ -324,7 +324,7 @@ class AsyncRawAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ImportManifestResponse]:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
@@ -346,7 +346,7 @@ class AsyncRawAssetsClient:
         Returns
         -------
         AsyncHttpResponse[ImportManifestResponse]
-            Import completed successfully
+            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "admin/import",

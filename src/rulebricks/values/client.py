@@ -112,12 +112,12 @@ class ValuesClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UpdateValuesResponse:
         """
-        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures.
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
+            A dictionary of keys and values to update or add. This developer-facing sync contract preserves source names and nesting: nested objects are flattened using dot notation while every key segment stays exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
@@ -368,12 +368,12 @@ class AsyncValuesClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UpdateValuesResponse:
         """
-        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. nested 'user_profile.first_name' becomes the value name 'user_profile.first_name'). Writes are set-based upserts keyed by value name - existing values keep their ids, so rule references stay valid - and each call is idempotent, so retrying a failed request is always safe. Imports of any size go through this endpoint (POST /values/bulk is an equivalent alias): drive large dictionaries as a sequence of chunked calls, each bounded by your deployment's request body limit. Payloads may compose values from other values with reference markers: { "$ref": "<value name>" } references a value by name (existing values first, then values created by the same request), and { "$rb": "globalValue", "id": "<value id>" } references by id. A scalar payload may be a single reference; list payloads may mix literal items and references. References are validated (existence, type match, cycles) before anything is written. Workspaces at or below the catalog threshold receive the full value list back (legacy behavior); larger workspaces receive summary counts ({ created, updated, processed }).
+        Update existing vocabulary values or add new ones for the authenticated user. Supports both flat and nested object structures.
 
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. Supports both flat key-value pairs and nested objects. Nested objects are automatically flattened using dot notation with keys preserved exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
+            A dictionary of keys and values to update or add. This developer-facing sync contract preserves source names and nesting: nested objects are flattened using dot notation while every key segment stays exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.

@@ -29,7 +29,7 @@ class ImportManifestResponse(UniversalBaseModel):
 
     skipped: typing.Optional[typing.List[ImportManifestResponseSkippedItem]] = pydantic.Field(default=None)
     """
-    Assets that were skipped during import.
+    Assets that were skipped during import. Object-managed values are listed here with a reason such as 'Collection is managed by a workspace object' or 'Value is managed by a workspace object'; they do not cause a whole-import 409.
     """
 
     errors: typing.Optional[typing.List[ImportManifestResponseErrorsItem]] = pydantic.Field(default=None)

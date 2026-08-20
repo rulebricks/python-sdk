@@ -314,7 +314,7 @@ class ContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContextBatchResponse:
         """
-        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests.
 
         Parameters
         ----------
@@ -708,7 +708,7 @@ class AsyncContextsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ContextBatchResponse:
         """
-        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests. On the cloud platform, a batch may not exceed the plan's remaining monthly rule executions (402 above it) or a 4.5MB request body, and executed rules count toward plan usage. Private (self-hosted) deployments run batches through the high-performance server with no plan gating, a 10,000-records-per-request default cap (CONTEXT_BATCH_MAX_ITEMS), and NDJSON support (Content-Type: application/x-ndjson).
+        Submit an array of records to any context in one synchronous call. Records merge into their context instances (matched by the context's identity fact), bound rules and flows whose inputs became satisfied execute, and the response returns the resolved state of every touched instance. Retries are always safe: merges are idempotent and executions are deduplicated by input hash. Fact history is recorded for tracked facts exactly as on individual writes. Clients chunk large datasets across requests.
 
         Parameters
         ----------

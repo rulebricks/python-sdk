@@ -9,6 +9,11 @@ from .workspace_object import WorkspaceObject
 
 
 class UpsertObjectResponse(UniversalBaseModel):
+    dry_run: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Present and true for a dry-run response; no object or managed values were written.
+    """
+
     created: typing.Optional[bool] = pydantic.Field(default=None)
     """
     True when the object was created by this call.

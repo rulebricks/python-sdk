@@ -78,7 +78,7 @@ class AssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
@@ -100,11 +100,11 @@ class AssetsClient:
         Returns
         -------
         ImportManifestResponse
-            Import completed successfully
+            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
 
         Examples
         --------
-        from rulebricks import Rulebricks
+        from rulebricks import ManifestLabeledAsset, Rulebricks
         from rulebricks.assets import ImportManifestRequestManifest
 
         client = Rulebricks(
@@ -113,8 +113,8 @@ class AssetsClient:
         client.assets.import_rbm(
             manifest=ImportManifestRequestManifest(
                 version="1.0",
-                rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
-                flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
+                rules=[ManifestLabeledAsset()],
+                flows=[ManifestLabeledAsset()],
                 entities=[{"name": "Customer", "slug": "customer"}],
                 values=[{"name": "tax_rate", "value": 0.08}],
             ),
@@ -289,7 +289,7 @@ class AsyncAssetsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ImportManifestResponse:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm). Both plain manifests and compressed ones (the compress-json array form produced by exporting with `compress: true`) are accepted and detected automatically. Run Flow (subflow) references between flows in the manifest are resolved to the slugs, IDs, and published versions the flows receive in this workspace.
+        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
 
         Parameters
         ----------
@@ -311,13 +311,13 @@ class AsyncAssetsClient:
         Returns
         -------
         ImportManifestResponse
-            Import completed successfully
+            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
 
         Examples
         --------
         import asyncio
 
-        from rulebricks import AsyncRulebricks
+        from rulebricks import AsyncRulebricks, ManifestLabeledAsset
         from rulebricks.assets import ImportManifestRequestManifest
 
         client = AsyncRulebricks(
@@ -329,8 +329,8 @@ class AsyncAssetsClient:
             await client.assets.import_rbm(
                 manifest=ImportManifestRequestManifest(
                     version="1.0",
-                    rules=[{"name": "Pricing Rule", "slug": "pricing-rule"}],
-                    flows=[{"name": "Onboarding Flow", "slug": "onboarding-flow"}],
+                    rules=[ManifestLabeledAsset()],
+                    flows=[ManifestLabeledAsset()],
                     entities=[{"name": "Customer", "slug": "customer"}],
                     values=[{"name": "tax_rate", "value": 0.08}],
                 ),

@@ -69,7 +69,7 @@ class RawInfraClient:
 
     def scale(self, *, request_options: typing.Optional[RequestOptions] = None) -> HttpResponse[ScaleStatusResponse]:
         """
-        Pre-scales the deployment's solver fleet to its maximum capacity ahead of a large batch workload, so the first wave of requests never pays the scale-from-baseline window. Takes no request body: the target is always the deployment's own configured ceiling. The fleet stays warm for a bounded window (default 10 minutes; repeat calls refresh it), after which normal autoscaling reclaims the capacity - an unused warm-up costs at most that window. Poll the GET variant until `status` is `ready` before starting the batch. Self-hosted deployments only.
+        Scales up the deployment's solver fleet to its maximum capacity ahead of a known incoming batch workload. Usually takes 1-2 minutes to complete. This is completely optional, the solver fleet will scale up automatically as needed anyway. Self-hosted deployments only.
 
         Parameters
         ----------
@@ -176,7 +176,7 @@ class AsyncRawInfraClient:
         self, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[ScaleStatusResponse]:
         """
-        Pre-scales the deployment's solver fleet to its maximum capacity ahead of a large batch workload, so the first wave of requests never pays the scale-from-baseline window. Takes no request body: the target is always the deployment's own configured ceiling. The fleet stays warm for a bounded window (default 10 minutes; repeat calls refresh it), after which normal autoscaling reclaims the capacity - an unused warm-up costs at most that window. Poll the GET variant until `status` is `ready` before starting the batch. Self-hosted deployments only.
+        Scales up the deployment's solver fleet to its maximum capacity ahead of a known incoming batch workload. Usually takes 1-2 minutes to complete. This is completely optional, the solver fleet will scale up automatically as needed anyway. Self-hosted deployments only.
 
         Parameters
         ----------

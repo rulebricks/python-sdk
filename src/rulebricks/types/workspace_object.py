@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .workspace_object_parsed_fields_item import WorkspaceObjectParsedFieldsItem
 
 
 class WorkspaceObject(UniversalBaseModel):
@@ -19,7 +20,7 @@ class WorkspaceObject(UniversalBaseModel):
 
     name: str = pydantic.Field()
     """
-    Display name (unique in practice per workspace).
+    Display name (unique in practice per workspace). Changing it does not move managed collection paths, which derive from schema field keys.
     """
 
     content: str = pydantic.Field()
@@ -37,9 +38,9 @@ class WorkspaceObject(UniversalBaseModel):
     Original import format ('json', 'csv', or 'ddl').
     """
 
-    parsed_fields: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
+    parsed_fields: typing.Optional[typing.List[WorkspaceObjectParsedFieldsItem]] = pydantic.Field(default=None)
     """
-    Flattened field descriptors derived from the schema.
+    Flattened field descriptors derived from the schema. Fields inside arrays of objects use an item-relative key (for example, 'status'), a scope naming the containing array (for example, 'boss'), and a schemaPath for locating the field in the source schema (for example, 'boss[].status'). The object remains a single stored API resource.
     """
 
     user_groups: typing.Optional[typing.List[str]] = pydantic.Field(default=None)

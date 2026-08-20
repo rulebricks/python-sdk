@@ -10,6 +10,7 @@ from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.forbidden_error import ForbiddenError
@@ -17,6 +18,7 @@ from ..errors.internal_server_error import InternalServerError
 from ..errors.not_found_error import NotFoundError
 from ..types.delete_object_response import DeleteObjectResponse
 from ..types.error import Error
+from ..types.upsert_object_request import UpsertObjectRequest
 from ..types.upsert_object_response import UpsertObjectResponse
 from ..types.workspace_object import WorkspaceObject
 from .types.delete_objects_request_values import DeleteObjectsRequestValues
@@ -34,7 +36,7 @@ class RawObjectsClient:
         self, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[typing.List[WorkspaceObject]]:
         """
-        Lists the workspace's objects (JSON Schemas). Results are scoped to the API key holder's user groups, matching the visibility model of values, rules, and flows: group-restricted keys only see objects whose user_groups overlap theirs.
+        Lists the workspace's objects (JSON Schemas). The provided API key must have permission to view vocabulary values. Results are scoped to the API key holder's user groups.
 
         Parameters
         ----------
@@ -61,6 +63,17 @@ class RawObjectsClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 500:
                 raise InternalServerError(
                     headers=dict(_response.headers),
@@ -82,38 +95,14 @@ class RawObjectsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def upsert(
-        self,
-        *,
-        content: str,
-        id: typing.Optional[str] = OMIT,
-        name: typing.Optional[str] = OMIT,
-        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
-        dry_run: typing.Optional[bool] = OMIT,
-        expected_updated_at: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
+        self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[UpsertObjectResponse]:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source.
+        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
 
         Parameters
         ----------
-        content : str
-            The object's JSON Schema as a string. Enums in the schema become the object's managed values.
-
-        id : typing.Optional[str]
-            Object ID to update. Omit to resolve by name (creating the object when the name is new).
-
-        name : typing.Optional[str]
-            Object name. Required when ID is omitted; used to resolve the existing object or to name a new one.
-
-        user_groups : typing.Optional[typing.Sequence[str]]
-            User groups for the object, propagated to every value it generates. Omit to keep the current groups.
-
-        dry_run : typing.Optional[bool]
-            Preview the value diff (would_sync / would_archive) without writing anything.
-
-        expected_updated_at : typing.Optional[str]
-            Optimistic concurrency: reject with 409 when the object's updated_at no longer matches.
+        request : UpsertObjectRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -126,17 +115,9 @@ class RawObjectsClient:
         _response = self._client_wrapper.httpx_client.request(
             "objects",
             method="PUT",
-            json={
-                "id": id,
-                "name": name,
-                "content": content,
-                "user_groups": user_groups,
-                "dry_run": dry_run,
-                "expected_updated_at": expected_updated_at,
-            },
-            headers={
-                "content-type": "application/json",
-            },
+            json=convert_and_respect_annotation_metadata(
+                object_=request, annotation=UpsertObjectRequest, direction="write"
+            ),
             request_options=request_options,
             omit=OMIT,
         )
@@ -172,13 +153,24 @@ class RawObjectsClient:
                         ),
                     ),
                 )
-            if _response.status_code == 409:
-                raise ConflictError(
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -207,7 +199,7 @@ class RawObjectsClient:
         self, object_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[WorkspaceObject]:
         """
-        Fetches one object by ID or exact name.
+        Fetches one object by ID or exact name. The provided API key must have permission to view vocabulary values.
 
         Parameters
         ----------
@@ -237,6 +229,17 @@ class RawObjectsClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 404:
                 raise NotFoundError(
                     headers=dict(_response.headers),
@@ -276,7 +279,7 @@ class RawObjectsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[DeleteObjectResponse]:
         """
-        Deletes the object. Its generated values always lose their management lock; by default they are also archived (published rules keep resolving them by id). Pass values=detach to keep them active as ordinary, hand-editable values instead. Requires the manage objects entitlement.
+        Deletes the object. By default, unused values are permanently deleted while values referenced by draft, current, or historical rules, flows, or other vocabulary values are archived. Pass values=detach to keep every generated value active as an ordinary, hand-editable value.
 
         Parameters
         ----------
@@ -284,7 +287,7 @@ class RawObjectsClient:
             Object ID or exact name
 
         values : typing.Optional[DeleteObjectsRequestValues]
-            What happens to the values this object generated: 'archive' (default) or 'detach'.
+            What happens to generated values: 'archive' (default) permanently deletes unused values and archives referenced values; 'detach' retains all values as active ordinary values.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -363,7 +366,7 @@ class AsyncRawObjectsClient:
         self, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[typing.List[WorkspaceObject]]:
         """
-        Lists the workspace's objects (JSON Schemas). Results are scoped to the API key holder's user groups, matching the visibility model of values, rules, and flows: group-restricted keys only see objects whose user_groups overlap theirs.
+        Lists the workspace's objects (JSON Schemas). The provided API key must have permission to view vocabulary values. Results are scoped to the API key holder's user groups.
 
         Parameters
         ----------
@@ -390,6 +393,17 @@ class AsyncRawObjectsClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 500:
                 raise InternalServerError(
                     headers=dict(_response.headers),
@@ -411,38 +425,14 @@ class AsyncRawObjectsClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def upsert(
-        self,
-        *,
-        content: str,
-        id: typing.Optional[str] = OMIT,
-        name: typing.Optional[str] = OMIT,
-        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
-        dry_run: typing.Optional[bool] = OMIT,
-        expected_updated_at: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
+        self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[UpsertObjectResponse]:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source.
+        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
 
         Parameters
         ----------
-        content : str
-            The object's JSON Schema as a string. Enums in the schema become the object's managed values.
-
-        id : typing.Optional[str]
-            Object ID to update. Omit to resolve by name (creating the object when the name is new).
-
-        name : typing.Optional[str]
-            Object name. Required when ID is omitted; used to resolve the existing object or to name a new one.
-
-        user_groups : typing.Optional[typing.Sequence[str]]
-            User groups for the object, propagated to every value it generates. Omit to keep the current groups.
-
-        dry_run : typing.Optional[bool]
-            Preview the value diff (would_sync / would_archive) without writing anything.
-
-        expected_updated_at : typing.Optional[str]
-            Optimistic concurrency: reject with 409 when the object's updated_at no longer matches.
+        request : UpsertObjectRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -455,17 +445,9 @@ class AsyncRawObjectsClient:
         _response = await self._client_wrapper.httpx_client.request(
             "objects",
             method="PUT",
-            json={
-                "id": id,
-                "name": name,
-                "content": content,
-                "user_groups": user_groups,
-                "dry_run": dry_run,
-                "expected_updated_at": expected_updated_at,
-            },
-            headers={
-                "content-type": "application/json",
-            },
+            json=convert_and_respect_annotation_metadata(
+                object_=request, annotation=UpsertObjectRequest, direction="write"
+            ),
             request_options=request_options,
             omit=OMIT,
         )
@@ -501,13 +483,24 @@ class AsyncRawObjectsClient:
                         ),
                     ),
                 )
-            if _response.status_code == 409:
-                raise ConflictError(
+            if _response.status_code == 404:
+                raise NotFoundError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -536,7 +529,7 @@ class AsyncRawObjectsClient:
         self, object_id: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[WorkspaceObject]:
         """
-        Fetches one object by ID or exact name.
+        Fetches one object by ID or exact name. The provided API key must have permission to view vocabulary values.
 
         Parameters
         ----------
@@ -566,6 +559,17 @@ class AsyncRawObjectsClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 404:
                 raise NotFoundError(
                     headers=dict(_response.headers),
@@ -605,7 +609,7 @@ class AsyncRawObjectsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[DeleteObjectResponse]:
         """
-        Deletes the object. Its generated values always lose their management lock; by default they are also archived (published rules keep resolving them by id). Pass values=detach to keep them active as ordinary, hand-editable values instead. Requires the manage objects entitlement.
+        Deletes the object. By default, unused values are permanently deleted while values referenced by draft, current, or historical rules, flows, or other vocabulary values are archived. Pass values=detach to keep every generated value active as an ordinary, hand-editable value.
 
         Parameters
         ----------
@@ -613,7 +617,7 @@ class AsyncRawObjectsClient:
             Object ID or exact name
 
         values : typing.Optional[DeleteObjectsRequestValues]
-            What happens to the values this object generated: 'archive' (default) or 'detach'.
+            What happens to generated values: 'archive' (default) permanently deletes unused values and archives referenced values; 'detach' retains all values as active ordinary values.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

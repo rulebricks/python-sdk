@@ -4,15 +4,19 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .asset_labels import AssetLabels
+from .object_value_collision import ObjectValueCollision
 
 
-class RuleExport(UniversalBaseModel):
+class ObjectUpsertConflictResponse(UniversalBaseModel):
+    error: str = pydantic.Field()
     """
-    The exported rule object containing all rule definition data. This payload intentionally preserves raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
+    Conflict message.
     """
 
-    labels: typing.Optional[AssetLabels] = None
+    collisions: typing.Optional[typing.List[ObjectValueCollision]] = pydantic.Field(default=None)
+    """
+    Values the object would generate but cannot adopt or overwrite. Present for value-name collisions and omitted for conflicts without colliding values.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

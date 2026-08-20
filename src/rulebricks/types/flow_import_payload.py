@@ -6,6 +6,7 @@ import pydantic
 import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from ..core.serialization import FieldMetadata
+from .asset_labels import AssetLabels
 from .rulebricks_flow_connection import RulebricksFlowConnection
 from .rulebricks_flow_node import RulebricksFlowNode
 
@@ -25,6 +26,7 @@ class FlowImportPayload(UniversalBaseModel):
     Optional flow description.
     """
 
+    labels: typing.Optional[AssetLabels] = None
     nodes: typing.List[RulebricksFlowNode] = pydantic.Field()
     """
     The flow's nodes. Exactly one must be an `origin`.

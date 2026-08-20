@@ -1,5 +1,7 @@
-from typing import Any, Union, List, Optional, Generic, TypeVar
+import math
 from datetime import datetime
+from typing import Any, Union, List, Optional, Generic, TypeVar
+
 from .types import OperatorDef, OperatorArg, Field, VocabularyValueType, TypeMismatchError
 from .vocabulary import VocabularyValue
 
@@ -8,13 +10,24 @@ U = TypeVar('U')  # For handling nested generic types
 
 class Argument(Generic[T]):
     """Represents a value that could be either a primitive or vocabulary value"""
-    def __init__(self, value: Union[T, VocabularyValue], expected_type: VocabularyValueType):
+    def __init__(
+        self,
+        value: Union[T, VocabularyValue],
+        expected_type: Optional[VocabularyValueType] = None
+    ):
         self.value = value
         self.expected_type = expected_type
         self._validate_type()
 
     def _validate_type(self) -> None:
         """Validate that the value matches the expected type"""
+        if self.expected_type is None:
+            if not self._is_valid_generic_literal(self.value):
+                raise TypeMismatchError(
+                    f"Value {self.value} is not a valid generic literal"
+                )
+            return
+
         if isinstance(self.value, VocabularyValue):
             if self.value.value_type != self.expected_type:
                 raise TypeMismatchError(
@@ -22,22 +35,95 @@ class Argument(Generic[T]):
                     f"but {self.expected_type.value} was expected"
                 )
         else:
-            expected_python_type = VocabularyValue.get_expected_type(self.expected_type)
-            if not isinstance(self.value, expected_python_type):
+            if self.expected_type == VocabularyValueType.DATE:
+                is_valid = isinstance(self.value, (datetime, str))
+            elif self.expected_type == VocabularyValueType.NUMBER:
+                is_valid = (
+                    isinstance(self.value, (int, float))
+                    and not isinstance(self.value, bool)
+                    and (
+                        not isinstance(self.value, float)
+                        or math.isfinite(self.value)
+                    )
+                )
+            elif self.expected_type == VocabularyValueType.LIST:
+                is_valid = (
+                    isinstance(self.value, list)
+                    and self._is_valid_generic_literal(self.value)
+                )
+            elif self.expected_type == VocabularyValueType.OBJECT:
+                is_valid = (
+                    isinstance(self.value, dict)
+                    and self._is_valid_generic_literal(self.value)
+                )
+            elif self.expected_type == VocabularyValueType.FUNCTION:
+                is_valid = callable(self.value)
+            else:
+                expected_python_type = VocabularyValue.get_expected_type(self.expected_type)
+                is_valid = isinstance(self.value, expected_python_type)
+
+            if not is_valid:
                 actual_type = type(self.value).__name__
                 raise TypeMismatchError(
                     f"Value {self.value} has type {actual_type}, "
                     f"but {self.expected_type.value} was expected"
                 )
 
+    @classmethod
+    def _is_valid_generic_literal(
+        cls,
+        value: Any,
+        seen: Optional[set] = None
+    ) -> bool:
+        """Return whether a value can be represented safely in a condition payload."""
+        if isinstance(value, VocabularyValue) or value is None:
+            return True
+        if isinstance(value, (str, bool)):
+            return True
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return not isinstance(value, float) or math.isfinite(value)
+
+        seen = seen or set()
+        if isinstance(value, list):
+            identity = id(value)
+            if identity in seen:
+                return False
+            seen.add(identity)
+            is_valid = all(cls._is_valid_generic_literal(item, seen) for item in value)
+            seen.remove(identity)
+            return is_valid
+
+        if isinstance(value, dict):
+            identity = id(value)
+            if identity in seen:
+                return False
+            seen.add(identity)
+            is_valid = all(
+                isinstance(key, str)
+                and cls._is_valid_generic_literal(item, seen)
+                for key, item in value.items()
+            )
+            seen.remove(identity)
+            return is_valid
+
+        return False
+
     def to_dict(self) -> Any:
         """Return the primitive value or vocabulary value dict"""
         if isinstance(self.value, VocabularyValue):
             return self.value.to_dict()
+        if isinstance(self.value, list):
+            return [self.process(item) for item in self.value]
+        if isinstance(self.value, dict):
+            return {key: self.process(value) for key, value in self.value.items()}
         return self.value  # Return the primitive value directly
 
     @classmethod
-    def process(cls, arg: Any, expected_type: VocabularyValueType) -> Any:
+    def process(
+        cls,
+        arg: Any,
+        expected_type: Optional[VocabularyValueType] = None
+    ) -> Any:
         """Process any argument into the correct format for conditions"""
         if isinstance(arg, Argument):
             return arg.to_dict()
@@ -65,8 +151,18 @@ class BooleanField(Field):
                 "is_null": OperatorDef("is null", [], "Check if value is null")
             }
 
-    def equals(self, value: Union[bool, VocabularyValue]) -> tuple:
+    def equals(self, value: bool) -> tuple:
         """Check if value equals the given boolean"""
+        if isinstance(value, VocabularyValue):
+            raise TypeMismatchError(
+                "BooleanField.equals requires a literal bool; "
+                f"vocabulary value '{value.name}' is not supported"
+            )
+        if type(value) is not bool:
+            raise TypeMismatchError(
+                "BooleanField.equals requires a literal bool, "
+                f"but {type(value).__name__} was provided"
+            )
         op_name = "is true" if value else "is false"
         return (op_name, [])
 
@@ -111,8 +207,7 @@ class NumberField(Field):
             "is_not_multiple_of": OperatorDef("is not a multiple of", [OperatorArg("multiple", "number", "Number that value must not be a multiple of")]),
             "is_power_of": OperatorDef(
                 "is a power of",
-                [OperatorArg("base", "number", "The base number")],
-                validate=lambda args: args[0] > 0
+                [OperatorArg("base", "number", "The base number")]
             ),
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
@@ -178,10 +273,6 @@ class NumberField(Field):
         return ("is not a multiple of", [Argument(value, VocabularyValueType.NUMBER)])
 
     def is_power_of(self, base: Union[int, float, VocabularyValue]) -> tuple:
-        if not isinstance(base, VocabularyValue):
-            op = self.operators["is_power_of"]
-            if op.validate and not op.validate([base]):
-                raise ValueError(f"Invalid base for is power of: {base}. Base must be positive.")
         return ("is a power of", [Argument(base, VocabularyValueType.NUMBER)])
 
     def is_null(self) -> tuple:
@@ -273,20 +364,48 @@ class StringField(Field):
                 "contains (case-insensitive)",
                 [OperatorArg("substring", "string", "The string that should be contained within the value (case-insensitive)")]
             ),
+            "is_phone": OperatorDef("is a valid phone number", []),
+            "is_zip_code": OperatorDef("is a valid zip code", []),
             "matches_regex": OperatorDef(
                 "matches RegEx",
-                [OperatorArg("regex", "string", "The regex the string should match", validate=lambda v: len(v) > 0)]
+                [
+                    OperatorArg(
+                        "regex",
+                        "string",
+                        "The regex the string should match",
+                        placeholder="^[a-z]+$",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
             ),
             "does_not_match_regex": OperatorDef(
                 "does not match RegEx",
-                [OperatorArg("regex", "string", "The regex the string should not match", validate=lambda v: len(v) > 0)]
+                [
+                    OperatorArg(
+                        "regex",
+                        "string",
+                        "The regex the string should match",
+                        placeholder="^[a-z]+$",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
             ),
+            "is_work_email": OperatorDef("is a work email address", []),
+            "is_personal_email": OperatorDef("is a personal email address", []),
             "is_valid_email": OperatorDef("is a valid email address", [], "Check if string is a valid email address"),
             "is_not_valid_email": OperatorDef("is not a valid email address", [], "Check if string is not a valid email address"),
             "is_valid_url": OperatorDef("is a valid URL", [], "Check if string is a valid URL"),
             "is_not_valid_url": OperatorDef("is not a valid URL", [], "Check if string is not a valid URL"),
             "is_valid_ip": OperatorDef("is a valid IP address", [], "Check if string is a valid IP address"),
             "is_not_valid_ip": OperatorDef("is not a valid IP address", [], "Check if string is not a valid IP address"),
+            "is_ipv6": OperatorDef("is a valid IPV6 address", []),
+            "is_not_ipv6": OperatorDef("is not a valid IPV6 address", []),
+            "is_credit_card": OperatorDef("is a valid credit card number", []),
+            "is_not_credit_card": OperatorDef("is not a valid credit card number", []),
+            "is_country_code": OperatorDef("is a valid country code", []),
+            "is_not_country_code": OperatorDef("is not a valid country code", []),
+            "contains_profanity": OperatorDef("contains profanity", []),
+            "does_not_contain_profanity": OperatorDef("does not contain profanity", []),
             "is_uppercase": OperatorDef("is uppercase", [], "Check if string is all uppercase"),
             "is_lowercase": OperatorDef("is lowercase", [], "Check if string is all lowercase"),
             "is_numeric": OperatorDef("is numeric", [], "Check if string contains only numeric characters"),
@@ -297,8 +416,108 @@ class StringField(Field):
                 [],
                 "Check if string contains only digits and letters"
             ),
+            "version_greater_than": OperatorDef(
+                "version is greater than",
+                [
+                    OperatorArg(
+                        "version",
+                        "string",
+                        "The version to compare against (e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "version_less_than": OperatorDef(
+                "version is less than",
+                [
+                    OperatorArg(
+                        "version",
+                        "string",
+                        "The version to compare against (e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "version_equals": OperatorDef(
+                "version is equal to",
+                [
+                    OperatorArg(
+                        "version",
+                        "string",
+                        "The version to compare against (e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "version_greater_than_or_equal": OperatorDef(
+                "version is greater than or equal to",
+                [
+                    OperatorArg(
+                        "version",
+                        "string",
+                        "The version to compare against (e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "version_less_than_or_equal": OperatorDef(
+                "version is less than or equal to",
+                [
+                    OperatorArg(
+                        "version",
+                        "string",
+                        "The version to compare against (e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "version_between": OperatorDef(
+                "version is between",
+                [
+                    OperatorArg(
+                        "minVersion",
+                        "string",
+                        "The minimum version (inclusive, e.g., 1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    ),
+                    OperatorArg(
+                        "maxVersion",
+                        "string",
+                        "The maximum version (inclusive, e.g., 2.0.0)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
+            "is_valid_semantic_version": OperatorDef("is valid semantic version", []),
+            "satisfies_version_range": OperatorDef(
+                "satisfies version range",
+                [
+                    OperatorArg(
+                        "range",
+                        "string",
+                        "The version range (e.g., >=1.2.3 <2.0.0 or ^1.2.3)",
+                        validate=lambda v: len(v) > 0
+                    )
+                ]
+            ),
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
+
+    def _validated_argument(
+        self,
+        operator_key: str,
+        value: Any,
+        expected_type: VocabularyValueType,
+        arg_index: int = 0
+    ) -> Argument:
+        arg = Argument(value, expected_type)
+        if not isinstance(value, VocabularyValue):
+            validate = self.operators[operator_key].args[arg_index].validate
+            if validate and not validate(value):
+                raise ValueError(
+                    f"Invalid value for {self.operators[operator_key].name}: {value}"
+                )
+        return arg
 
     def contains(self, value: Union[str, VocabularyValue]) -> tuple:
         arg = Argument(value, VocabularyValueType.STRING)
@@ -359,7 +578,10 @@ class StringField(Field):
     def ends_with_case_insensitive(self, value: Union[str, VocabularyValue]) -> tuple:
         return ("ends with (case-insensitive)", [Argument(value, VocabularyValueType.STRING)])
 
-    def is_included_in(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+    def is_included_in(
+        self,
+        values: Union[List[Union[str, VocabularyValue]], VocabularyValue]
+    ) -> tuple:
         if isinstance(values, VocabularyValue):
             if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
@@ -374,7 +596,10 @@ class StringField(Field):
 
         return ("is included in", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def is_not_included_in(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+    def is_not_included_in(
+        self,
+        values: Union[List[Union[str, VocabularyValue]], VocabularyValue]
+    ) -> tuple:
         if isinstance(values, VocabularyValue):
             if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
@@ -389,7 +614,10 @@ class StringField(Field):
 
         return ("is not included in", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def contains_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+    def contains_any_of(
+        self,
+        values: Union[List[Union[str, VocabularyValue]], VocabularyValue]
+    ) -> tuple:
         if isinstance(values, VocabularyValue):
             if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
@@ -404,7 +632,10 @@ class StringField(Field):
 
         return ("contains any of", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def not_contains_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+    def not_contains_any_of(
+        self,
+        values: Union[List[Union[str, VocabularyValue]], VocabularyValue]
+    ) -> tuple:
         if isinstance(values, VocabularyValue):
             if values.value_type != VocabularyValueType.LIST:
                 raise TypeMismatchError(
@@ -419,41 +650,74 @@ class StringField(Field):
 
         return ("does not contain any of", [[Argument(v, VocabularyValueType.STRING) for v in values]])
 
-    def does_not_contain_any_of(self, values: Union[List[str], List[VocabularyValue], VocabularyValue]) -> tuple:
+    def does_not_contain_any_of(
+        self,
+        values: Union[List[Union[str, VocabularyValue]], VocabularyValue]
+    ) -> tuple:
         return self.not_contains_any_of(values)
 
     def length_equals(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is of length", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is of length",
+            [self._validated_argument("is_of_length", length, VocabularyValueType.NUMBER)]
+        )
 
     def is_of_length(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.length_equals(length)
 
     def length_not_equals(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is not of length", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is not of length",
+            [self._validated_argument("is_not_of_length", length, VocabularyValueType.NUMBER)]
+        )
 
     def is_not_of_length(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.length_not_equals(length)
 
     def longer_than(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is longer than", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is longer than",
+            [self._validated_argument("is_longer_than", length, VocabularyValueType.NUMBER)]
+        )
 
     def is_longer_than(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.longer_than(length)
 
     def shorter_than(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is shorter than", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is shorter than",
+            [self._validated_argument("is_shorter_than", length, VocabularyValueType.NUMBER)]
+        )
 
     def is_shorter_than(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.shorter_than(length)
 
     def longer_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is longer than or equal to", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is longer than or equal to",
+            [
+                self._validated_argument(
+                    "is_longer_than_or_equal",
+                    length,
+                    VocabularyValueType.NUMBER
+                )
+            ]
+        )
 
     def is_longer_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.longer_than_or_equal(length)
 
     def shorter_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
-        return ("is shorter than or equal to", [Argument(length, VocabularyValueType.NUMBER)])
+        return (
+            "is shorter than or equal to",
+            [
+                self._validated_argument(
+                    "is_shorter_than_or_equal",
+                    length,
+                    VocabularyValueType.NUMBER
+                )
+            ]
+        )
 
     def is_shorter_than_or_equal(self, length: Union[int, VocabularyValue]) -> tuple:
         return self.shorter_than_or_equal(length)
@@ -510,6 +774,157 @@ class StringField(Field):
     def contains_only_digits_and_letters(self) -> tuple:
         return ("contains only digits and letters", [])
 
+    def is_phone(self) -> tuple:
+        return ("is a valid phone number", [])
+
+    def is_zip_code(self) -> tuple:
+        return ("is a valid zip code", [])
+
+    def is_work_email(self) -> tuple:
+        return ("is a work email address", [])
+
+    def is_personal_email(self) -> tuple:
+        return ("is a personal email address", [])
+
+    def is_ipv6(self) -> tuple:
+        return ("is a valid IPV6 address", [])
+
+    def is_not_ipv6(self) -> tuple:
+        return ("is not a valid IPV6 address", [])
+
+    def is_credit_card(self) -> tuple:
+        return ("is a valid credit card number", [])
+
+    def is_not_credit_card(self) -> tuple:
+        return ("is not a valid credit card number", [])
+
+    def is_country_code(self) -> tuple:
+        return ("is a valid country code", [])
+
+    def is_not_country_code(self) -> tuple:
+        return ("is not a valid country code", [])
+
+    def contains_profanity(self) -> tuple:
+        return ("contains profanity", [])
+
+    def does_not_contain_profanity(self) -> tuple:
+        return ("does not contain profanity", [])
+
+    def version_greater_than(
+        self,
+        version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is greater than",
+            [
+                self._validated_argument(
+                    "version_greater_than",
+                    version,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
+    def version_less_than(
+        self,
+        version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is less than",
+            [
+                self._validated_argument(
+                    "version_less_than",
+                    version,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
+    def version_equals(
+        self,
+        version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is equal to",
+            [
+                self._validated_argument(
+                    "version_equals",
+                    version,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
+    def version_greater_than_or_equal(
+        self,
+        version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is greater than or equal to",
+            [
+                self._validated_argument(
+                    "version_greater_than_or_equal",
+                    version,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
+    def version_less_than_or_equal(
+        self,
+        version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is less than or equal to",
+            [
+                self._validated_argument(
+                    "version_less_than_or_equal",
+                    version,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
+    def version_between(
+        self,
+        min_version: Union[str, VocabularyValue],
+        max_version: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "version is between",
+            [
+                self._validated_argument(
+                    "version_between",
+                    min_version,
+                    VocabularyValueType.STRING
+                ),
+                self._validated_argument(
+                    "version_between",
+                    max_version,
+                    VocabularyValueType.STRING,
+                    1
+                )
+            ]
+        )
+
+    def is_valid_semantic_version(self) -> tuple:
+        return ("is valid semantic version", [])
+
+    def satisfies_version_range(
+        self,
+        version_range: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "satisfies version range",
+            [
+                self._validated_argument(
+                    "satisfies_version_range",
+                    version_range,
+                    VocabularyValueType.STRING
+                )
+            ]
+        )
+
     def is_null(self) -> tuple:
         return ("is null", [])
 
@@ -523,15 +938,15 @@ class DateField(Field):
             "is_future": OperatorDef("is in the future", [], "Date is in the future"),
             "days_ago": OperatorDef(
                 "days ago",
-                [OperatorArg("days", "number", "Number of days ago that the date is equal to")]
+                [OperatorArg("value", "number", "Number of days ago that the date is equal to")]
             ),
             "less_than_days_ago": OperatorDef(
                 "is less than N days ago",
-                [OperatorArg("days", "number", "Number of days ago that the date is less than or equal to")]
+                [OperatorArg("value", "number", "Number of days ago that the date is less than or equal to")]
             ),
             "more_than_days_ago": OperatorDef(
                 "is more than N days ago",
-                [OperatorArg("days", "number", "Number of days ago that the date is more than or equal to")]
+                [OperatorArg("value", "number", "Number of days ago that the date is more than or equal to")]
             ),
             "between_n_and_m_days_ago": OperatorDef(
                 "is between N and M days ago",
@@ -542,27 +957,27 @@ class DateField(Field):
             ),
             "days_from_now": OperatorDef(
                 "days from now",
-                [OperatorArg("days", "number", "Number of days from now that the date is equal to")]
+                [OperatorArg("value", "number", "Number of days from now that the date is equal to")]
             ),
             "less_than_days_from_now": OperatorDef(
                 "is less than N days from now",
-                [OperatorArg("days", "number", "Number of days from now that the date is less than or equal to")]
+                [OperatorArg("value", "number", "Number of days from now that the date is less than or equal to")]
             ),
             "more_than_days_from_now": OperatorDef(
                 "is more than N days from now",
-                [OperatorArg("days", "number", "Number of days from now that the date is more than or equal to")]
+                [OperatorArg("value", "number", "Number of days from now that the date is more than or equal to")]
             ),
             "months_ago": OperatorDef(
                 "months ago",
-                [OperatorArg("months", "number", "Number of months ago that the date is equal to")]
+                [OperatorArg("value", "number", "Number of months ago that the date is equal to")]
             ),
             "less_than_months_ago": OperatorDef(
                 "is less than N months ago",
-                [OperatorArg("months", "number", "Number of months ago that the date is less than or equal to")]
+                [OperatorArg("value", "number", "Number of months ago that the date is less than or equal to")]
             ),
             "more_than_months_ago": OperatorDef(
                 "is more than N months ago",
-                [OperatorArg("months", "number", "Number of months ago that the date is more than or equal to")]
+                [OperatorArg("value", "number", "Number of months ago that the date is more than or equal to")]
             ),
             "between_n_and_m_months_ago": OperatorDef(
                 "is between N and M months ago",
@@ -573,15 +988,15 @@ class DateField(Field):
             ),
             "months_from_now": OperatorDef(
                 "months from now",
-                [OperatorArg("months", "number", "Number of months from now that the date is equal to")]
+                [OperatorArg("value", "number", "Number of months from now that the date is equal to")]
             ),
             "less_than_months_from_now": OperatorDef(
                 "is less than N months from now",
-                [OperatorArg("months", "number", "Number of months from now that the date is less than or equal to")]
+                [OperatorArg("value", "number", "Number of months from now that the date is less than or equal to")]
             ),
             "more_than_months_from_now": OperatorDef(
                 "is more than N months from now",
-                [OperatorArg("months", "number", "Number of months from now that the date is more than or equal to")]
+                [OperatorArg("value", "number", "Number of months from now that the date is more than or equal to")]
             ),
             "is_today": OperatorDef("is today", [], "Date is today"),
             "is_this_week": OperatorDef("is this week", [], "Date is in the current week"),
@@ -595,41 +1010,125 @@ class DateField(Field):
             "is_last_year": OperatorDef("is last year", [], "Date is in the previous year"),
             "after": OperatorDef(
                 "after",
-                [OperatorArg("date", "date", "Date that value must be after")]
+                [OperatorArg("value", "date", "Date that value must be after")]
             ),
             "on_or_after": OperatorDef(
                 "on or after",
-                [OperatorArg("date", "date", "Date that value must be on or after")]
+                [OperatorArg("value", "date", "Date that value must be on or after")]
             ),
             "before": OperatorDef(
                 "before",
-                [OperatorArg("date", "date", "Date that value must be before")]
+                [OperatorArg("value", "date", "Date that value must be before")]
             ),
             "on_or_before": OperatorDef(
                 "on or before",
-                [OperatorArg("date", "date", "Date that value must be on or before")]
+                [OperatorArg("value", "date", "Date that value must be on or before")]
             ),
             "equals": OperatorDef(
                 "equals",
-                [OperatorArg("date", "date", "Date that value must be equal to")]
+                [OperatorArg("value", "date", "Date that value must be equal to")]
             ),
             "does_not_equal": OperatorDef(
                 "does not equal",
-                [OperatorArg("date", "date", "Date that value must not be equal to")]
+                [OperatorArg("value", "date", "Date that value must not be equal to")]
             ),
             "between": OperatorDef(
                 "between",
                 [
-                    OperatorArg("start", "date", "Date that value must be after", placeholder="From"),
-                    OperatorArg("end", "date", "Date that value must be before", placeholder="To")
+                    OperatorArg("lower", "date", "Date that value must be after", placeholder="From"),
+                    OperatorArg("upper", "date", "Date that value must be before", placeholder="To")
                 ]
             ),
             "not_between": OperatorDef(
                 "not between",
                 [
-                    OperatorArg("start", "date", "Date that value must be before", placeholder="From"),
-                    OperatorArg("end", "date", "Date that value must be after", placeholder="To")
+                    OperatorArg("lower", "date", "Date that value must be before", placeholder="From"),
+                    OperatorArg("upper", "date", "Date that value must be after", placeholder="To")
                 ]
+            ),
+            "is_before_time": OperatorDef(
+                "is before time",
+                [
+                    OperatorArg(
+                        "time",
+                        "string",
+                        "Time of day that date must be before",
+                        placeholder="Enter time (e.g., 2:30 PM)"
+                    )
+                ]
+            ),
+            "is_after_time": OperatorDef(
+                "is after time",
+                [
+                    OperatorArg(
+                        "time",
+                        "string",
+                        "Time of day that date must be after",
+                        placeholder="Enter time (e.g., 2:30 PM)"
+                    )
+                ]
+            ),
+            "hours_ago": OperatorDef(
+                "hours ago",
+                [OperatorArg("value", "number", "Number of hours ago that the date is equal to")]
+            ),
+            "less_than_hours_ago": OperatorDef(
+                "is less than N hours ago",
+                [OperatorArg("value", "number", "Number of hours ago that the date is less than")]
+            ),
+            "more_than_hours_ago": OperatorDef(
+                "is more than N hours ago",
+                [OperatorArg("value", "number", "Number of hours ago that the date is more than")]
+            ),
+            "between_n_and_m_hours_ago": OperatorDef(
+                "is between N and M hours ago",
+                [
+                    OperatorArg("minHours", "number", "Minimum number of hours ago", placeholder="Min hours"),
+                    OperatorArg("maxHours", "number", "Maximum number of hours ago", placeholder="Max hours")
+                ]
+            ),
+            "hours_from_now": OperatorDef(
+                "hours from now",
+                [OperatorArg("value", "number", "Number of hours from now that the date is equal to")]
+            ),
+            "less_than_hours_from_now": OperatorDef(
+                "is less than N hours from now",
+                [OperatorArg("value", "number", "Number of hours from now that the date is less than")]
+            ),
+            "more_than_hours_from_now": OperatorDef(
+                "is more than N hours from now",
+                [OperatorArg("value", "number", "Number of hours from now that the date is more than")]
+            ),
+            "minutes_ago": OperatorDef(
+                "minutes ago",
+                [OperatorArg("value", "number", "Number of minutes ago that the date is equal to")]
+            ),
+            "less_than_minutes_ago": OperatorDef(
+                "is less than N minutes ago",
+                [OperatorArg("value", "number", "Number of minutes ago that the date is less than")]
+            ),
+            "more_than_minutes_ago": OperatorDef(
+                "is more than N minutes ago",
+                [OperatorArg("value", "number", "Number of minutes ago that the date is more than")]
+            ),
+            "between_n_and_m_minutes_ago": OperatorDef(
+                "is between N and M minutes ago",
+                [
+                    OperatorArg("minMinutes", "number", "Minimum number of minutes ago", placeholder="Min minutes"),
+                    OperatorArg("maxMinutes", "number", "Maximum number of minutes ago", placeholder="Max minutes")
+                ]
+            ),
+            "minutes_from_now": OperatorDef(
+                "minutes from now",
+                [OperatorArg("value", "number", "Number of minutes from now that the date is equal to")]
+            ),
+            "less_than_minutes_from_now": OperatorDef(
+                "is less than N minutes from now",
+                [OperatorArg("value", "number", "Number of minutes from now that the date is less than")]
+            ),
+            "more_than_minutes_from_now": OperatorDef(
+                "is more than N minutes from now",
+                [OperatorArg("value", "number", "Number of minutes from now that the date is more than")]
             ),
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
@@ -742,6 +1241,74 @@ class DateField(Field):
     def not_between(self, start: Union[datetime, str, VocabularyValue], end: Union[datetime, str, VocabularyValue]) -> tuple:
         return ("not between", [Argument(start, VocabularyValueType.DATE), Argument(end, VocabularyValueType.DATE)])
 
+    def is_before_time(self, time: Union[str, VocabularyValue]) -> tuple:
+        return ("is before time", [Argument(time, VocabularyValueType.STRING)])
+
+    def is_after_time(self, time: Union[str, VocabularyValue]) -> tuple:
+        return ("is after time", [Argument(time, VocabularyValueType.STRING)])
+
+    def hours_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("hours ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def less_than_hours_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N hours ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def more_than_hours_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N hours ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def between_n_and_m_hours_ago(
+        self,
+        min_hours: Union[int, VocabularyValue],
+        max_hours: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "is between N and M hours ago",
+            [
+                Argument(min_hours, VocabularyValueType.NUMBER),
+                Argument(max_hours, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def hours_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("hours from now", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def less_than_hours_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N hours from now", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def more_than_hours_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N hours from now", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def minutes_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("minutes ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def less_than_minutes_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N minutes ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def more_than_minutes_ago(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N minutes ago", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def between_n_and_m_minutes_ago(
+        self,
+        min_minutes: Union[int, VocabularyValue],
+        max_minutes: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "is between N and M minutes ago",
+            [
+                Argument(min_minutes, VocabularyValueType.NUMBER),
+                Argument(max_minutes, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def minutes_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("minutes from now", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def less_than_minutes_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is less than N minutes from now", [Argument(value, VocabularyValueType.NUMBER)])
+
+    def more_than_minutes_from_now(self, value: Union[int, VocabularyValue]) -> tuple:
+        return ("is more than N minutes from now", [Argument(value, VocabularyValueType.NUMBER)])
+
     def is_null(self) -> tuple:
         return ("is null", [])
 
@@ -753,7 +1320,25 @@ class ListField(Field):
             "any": OperatorDef("any", [], "Match any list value", skip_typecheck=True),
             "contains": OperatorDef(
                 "contains",
-                [OperatorArg("value", "generic", "Value that must be contained in the list")]
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be contained in the list",
+                        placeholder="Enter any value to search for"
+                    )
+                ]
+            ),
+            "contains_case_insensitive": OperatorDef(
+                "contains (case-insensitive)",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be contained in the list (case-insensitive for strings)",
+                        placeholder="Enter any value to search for"
+                    )
+                ]
             ),
             "is_empty": OperatorDef("is empty", [], "Check if list is empty"),
             "is_not_empty": OperatorDef("is not empty", [], "Check if list is not empty"),
@@ -773,21 +1358,125 @@ class ListField(Field):
                 "is shorter than",
                 [OperatorArg("length", "number", "Length that the list must be shorter than")]
             ),
+            "is_longer_than_or_equal": OperatorDef(
+                "is longer than or equal to",
+                [OperatorArg("length", "number", "Length that the list must be longer than or equal to")]
+            ),
+            "is_shorter_than_or_equal": OperatorDef(
+                "is shorter than or equal to",
+                [OperatorArg("length", "number", "Length that the list must be shorter than or equal to")]
+            ),
             "contains_all_of": OperatorDef(
                 "contains all of",
                 [OperatorArg("values", "list", "List of values that must be contained in the list")]
+            ),
+            "contains_all_of_case_insensitive": OperatorDef(
+                "contains all of (case-insensitive)",
+                [
+                    OperatorArg(
+                        "values",
+                        "list",
+                        "List of values that must be contained in the list (case-insensitive for strings)"
+                    )
+                ]
+            ),
+            "contains_n_occurrences_of": OperatorDef(
+                "contains N occurrences of",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be contained in the list",
+                        placeholder="Enter any value to search for"
+                    ),
+                    OperatorArg(
+                        "occurrences",
+                        "number",
+                        "Number of occurrences that must be present"
+                    )
+                ]
+            ),
+            "contains_at_least_n_occurrences_of": OperatorDef(
+                "contains at least N occurrences of",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be contained in the list",
+                        placeholder="Enter any value to search for"
+                    ),
+                    OperatorArg(
+                        "occurrences",
+                        "number",
+                        "Number of occurrences that must be present"
+                    )
+                ]
+            ),
+            "contains_at_most_n_occurrences_of": OperatorDef(
+                "contains at most N occurrences of",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be contained in the list",
+                        placeholder="Enter any value to search for"
+                    ),
+                    OperatorArg(
+                        "occurrences",
+                        "number",
+                        "Number of occurrences that must be present"
+                    )
+                ]
             ),
             "contains_any_of": OperatorDef(
                 "contains any of",
                 [OperatorArg("values", "list", "List of values that might be contained in the list")]
             ),
+            "contains_any_of_case_insensitive": OperatorDef(
+                "contains any of (case-insensitive)",
+                [
+                    OperatorArg(
+                        "values",
+                        "list",
+                        "List of values that might be contained in the list (case-insensitive for strings)"
+                    )
+                ]
+            ),
             "contains_none_of": OperatorDef(
                 "contains none of",
                 [OperatorArg("values", "list", "List of values that must not be contained in the list")]
             ),
+            "contains_none_of_case_insensitive": OperatorDef(
+                "contains none of (case-insensitive)",
+                [
+                    OperatorArg(
+                        "values",
+                        "list",
+                        "List of values that must not be contained in the list (case-insensitive for strings)"
+                    )
+                ]
+            ),
             "does_not_contain": OperatorDef(
                 "does not contain",
-                [OperatorArg("value", "generic", "Value that must not be contained in the list")]
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must not be contained in the list",
+                        placeholder="Enter any value to search for"
+                    )
+                ]
+            ),
+            "does_not_contain_case_insensitive": OperatorDef(
+                "does not contain (case-insensitive)",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must not be contained in the list (case-insensitive for strings)",
+                        placeholder="Enter any value to search for"
+                    )
+                ]
             ),
             "is_equal_to": OperatorDef(
                 "is equal to",
@@ -799,6 +1488,13 @@ class ListField(Field):
             ),
             "contains_duplicates": OperatorDef("contains duplicates", [], "Check if list contains duplicate values"),
             "does_not_contain_duplicates": OperatorDef("does not contain duplicates", [], "Check if list does not contain duplicate values"),
+            "contains_numbers_in_range": OperatorDef(
+                "contains numbers in range (inclusive)",
+                [
+                    OperatorArg("min", "number", "Minimum value in the range (inclusive)"),
+                    OperatorArg("max", "number", "Maximum value in the range (inclusive)")
+                ]
+            ),
             "contains_object_with_key_value": OperatorDef(
                 "contains object with key & value",
                 [
@@ -806,11 +1502,33 @@ class ListField(Field):
                     OperatorArg("value", "generic", "Value that the key must be equal to")
                 ]
             ),
+            "contains_object_with_key_value_case_insensitive": OperatorDef(
+                "contains object with key & value (case-insensitive)",
+                [
+                    OperatorArg("key", "string", "Key of any object contained in the list"),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that the key must be equal to (case-insensitive for strings)"
+                    )
+                ]
+            ),
             "does_not_contain_object_with_key_value": OperatorDef(
                 "does not contain object with key & value",
                 [
                     OperatorArg("key", "string", "Key of any object contained in the list"),
                     OperatorArg("value", "generic", "Value that the key must not be equal to")
+                ]
+            ),
+            "does_not_contain_object_with_key_value_case_insensitive": OperatorDef(
+                "does not contain object with key & value (case-insensitive)",
+                [
+                    OperatorArg("key", "string", "Key of any object contained in the list"),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that the key must not be equal to (case-insensitive for strings)"
+                    )
                 ]
             ),
             "contains_object_with_key": OperatorDef(
@@ -821,6 +1539,96 @@ class ListField(Field):
                 "does not contain object with key",
                 [OperatorArg("key", "string", "Key of any object contained in the list")]
             ),
+            "contains_only_objects_with_keys": OperatorDef(
+                "contains only objects with keys",
+                [
+                    OperatorArg(
+                        "keys",
+                        "list",
+                        "List of keys to look for within all objects in the list"
+                    )
+                ]
+            ),
+            "does_not_contain_only_objects_with_keys": OperatorDef(
+                "does not contain only objects with keys",
+                [
+                    OperatorArg(
+                        "keys",
+                        "list",
+                        "List of keys to look for within all objects in the list"
+                    )
+                ]
+            ),
+            "contains_object_with_data": OperatorDef(
+                "contains object with data",
+                [
+                    OperatorArg(
+                        "data",
+                        "object",
+                        "Data that may be present within any object in the list"
+                    )
+                ]
+            ),
+            "contains_all_objects_with_data": OperatorDef(
+                "contains all objects with data",
+                [
+                    OperatorArg(
+                        "data",
+                        "object",
+                        "Data that must be present within all objects in the list"
+                    )
+                ]
+            ),
+            "does_not_contain_object_with_data": OperatorDef(
+                "does not contain object with data",
+                [
+                    OperatorArg(
+                        "data",
+                        "object",
+                        "Data that must not be present within any object in the list"
+                    )
+                ]
+            ),
+            "contains_all_elements_in_order": OperatorDef(
+                "contains all elements in order",
+                [
+                    OperatorArg(
+                        "sublist",
+                        "list",
+                        "List that must be contained in order within the list"
+                    )
+                ]
+            ),
+            "contains_all_elements_in_order_case_insensitive": OperatorDef(
+                "contains all elements in order (case-insensitive)",
+                [
+                    OperatorArg(
+                        "sublist",
+                        "list",
+                        "List that must be contained in order within the list (case-insensitive for strings)"
+                    )
+                ]
+            ),
+            "contains_duplicates_of_value": OperatorDef(
+                "contains duplicates of value",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must appear more than once in the list"
+                    )
+                ]
+            ),
+            "contains_duplicates_of_value_case_insensitive": OperatorDef(
+                "contains duplicates of value (case-insensitive)",
+                [
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must appear more than once in the list (case-insensitive for strings)"
+                    )
+                ]
+            ),
             "has_unique_elements": OperatorDef("has unique elements", [], "Check if all elements in the list are unique"),
             "is_sublist_of": OperatorDef(
                 "is a sublist of",
@@ -830,11 +1638,126 @@ class ListField(Field):
                 "is a superlist of",
                 [OperatorArg("sublist", "list", "List that must be contained as a sublist within this list")]
             ),
+            "has_item_at_index": OperatorDef(
+                "has item at index",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be at the specified index"
+                    )
+                ]
+            ),
+            "has_item_at_index_case_insensitive": OperatorDef(
+                "has item at index (case-insensitive)",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must be at the specified index (case-insensitive for strings)"
+                    )
+                ]
+            ),
+            "does_not_have_item_at_index": OperatorDef(
+                "does not have item at index",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must not be at the specified index"
+                    )
+                ]
+            ),
+            "does_not_have_item_at_index_case_insensitive": OperatorDef(
+                "does not have item at index (case-insensitive)",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that must not be at the specified index (case-insensitive for strings)"
+                    )
+                ]
+            ),
+            "has_object_with_key_value_at_index": OperatorDef(
+                "has object with key & value at index",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "key",
+                        "string",
+                        "Key to check in the object at the specified index"
+                    ),
+                    OperatorArg("value", "generic", "Value that the key must equal")
+                ]
+            ),
+            "has_object_with_key_value_at_index_case_insensitive": OperatorDef(
+                "has object with key & value at index (case-insensitive)",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "key",
+                        "string",
+                        "Key to check in the object at the specified index"
+                    ),
+                    OperatorArg(
+                        "value",
+                        "generic",
+                        "Value that the key must equal (case-insensitive for strings)"
+                    )
+                ]
+            ),
+            "object_at_index_has_keys": OperatorDef(
+                "object at index has keys",
+                [
+                    OperatorArg(
+                        "index",
+                        "number",
+                        "Index in the list (negative indices count from the end)"
+                    ),
+                    OperatorArg(
+                        "keys",
+                        "list",
+                        "List of keys that must be present in the object"
+                    )
+                ]
+            ),
+            "contains_any_object_with_key": OperatorDef(
+                "contains any object with key",
+                [OperatorArg("key", "string", "Key that the object must contain")]
+            ),
             "is_null": OperatorDef("is null", [], "Check if value is null")
         }
 
     def contains(self, value: Union[Any, VocabularyValue]) -> tuple:
-        return ("contains", [Argument(value, VocabularyValueType.OBJECT)])  # Use OBJECT type for generic values
+        return ("contains", [Argument(value)])
 
     def is_empty(self) -> tuple:
         return ("is empty", [])
@@ -855,45 +1778,25 @@ class ListField(Field):
         return ("is shorter than", [Argument(length, VocabularyValueType.NUMBER)])
 
     def contains_all(self, values: Union[List[Any], VocabularyValue]) -> tuple:
-        if isinstance(values, VocabularyValue):
-            if values.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains all of", [Argument(values, VocabularyValueType.LIST)])
-        return ("contains all of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
+        return ("contains all of", [Argument(values, VocabularyValueType.LIST)])
 
     def contains_any(self, values: Union[List[Any], VocabularyValue]) -> tuple:
-        if isinstance(values, VocabularyValue):
-            if values.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains any of", [Argument(values, VocabularyValueType.LIST)])
-        return ("contains any of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
+        return ("contains any of", [Argument(values, VocabularyValueType.LIST)])
 
     def contains_none(self, values: Union[List[Any], VocabularyValue]) -> tuple:
-        if isinstance(values, VocabularyValue):
-            if values.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{values.name}' has type {values.value_type.value}, but list was expected")
-            return ("contains none of", [Argument(values, VocabularyValueType.LIST)])
-        return ("contains none of", [[Argument(v, VocabularyValueType.OBJECT) for v in values]])
+        return ("contains none of", [Argument(values, VocabularyValueType.LIST)])
 
     def not_contains(self, value: Union[Any, VocabularyValue]) -> tuple:
         """Check if list does not contain value"""
-        return ("does not contain", [Argument(value, VocabularyValueType.OBJECT)])
+        return ("does not contain", [Argument(value)])
 
     def equals(self, other: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list equals another list"""
-        if isinstance(other, VocabularyValue):
-            if other.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{other.name}' has type {other.value_type.value}, but list was expected")
-            return ("is equal to", [Argument(other, VocabularyValueType.LIST)])
-        return ("is equal to", [[Argument(v, VocabularyValueType.OBJECT) for v in other]])
+        return ("is equal to", [Argument(other, VocabularyValueType.LIST)])
 
     def not_equals(self, other: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list does not equal another list"""
-        if isinstance(other, VocabularyValue):
-            if other.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{other.name}' has type {other.value_type.value}, but list was expected")
-            return ("is not equal to", [Argument(other, VocabularyValueType.LIST)])
-        return ("is not equal to", [[Argument(v, VocabularyValueType.OBJECT) for v in other]])
+        return ("is not equal to", [Argument(other, VocabularyValueType.LIST)])
 
     def has_duplicates(self) -> tuple:
         """Check if list has duplicate values"""
@@ -907,14 +1810,14 @@ class ListField(Field):
         """Check if list contains an object with specified key and value"""
         return ("contains object with key & value", [
             Argument(key, VocabularyValueType.STRING),
-            Argument(value, VocabularyValueType.OBJECT)
+            Argument(value)
         ])
 
     def does_not_contain_object_with_key_value(self, key: Union[str, VocabularyValue], value: Union[Any, VocabularyValue]) -> tuple:
         """Check if list does not contain an object with specified key and value"""
         return ("does not contain object with key & value", [
             Argument(key, VocabularyValueType.STRING),
-            Argument(value, VocabularyValueType.OBJECT)
+            Argument(value)
         ])
 
     def contains_object_with_key(self, key: Union[str, VocabularyValue]) -> tuple:
@@ -931,19 +1834,328 @@ class ListField(Field):
 
     def is_sublist_of(self, superlist: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list is a sublist of another list"""
-        if isinstance(superlist, VocabularyValue):
-            if superlist.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{superlist.name}' has type {superlist.value_type.value}, but list was expected")
-            return ("is a sublist of", [Argument(superlist, VocabularyValueType.LIST)])
-        return ("is a sublist of", [[Argument(v, VocabularyValueType.OBJECT) for v in superlist]])
+        return ("is a sublist of", [Argument(superlist, VocabularyValueType.LIST)])
 
     def is_superlist_of(self, sublist: Union[List[Any], VocabularyValue]) -> tuple:
         """Check if list contains another list as a sublist"""
-        if isinstance(sublist, VocabularyValue):
-            if sublist.value_type != VocabularyValueType.LIST:
-                raise TypeMismatchError(f"Vocabulary value '{sublist.name}' has type {sublist.value_type.value}, but list was expected")
-            return ("is a superlist of", [Argument(sublist, VocabularyValueType.LIST)])
-        return ("is a superlist of", [[Argument(v, VocabularyValueType.OBJECT) for v in sublist]])
+        return ("is a superlist of", [Argument(sublist, VocabularyValueType.LIST)])
+
+    def contains_case_insensitive(
+        self,
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return ("contains (case-insensitive)", [Argument(value)])
+
+    def longer_than_or_equal(
+        self,
+        length: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "is longer than or equal to",
+            [Argument(length, VocabularyValueType.NUMBER)]
+        )
+
+    def shorter_than_or_equal(
+        self,
+        length: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "is shorter than or equal to",
+            [Argument(length, VocabularyValueType.NUMBER)]
+        )
+
+    def contains_all_case_insensitive(
+        self,
+        values: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains all of (case-insensitive)",
+            [Argument(values, VocabularyValueType.LIST)]
+        )
+
+    def contains_n_occurrences_of(
+        self,
+        value: Union[Any, VocabularyValue],
+        occurrences: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains N occurrences of",
+            [
+                Argument(value),
+                Argument(occurrences, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def contains_at_least_n_occurrences_of(
+        self,
+        value: Union[Any, VocabularyValue],
+        occurrences: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains at least N occurrences of",
+            [
+                Argument(value),
+                Argument(occurrences, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def contains_at_most_n_occurrences_of(
+        self,
+        value: Union[Any, VocabularyValue],
+        occurrences: Union[int, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains at most N occurrences of",
+            [
+                Argument(value),
+                Argument(occurrences, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def contains_any_case_insensitive(
+        self,
+        values: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains any of (case-insensitive)",
+            [Argument(values, VocabularyValueType.LIST)]
+        )
+
+    def contains_none_case_insensitive(
+        self,
+        values: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains none of (case-insensitive)",
+            [Argument(values, VocabularyValueType.LIST)]
+        )
+
+    def not_contains_case_insensitive(
+        self,
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return ("does not contain (case-insensitive)", [Argument(value)])
+
+    def contains_numbers_in_range(
+        self,
+        minimum: Union[int, float, VocabularyValue],
+        maximum: Union[int, float, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains numbers in range (inclusive)",
+            [
+                Argument(minimum, VocabularyValueType.NUMBER),
+                Argument(maximum, VocabularyValueType.NUMBER)
+            ]
+        )
+
+    def contains_object_with_key_value_case_insensitive(
+        self,
+        key: Union[str, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains object with key & value (case-insensitive)",
+            [
+                Argument(key, VocabularyValueType.STRING),
+                Argument(value)
+            ]
+        )
+
+    def does_not_contain_object_with_key_value_case_insensitive(
+        self,
+        key: Union[str, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "does not contain object with key & value (case-insensitive)",
+            [
+                Argument(key, VocabularyValueType.STRING),
+                Argument(value)
+            ]
+        )
+
+    def contains_only_objects_with_keys(
+        self,
+        keys: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains only objects with keys",
+            [Argument(keys, VocabularyValueType.LIST)]
+        )
+
+    def does_not_contain_only_objects_with_keys(
+        self,
+        keys: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "does not contain only objects with keys",
+            [Argument(keys, VocabularyValueType.LIST)]
+        )
+
+    def contains_object_with_data(
+        self,
+        data: Union[dict, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains object with data",
+            [Argument(data, VocabularyValueType.OBJECT)]
+        )
+
+    def contains_all_objects_with_data(
+        self,
+        data: Union[dict, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains all objects with data",
+            [Argument(data, VocabularyValueType.OBJECT)]
+        )
+
+    def does_not_contain_object_with_data(
+        self,
+        data: Union[dict, VocabularyValue]
+    ) -> tuple:
+        return (
+            "does not contain object with data",
+            [Argument(data, VocabularyValueType.OBJECT)]
+        )
+
+    def contains_all_elements_in_order(
+        self,
+        sublist: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains all elements in order",
+            [Argument(sublist, VocabularyValueType.LIST)]
+        )
+
+    def contains_all_elements_in_order_case_insensitive(
+        self,
+        sublist: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains all elements in order (case-insensitive)",
+            [Argument(sublist, VocabularyValueType.LIST)]
+        )
+
+    def contains_duplicates_of_value(
+        self,
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return ("contains duplicates of value", [Argument(value)])
+
+    def contains_duplicates_of_value_case_insensitive(
+        self,
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains duplicates of value (case-insensitive)",
+            [Argument(value)]
+        )
+
+    def has_item_at_index(
+        self,
+        index: Union[int, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "has item at index",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(value)
+            ]
+        )
+
+    def has_item_at_index_case_insensitive(
+        self,
+        index: Union[int, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "has item at index (case-insensitive)",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(value)
+            ]
+        )
+
+    def does_not_have_item_at_index(
+        self,
+        index: Union[int, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "does not have item at index",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(value)
+            ]
+        )
+
+    def does_not_have_item_at_index_case_insensitive(
+        self,
+        index: Union[int, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "does not have item at index (case-insensitive)",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(value)
+            ]
+        )
+
+    def has_object_with_key_value_at_index(
+        self,
+        index: Union[int, VocabularyValue],
+        key: Union[str, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "has object with key & value at index",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(key, VocabularyValueType.STRING),
+                Argument(value)
+            ]
+        )
+
+    def has_object_with_key_value_at_index_case_insensitive(
+        self,
+        index: Union[int, VocabularyValue],
+        key: Union[str, VocabularyValue],
+        value: Union[Any, VocabularyValue]
+    ) -> tuple:
+        return (
+            "has object with key & value at index (case-insensitive)",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(key, VocabularyValueType.STRING),
+                Argument(value)
+            ]
+        )
+
+    def object_at_index_has_keys(
+        self,
+        index: Union[int, VocabularyValue],
+        keys: Union[List[Any], VocabularyValue]
+    ) -> tuple:
+        return (
+            "object at index has keys",
+            [
+                Argument(index, VocabularyValueType.NUMBER),
+                Argument(keys, VocabularyValueType.LIST)
+            ]
+        )
+
+    def contains_any_object_with_key(
+        self,
+        key: Union[str, VocabularyValue]
+    ) -> tuple:
+        return (
+            "contains any object with key",
+            [Argument(key, VocabularyValueType.STRING)]
+        )
 
     def is_null(self) -> tuple:
         return ("is null", [])

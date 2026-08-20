@@ -3,16 +3,22 @@
 import typing
 
 import pydantic
+import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .asset_labels import AssetLabels
+from ..core.serialization import FieldMetadata
 
 
-class RuleExport(UniversalBaseModel):
+class ObjectValueCollision(UniversalBaseModel):
+    name: str = pydantic.Field()
     """
-    The exported rule object containing all rule definition data. This payload intentionally preserves raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
+    Managed value name the submitted object would generate.
     """
 
-    labels: typing.Optional[AssetLabels] = None
+    existing_id: typing_extensions.Annotated[
+        str,
+        FieldMetadata(alias="existingId"),
+        pydantic.Field(alias="existingId", description="ID of the existing value that the object does not own."),
+    ]
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -7,6 +7,7 @@ import pydantic
 import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from ..core.serialization import FieldMetadata
+from .asset_labels import AssetLabels
 from .rule_import_condition_row import RuleImportConditionRow
 from .rule_import_schema_field import RuleImportSchemaField
 
@@ -41,6 +42,7 @@ class RuleImportPayload(UniversalBaseModel):
     Rule description.
     """
 
+    labels: typing.Optional[AssetLabels] = None
     created_at: typing_extensions.Annotated[
         typing.Optional[dt.datetime],
         FieldMetadata(alias="createdAt"),

@@ -4,15 +4,15 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .asset_labels import AssetLabels
+from .manifest_labeled_asset_data import ManifestLabeledAssetData
 
 
-class RuleExport(UniversalBaseModel):
+class ManifestLabeledAsset(UniversalBaseModel):
     """
-    The exported rule object containing all rule definition data. This payload intentionally preserves raw rule document casing (for example, `requestSchema`, `sampleRequest`, and `createdAt`) so it can round-trip through `/admin/rules/import` and `.rbm` workflows.
+    A rule or flow entry in an RBM manifest. The full asset document is preserved for round-trip compatibility.
     """
 
-    labels: typing.Optional[AssetLabels] = None
+    data: typing.Optional[ManifestLabeledAssetData] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

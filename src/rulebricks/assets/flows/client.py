@@ -33,17 +33,21 @@ class FlowsClient:
         self,
         *,
         folder: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         user_group: typing.Optional[str] = None,
         name: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FlowListResponse:
         """
-        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
+        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, labels, user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
         folder : typing.Optional[str]
             Filter results by folder name or folder ID.
+
+        labels : typing.Optional[typing.Union[str, typing.Sequence[str]]]
+            Filter results to assets containing all comma-separated labels.
 
         user_group : typing.Optional[str]
             Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
@@ -69,7 +73,7 @@ class FlowsClient:
         client.assets.flows.list()
         """
         _response = self._raw_client.list(
-            folder=folder, user_group=user_group, name=name, request_options=request_options
+            folder=folder, labels=labels, user_group=user_group, name=name, request_options=request_options
         )
         return _response.data
 
@@ -259,17 +263,21 @@ class AsyncFlowsClient:
         self,
         *,
         folder: typing.Optional[str] = None,
+        labels: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         user_group: typing.Optional[str] = None,
         name: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FlowListResponse:
         """
-        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, by user group name or ID when the API key has access to that group, or by name.
+        List all flows in the organization. Results are scoped to the API key holder's user groups. Optionally filter by folder name or ID, labels, user group name or ID when the API key has access to that group, or by name.
 
         Parameters
         ----------
         folder : typing.Optional[str]
             Filter results by folder name or folder ID.
+
+        labels : typing.Optional[typing.Union[str, typing.Sequence[str]]]
+            Filter results to assets containing all comma-separated labels.
 
         user_group : typing.Optional[str]
             Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
@@ -303,7 +311,7 @@ class AsyncFlowsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list(
-            folder=folder, user_group=user_group, name=name, request_options=request_options
+            folder=folder, labels=labels, user_group=user_group, name=name, request_options=request_options
         )
         return _response.data
 

@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2
+from .asset_labels import AssetLabels
 from .folder import Folder
 from .rule_base import RuleBase
 from .rule_detail_context import RuleDetailContext
@@ -22,6 +23,7 @@ class RuleDetail(RuleBase):
     The date this rule was last updated.
     """
 
+    labels: typing.Optional[AssetLabels] = None
     published: typing.Optional[bool] = pydantic.Field(default=None)
     """
     Whether the rule is currently published.

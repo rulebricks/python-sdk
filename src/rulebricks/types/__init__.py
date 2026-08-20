@@ -6,6 +6,7 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .asset_labels import AssetLabels
     from .bulk_rule_response_item import BulkRuleResponseItem
     from .bulk_rule_response_item_error import BulkRuleResponseItemError
     from .cascade_context_request import CascadeContextRequest
@@ -113,6 +114,10 @@ if typing.TYPE_CHECKING:
     from .import_manifest_response_organization_created import ImportManifestResponseOrganizationCreated
     from .import_manifest_response_skipped_item import ImportManifestResponseSkippedItem
     from .import_manifest_response_updated_item import ImportManifestResponseUpdatedItem
+    from .manifest_labeled_asset import ManifestLabeledAsset
+    from .manifest_labeled_asset_data import ManifestLabeledAssetData
+    from .object_upsert_conflict_response import ObjectUpsertConflictResponse
+    from .object_value_collision import ObjectValueCollision
     from .parallel_solve_entity_error import ParallelSolveEntityError
     from .parallel_solve_entity_error_error import ParallelSolveEntityErrorError
     from .parallel_solve_request import ParallelSolveRequest
@@ -178,6 +183,8 @@ if typing.TYPE_CHECKING:
     from .test_test_state_evaluation_error import TestTestStateEvaluationError
     from .update_context_response import UpdateContextResponse
     from .update_values_summary_response import UpdateValuesSummaryResponse
+    from .upsert_object_request import UpsertObjectRequest
+    from .upsert_object_request_field_rename import UpsertObjectRequestFieldRename
     from .upsert_object_response import UpsertObjectResponse
     from .upsert_object_response_values import UpsertObjectResponseValues
     from .upsert_object_response_values_would_archive_item import UpsertObjectResponseValuesWouldArchiveItem
@@ -192,7 +199,9 @@ if typing.TYPE_CHECKING:
     from .value_reference import ValueReference
     from .value_reference_rb import ValueReferenceRb
     from .workspace_object import WorkspaceObject
+    from .workspace_object_parsed_fields_item import WorkspaceObjectParsedFieldsItem
 _dynamic_imports: typing.Dict[str, str] = {
+    "AssetLabels": ".asset_labels",
     "BulkRuleResponseItem": ".bulk_rule_response_item",
     "BulkRuleResponseItemError": ".bulk_rule_response_item_error",
     "CascadeContextRequest": ".cascade_context_request",
@@ -290,6 +299,10 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ImportManifestResponseOrganizationCreated": ".import_manifest_response_organization_created",
     "ImportManifestResponseSkippedItem": ".import_manifest_response_skipped_item",
     "ImportManifestResponseUpdatedItem": ".import_manifest_response_updated_item",
+    "ManifestLabeledAsset": ".manifest_labeled_asset",
+    "ManifestLabeledAssetData": ".manifest_labeled_asset_data",
+    "ObjectUpsertConflictResponse": ".object_upsert_conflict_response",
+    "ObjectValueCollision": ".object_value_collision",
     "ParallelSolveEntityError": ".parallel_solve_entity_error",
     "ParallelSolveEntityErrorError": ".parallel_solve_entity_error_error",
     "ParallelSolveRequest": ".parallel_solve_request",
@@ -355,6 +368,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "TestTestStateEvaluationError": ".test_test_state_evaluation_error",
     "UpdateContextResponse": ".update_context_response",
     "UpdateValuesSummaryResponse": ".update_values_summary_response",
+    "UpsertObjectRequest": ".upsert_object_request",
+    "UpsertObjectRequestFieldRename": ".upsert_object_request_field_rename",
     "UpsertObjectResponse": ".upsert_object_response",
     "UpsertObjectResponseValues": ".upsert_object_response_values",
     "UpsertObjectResponseValuesWouldArchiveItem": ".upsert_object_response_values_would_archive_item",
@@ -369,6 +384,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "ValueReference": ".value_reference",
     "ValueReferenceRb": ".value_reference_rb",
     "WorkspaceObject": ".workspace_object",
+    "WorkspaceObjectParsedFieldsItem": ".workspace_object_parsed_fields_item",
 }
 
 
@@ -394,6 +410,7 @@ def __dir__():
 
 
 __all__ = [
+    "AssetLabels",
     "BulkRuleResponseItem",
     "BulkRuleResponseItemError",
     "CascadeContextRequest",
@@ -491,6 +508,10 @@ __all__ = [
     "ImportManifestResponseOrganizationCreated",
     "ImportManifestResponseSkippedItem",
     "ImportManifestResponseUpdatedItem",
+    "ManifestLabeledAsset",
+    "ManifestLabeledAssetData",
+    "ObjectUpsertConflictResponse",
+    "ObjectValueCollision",
     "ParallelSolveEntityError",
     "ParallelSolveEntityErrorError",
     "ParallelSolveRequest",
@@ -556,6 +577,8 @@ __all__ = [
     "TestTestStateEvaluationError",
     "UpdateContextResponse",
     "UpdateValuesSummaryResponse",
+    "UpsertObjectRequest",
+    "UpsertObjectRequestFieldRename",
     "UpsertObjectResponse",
     "UpsertObjectResponseValues",
     "UpsertObjectResponseValuesWouldArchiveItem",
@@ -570,4 +593,5 @@ __all__ = [
     "ValueReference",
     "ValueReferenceRb",
     "WorkspaceObject",
+    "WorkspaceObjectParsedFieldsItem",
 ]

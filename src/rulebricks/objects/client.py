@@ -5,6 +5,7 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.delete_object_response import DeleteObjectResponse
+from ..types.upsert_object_request import UpsertObjectRequest
 from ..types.upsert_object_response import UpsertObjectResponse
 from ..types.workspace_object import WorkspaceObject
 from .raw_client import AsyncRawObjectsClient, RawObjectsClient
@@ -31,7 +32,7 @@ class ObjectsClient:
 
     def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> typing.List[WorkspaceObject]:
         """
-        Lists the workspace's objects (JSON Schemas). Results are scoped to the API key holder's user groups, matching the visibility model of values, rules, and flows: group-restricted keys only see objects whose user_groups overlap theirs.
+        Lists the workspace's objects (JSON Schemas). The provided API key must have permission to view vocabulary values. Results are scoped to the API key holder's user groups.
 
         Parameters
         ----------
@@ -56,38 +57,14 @@ class ObjectsClient:
         return _response.data
 
     def upsert(
-        self,
-        *,
-        content: str,
-        id: typing.Optional[str] = OMIT,
-        name: typing.Optional[str] = OMIT,
-        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
-        dry_run: typing.Optional[bool] = OMIT,
-        expected_updated_at: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
+        self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> UpsertObjectResponse:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source.
+        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
 
         Parameters
         ----------
-        content : str
-            The object's JSON Schema as a string. Enums in the schema become the object's managed values.
-
-        id : typing.Optional[str]
-            Object ID to update. Omit to resolve by name (creating the object when the name is new).
-
-        name : typing.Optional[str]
-            Object name. Required when ID is omitted; used to resolve the existing object or to name a new one.
-
-        user_groups : typing.Optional[typing.Sequence[str]]
-            User groups for the object, propagated to every value it generates. Omit to keep the current groups.
-
-        dry_run : typing.Optional[bool]
-            Preview the value diff (would_sync / would_archive) without writing anything.
-
-        expected_updated_at : typing.Optional[str]
-            Optimistic concurrency: reject with 409 when the object's updated_at no longer matches.
+        request : UpsertObjectRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -105,25 +82,19 @@ class ObjectsClient:
             api_key="YOUR_API_KEY",
         )
         client.objects.upsert(
-            name="Claim",
-            content='{\n  "type": "object",\n  "properties": {\n    "countryCode": { "type": "string", "title": "Country Code", "enum": ["US", "CA", "GB"] }\n  }\n}',
-            user_groups=["underwriting"],
+            request={
+                "name": "Claim",
+                "content": '{\n  "type": "object",\n  "properties": {\n    "countryCode": { "type": "string", "title": "Country Code", "enum": ["US", "CA", "GB"] }\n  }\n}',
+                "user_groups": ["underwriting"],
+            },
         )
         """
-        _response = self._raw_client.upsert(
-            content=content,
-            id=id,
-            name=name,
-            user_groups=user_groups,
-            dry_run=dry_run,
-            expected_updated_at=expected_updated_at,
-            request_options=request_options,
-        )
+        _response = self._raw_client.upsert(request=request, request_options=request_options)
         return _response.data
 
     def get(self, object_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> WorkspaceObject:
         """
-        Fetches one object by ID or exact name.
+        Fetches one object by ID or exact name. The provided API key must have permission to view vocabulary values.
 
         Parameters
         ----------
@@ -160,7 +131,7 @@ class ObjectsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteObjectResponse:
         """
-        Deletes the object. Its generated values always lose their management lock; by default they are also archived (published rules keep resolving them by id). Pass values=detach to keep them active as ordinary, hand-editable values instead. Requires the manage objects entitlement.
+        Deletes the object. By default, unused values are permanently deleted while values referenced by draft, current, or historical rules, flows, or other vocabulary values are archived. Pass values=detach to keep every generated value active as an ordinary, hand-editable value.
 
         Parameters
         ----------
@@ -168,7 +139,7 @@ class ObjectsClient:
             Object ID or exact name
 
         values : typing.Optional[DeleteObjectsRequestValues]
-            What happens to the values this object generated: 'archive' (default) or 'detach'.
+            What happens to generated values: 'archive' (default) permanently deletes unused values and archives referenced values; 'detach' retains all values as active ordinary values.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -210,7 +181,7 @@ class AsyncObjectsClient:
 
     async def list(self, *, request_options: typing.Optional[RequestOptions] = None) -> typing.List[WorkspaceObject]:
         """
-        Lists the workspace's objects (JSON Schemas). Results are scoped to the API key holder's user groups, matching the visibility model of values, rules, and flows: group-restricted keys only see objects whose user_groups overlap theirs.
+        Lists the workspace's objects (JSON Schemas). The provided API key must have permission to view vocabulary values. Results are scoped to the API key holder's user groups.
 
         Parameters
         ----------
@@ -243,38 +214,14 @@ class AsyncObjectsClient:
         return _response.data
 
     async def upsert(
-        self,
-        *,
-        content: str,
-        id: typing.Optional[str] = OMIT,
-        name: typing.Optional[str] = OMIT,
-        user_groups: typing.Optional[typing.Sequence[str]] = OMIT,
-        dry_run: typing.Optional[bool] = OMIT,
-        expected_updated_at: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
+        self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> UpsertObjectResponse:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source.
+        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
 
         Parameters
         ----------
-        content : str
-            The object's JSON Schema as a string. Enums in the schema become the object's managed values.
-
-        id : typing.Optional[str]
-            Object ID to update. Omit to resolve by name (creating the object when the name is new).
-
-        name : typing.Optional[str]
-            Object name. Required when ID is omitted; used to resolve the existing object or to name a new one.
-
-        user_groups : typing.Optional[typing.Sequence[str]]
-            User groups for the object, propagated to every value it generates. Omit to keep the current groups.
-
-        dry_run : typing.Optional[bool]
-            Preview the value diff (would_sync / would_archive) without writing anything.
-
-        expected_updated_at : typing.Optional[str]
-            Optimistic concurrency: reject with 409 when the object's updated_at no longer matches.
+        request : UpsertObjectRequest
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -297,28 +244,22 @@ class AsyncObjectsClient:
 
         async def main() -> None:
             await client.objects.upsert(
-                name="Claim",
-                content='{\n  "type": "object",\n  "properties": {\n    "countryCode": { "type": "string", "title": "Country Code", "enum": ["US", "CA", "GB"] }\n  }\n}',
-                user_groups=["underwriting"],
+                request={
+                    "name": "Claim",
+                    "content": '{\n  "type": "object",\n  "properties": {\n    "countryCode": { "type": "string", "title": "Country Code", "enum": ["US", "CA", "GB"] }\n  }\n}',
+                    "user_groups": ["underwriting"],
+                },
             )
 
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.upsert(
-            content=content,
-            id=id,
-            name=name,
-            user_groups=user_groups,
-            dry_run=dry_run,
-            expected_updated_at=expected_updated_at,
-            request_options=request_options,
-        )
+        _response = await self._raw_client.upsert(request=request, request_options=request_options)
         return _response.data
 
     async def get(self, object_id: str, *, request_options: typing.Optional[RequestOptions] = None) -> WorkspaceObject:
         """
-        Fetches one object by ID or exact name.
+        Fetches one object by ID or exact name. The provided API key must have permission to view vocabulary values.
 
         Parameters
         ----------
@@ -363,7 +304,7 @@ class AsyncObjectsClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> DeleteObjectResponse:
         """
-        Deletes the object. Its generated values always lose their management lock; by default they are also archived (published rules keep resolving them by id). Pass values=detach to keep them active as ordinary, hand-editable values instead. Requires the manage objects entitlement.
+        Deletes the object. By default, unused values are permanently deleted while values referenced by draft, current, or historical rules, flows, or other vocabulary values are archived. Pass values=detach to keep every generated value active as an ordinary, hand-editable value.
 
         Parameters
         ----------
@@ -371,7 +312,7 @@ class AsyncObjectsClient:
             Object ID or exact name
 
         values : typing.Optional[DeleteObjectsRequestValues]
-            What happens to the values this object generated: 'archive' (default) or 'detach'.
+            What happens to generated values: 'archive' (default) permanently deletes unused values and archives referenced values; 'detach' retains all values as active ordinary values.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

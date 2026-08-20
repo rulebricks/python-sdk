@@ -1,7 +1,8 @@
+from rulebricks import Rulebricks
 from rulebricks.forge import Rule
 
-import rulebricks as rb
 import os
+
 
 def build_example_rule():
     # Initialize the rule
@@ -71,6 +72,7 @@ def build_example_rule():
 
     return rule
 
+
 if __name__ == "__main__":
     # Create and preview the rule's conditions...
     rule = build_example_rule()
@@ -80,18 +82,21 @@ if __name__ == "__main__":
     # rule.export()
 
     # Or, import the rule directly into your Rulebricks workspace
-    rb.configure(
-        api_key="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" # Replace with your API key
+    client = Rulebricks(
+        base_url=os.getenv("RULEBRICKS_ENVIRONMENT")
+        or "https://rulebricks.com/api/v1",
+        api_key=os.getenv("RULEBRICKS_API_KEY")
+        or "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
     )
 
     # Provide our configured workspace client to the Forge SDK
-    rule.set_workspace(rb)
+    rule.set_workspace(client)
 
     # Push the rule to the workspace without publishing it...
     rule.update()
 
     # The new rule should appear in your Rulebricks workspace if we list all rules
-    print(rb.assets.rules.list())
+    print(client.assets.rules.list())
 
     # The URL to edit the rule in the Rulebricks web app should work!
     print(rule.get_editor_url())
@@ -108,11 +113,11 @@ if __name__ == "__main__":
         "medical_service_frequency": "monthly"
     }
     print(rule)
-    test_data_solution = rb.rules.solve(
+    test_data_solution = client.rules.solve(
         slug=rule.slug,
         request=test_data
     )
     print(test_data_solution)
 
     # Delete the rule
-    rb.assets.rules.delete(id=rule.id)
+    client.assets.rules.delete(id=rule.id)

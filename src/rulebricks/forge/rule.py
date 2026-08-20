@@ -71,7 +71,7 @@ def process_vocabulary_values(arg: Any) -> Any:
     if isinstance(arg, VocabularyValue):
         return arg.to_dict()
     elif isinstance(arg, Argument):
-        return arg.value if not isinstance(arg.value, VocabularyValue) else arg.value.to_dict()
+        return process_vocabulary_values(arg.to_dict())
     elif isinstance(arg, list):
         return [process_vocabulary_values(item) for item in arg]
     elif isinstance(arg, dict):
@@ -538,10 +538,10 @@ class Rule:
         self.published_at = None
         self.test_suite = []
         self.access_groups = []
-        self.published_conditions = []
-        self.published_request_schema = []
-        self.published_response_schema = []
-        self.published_groups = {}
+        self.published_conditions = None
+        self.published_request_schema = None
+        self.published_response_schema = None
+        self.published_groups = None
 
     def set_workspace(self, rulebricks_client: Any) -> None:
         """
@@ -589,8 +589,14 @@ class Rule:
                 data = json.loads(json_str)
             except json.JSONDecodeError as e:
                 raise ValueError(f"Invalid JSON string: {e}")
-        else:
+        elif isinstance(json_str, dict):
             data = json_str
+        elif hasattr(json_str, "model_dump"):
+            data = json_str.model_dump(by_alias=True)
+        elif hasattr(json_str, "dict"):
+            data = json_str.dict(by_alias=True)
+        else:
+            raise ValueError("Input must be a dictionary or JSON object")
 
         if not isinstance(data, dict):
             raise ValueError("Input must be a dictionary or JSON object")
@@ -608,56 +614,98 @@ class Rule:
         rule.updated_by = data.get('updatedBy', 'Rulebricks SDK')
         rule.settings = data.get('settings', {})
         rule.form = data.get('form', {})
-        rule.history = data.get('history', [])
+        rule.history = data.get('history') or []
         rule.groups = data.get('groups', {})
         rule.published = data.get('published', False)
         rule.published_at = data.get('publishedAt', None)
-        rule.test_suite = data.get('testSuite', [])
+        rule.test_suite = data.get('testSuite') or []
         rule.test_suite = [RuleTest.from_json(test) for test in rule.test_suite]
-        rule.access_groups = data.get('accessGroups', [])
+        rule.access_groups = data.get('accessGroups') or []
         rule.test_request = data.get('testRequest', {})
         rule.folder_id = data.get('tag', None)
-        rule.published_conditions = data.get('publishedConditions', [])
-        rule.published_request_schema = data.get('publishedRequestSchema', [])
-        rule.published_response_schema = data.get('publishedResponseSchema', [])
-        rule.published_groups = data.get('publishedGroups', {})
+        rule.published_conditions = (
+            data['published_conditions']
+            if 'published_conditions' in data
+            else data.get('publishedConditions')
+        )
+        rule.published_request_schema = (
+            data['published_requestSchema']
+            if 'published_requestSchema' in data
+            else data.get('publishedRequestSchema')
+        )
+        rule.published_response_schema = (
+            data['published_responseSchema']
+            if 'published_responseSchema' in data
+            else data.get('publishedResponseSchema')
+        )
+        rule.published_groups = (
+            data['published_groups']
+            if 'published_groups' in data
+            else data.get('publishedGroups')
+        )
 
         # Process request schema
-        for field in data.get('requestSchema', []):
+        for field in data.get('requestSchema') or []:
             try:
                 field_type = RuleType(field['type'])
+                hydrated_field = None
                 if field_type == RuleType.BOOLEAN:
-                    rule.add_boolean_field(field['key'], field.get('description', ''), field.get('defaultValue', False))
+                    hydrated_field = rule.add_boolean_field(
+                        field['key'], field.get('description', ''), field.get('defaultValue', False)
+                    )
                 elif field_type == RuleType.NUMBER:
-                    rule.add_number_field(field['key'], field.get('description', ''), field.get('defaultValue', 0))
+                    hydrated_field = rule.add_number_field(
+                        field['key'], field.get('description', ''), field.get('defaultValue', 0)
+                    )
                 elif field_type == RuleType.STRING:
-                    rule.add_string_field(field['key'], field.get('description', ''), field.get('defaultValue', ''))
+                    hydrated_field = rule.add_string_field(
+                        field['key'], field.get('description', ''), field.get('defaultValue', '')
+                    )
                 elif field_type == RuleType.DATE:
-                    rule.add_date_field(field['key'], field.get('description', ''), field.get('defaultValue'))
+                    hydrated_field = rule.add_date_field(
+                        field['key'], field.get('description', ''), field.get('defaultValue')
+                    )
                 elif field_type == RuleType.LIST:
-                    rule.add_list_field(field['key'], field.get('description', ''), field.get('defaultValue', []))
+                    hydrated_field = rule.add_list_field(
+                        field['key'], field.get('description', ''), field.get('defaultValue', [])
+                    )
+                if hydrated_field is not None:
+                    hydrated_field.display_name = field.get('name')
             except KeyError as e:
                 raise ValueError(f"Missing required field in requestSchema: {str(e)}")
 
         # Process response schema
-        for field in data.get('responseSchema', []):
+        for field in data.get('responseSchema') or []:
             try:
                 field_type = RuleType(field['type'])
+                hydrated_field = None
                 if field_type == RuleType.BOOLEAN:
-                    rule.add_boolean_response(field['key'], field.get('description', ''), field.get('defaultValue', False))
+                    hydrated_field = rule.add_boolean_response(
+                        field['key'], field.get('description', ''), field.get('defaultValue', False)
+                    )
                 elif field_type == RuleType.NUMBER:
-                    rule.add_number_response(field['key'], field.get('description', ''), field.get('defaultValue', 0))
+                    hydrated_field = rule.add_number_response(
+                        field['key'], field.get('description', ''), field.get('defaultValue', 0)
+                    )
                 elif field_type == RuleType.STRING:
-                    rule.add_string_response(field['key'], field.get('description', ''), field.get('defaultValue', ''))
+                    hydrated_field = rule.add_string_response(
+                        field['key'], field.get('description', ''), field.get('defaultValue', '')
+                    )
                 elif field_type == RuleType.DATE:
-                    rule.add_date_field(field['key'], field.get('description', ''), field.get('defaultValue'))
+                    hydrated_field = rule.add_date_response(
+                        field['key'], field.get('description', ''), field.get('defaultValue')
+                    )
                 elif field_type == RuleType.LIST:
-                    rule.add_list_field(field['key'], field.get('description', ''), field.get('defaultValue', []))
+                    hydrated_field = rule.add_list_response(
+                        field['key'], field.get('description', ''), field.get('defaultValue', [])
+                    )
+                if hydrated_field is not None:
+                    hydrated_field.display_name = field.get('name')
             except KeyError as e:
                 raise ValueError(f"Missing required field in responseSchema: {str(e)}")
 
         # Process conditions
-        rule.conditions = data.get('conditions', [])
+        rule.conditions = data.get('conditions') or []
 
         return rule
 
@@ -677,7 +725,9 @@ class Rule:
         if not self.workspace:
             raise ValueError("A Rulebricks client is required to load a rule from the workspace")
         rule_data = self.workspace.assets.rules.pull(id=rule_id)
-        return Rule.from_json(rule_data)
+        rule = Rule.from_json(rule_data)
+        rule.workspace = self.workspace
+        return rule
 
     def update(self, request_options: Optional[RequestOptions] = None) -> 'Rule':
         """
@@ -700,7 +750,10 @@ class Rule:
             self.workspace.assets.rules.push(rule=self.to_dict(), request_options=request_options)
         except ApiError as e:
             raise _to_rule_publish_error(e) from None
-        self = self.from_workspace(rule_id=self.id)
+        workspace = self.workspace
+        refreshed_rule = self.from_workspace(rule_id=self.id)
+        self.__dict__.update(refreshed_rule.__dict__)
+        self.workspace = workspace
         return self
 
     def publish(self, request_options: Optional[RequestOptions] = None) -> 'Rule':
@@ -729,7 +782,10 @@ class Rule:
             self.workspace.assets.rules.push(rule=rule_dict, request_options=request_options)
         except ApiError as e:
             raise _to_rule_publish_error(e) from None
-        self = self.from_workspace(rule_id=self.id)
+        workspace = self.workspace
+        refreshed_rule = self.from_workspace(rule_id=self.id)
+        self.__dict__.update(refreshed_rule.__dict__)
+        self.workspace = workspace
         return self
 
     def _generate_slug(self, length: int = 10) -> str:
@@ -1460,7 +1516,7 @@ class Rule:
                 current = current.setdefault(part, {})
             current[parts[-1]] = field.default
 
-        return {
+        rule_dict = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -1474,14 +1530,13 @@ class Rule:
             "sampleRequest": sampleRequest,
             "sampleResponse": sampleResponse,
             "testRequest": self.test_request or sampleRequest,
-            "published_requestSchema": self.published_request_schema,
-            "published_responseSchema": self.published_response_schema,
-            "published_conditions": self.published_conditions,
-            "published_groups": self.published_groups,
             "requestSchema": [
                 {
                     "key": name,
-                    "name": field.name.replace('_', ' ').title(),
+                    "name": (
+                        getattr(field, "display_name", None)
+                        or field.name.replace('_', ' ').title()
+                    ),
                     "type": self._get_field_type(field).value,
                     "description": field.description,
                     "defaultValue": field.default,
@@ -1492,7 +1547,10 @@ class Rule:
             "responseSchema": [
                 {
                     "key": name,
-                    "name": field.name.replace('_', ' ').title(),
+                    "name": (
+                        getattr(field, "display_name", None)
+                        or field.name.replace('_', ' ').title()
+                    ),
                     "type": self._get_field_type(field).value,
                     "description": field.description,
                     "defaultValue": field.default,
@@ -1509,6 +1567,21 @@ class Rule:
             "no_conditions": len(self.conditions),
             "accessGroups": self.access_groups
         }
+
+        published_snapshots = {
+            "published_requestSchema": self.published_request_schema,
+            "published_responseSchema": self.published_response_schema,
+            "published_conditions": self.published_conditions,
+            "published_groups": self.published_groups
+        }
+        rule_dict.update(
+            {
+                key: value
+                for key, value in published_snapshots.items()
+                if value is not None
+            }
+        )
+        return rule_dict
 
     def to_json(self) -> str:
         """
