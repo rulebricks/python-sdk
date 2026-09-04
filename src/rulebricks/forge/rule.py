@@ -1,10 +1,11 @@
-from .types.operators import RuleType
+from .types.operators import Field, RuleType
 from .operators import BooleanField, NumberField, StringField, DateField, ListField, Argument
 from .vocabulary import VocabularyValue
 from ..core.api_error import ApiError
 from ..core.request_options import RequestOptions
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from datetime import datetime
+from copy import deepcopy
 import json
 import uuid
 import string
@@ -77,6 +78,50 @@ def process_vocabulary_values(arg: Any) -> Any:
     elif isinstance(arg, dict):
         return {k: process_vocabulary_values(v) for k, v in arg.items()}
     return arg
+
+
+def canonical_condition_value(value: Any) -> Any:
+    """Normalize condition values for structural comparisons."""
+    serialized = process_vocabulary_values(value)
+    if isinstance(serialized, list):
+        return [canonical_condition_value(item) for item in serialized]
+    if isinstance(serialized, dict):
+        if "$rb" in serialized and "id" in serialized:
+            return {"$rb": serialized["$rb"], "id": serialized["id"]}
+        return {
+            key: canonical_condition_value(item)
+            for key, item in serialized.items()
+        }
+    return serialized
+
+
+def set_default_if_missing(target: Dict[str, Any], path: str, value: Any) -> None:
+    """Populate a dotted sample path without replacing an existing value."""
+    parts = path.split(".")
+    current = target
+    for part in parts[:-1]:
+        if part not in current:
+            current[part] = {}
+        elif not isinstance(current[part], dict):
+            return
+        current = current[part]
+    if parts[-1] not in current:
+        current[parts[-1]] = deepcopy(value)
+
+
+class OpaqueField(Field):
+    """Schema field retained for lossless round-tripping without fluent operators."""
+
+    def __init__(
+        self,
+        name: str,
+        field_type: RuleType,
+        description: str = "",
+        default: Any = None,
+    ):
+        super().__init__(name, description, default)
+        self.field_type = field_type
+
 
 def format_table_value(value: Any) -> str:
     """
@@ -525,6 +570,9 @@ class Rule:
         self.groups = {}
         self.name = "Untitled Rule"
         self.description = ""
+        self.stable_id = None
+        self.labels = None
+        self.metadata = None
         self.id = str(uuid.uuid4())
         self.created_at = datetime.utcnow().isoformat() + "Z"
         self.updated_at = self.created_at
@@ -536,6 +584,8 @@ class Rule:
         self.history = []
         self.published = False
         self.published_at = None
+        self.sample_request = {}
+        self.sample_response = {}
         self.test_suite = []
         self.access_groups = []
         self.published_conditions = None
@@ -606,8 +656,11 @@ class Rule:
 
         # Set basic attributes
         rule.id = data.get('id', str(uuid.uuid4()))
+        rule.stable_id = data.get('stable_id', data.get('stableId'))
         rule.name = data.get('name', 'Untitled Rule')
         rule.description = data.get('description', '')
+        rule.labels = deepcopy(data.get('labels'))
+        rule.metadata = deepcopy(data.get('metadata'))
         rule.slug = data.get('slug', rule._generate_slug())
         rule.created_at = data.get('createdAt', datetime.utcnow().isoformat() + "Z")
         rule.updated_at = data.get('updatedAt', rule.created_at)
@@ -622,6 +675,8 @@ class Rule:
         rule.test_suite = [RuleTest.from_json(test) for test in rule.test_suite]
         rule.access_groups = data.get('accessGroups') or []
         rule.test_request = data.get('testRequest', {})
+        rule.sample_request = deepcopy(data.get('sampleRequest') or {})
+        rule.sample_response = deepcopy(data.get('sampleResponse') or {})
         rule.folder_id = data.get('tag', None)
         rule.published_conditions = (
             data['published_conditions']
@@ -669,8 +724,17 @@ class Rule:
                     hydrated_field = rule.add_list_field(
                         field['key'], field.get('description', ''), field.get('defaultValue', [])
                     )
+                elif field_type in (RuleType.OBJECT, RuleType.FUNCTION):
+                    hydrated_field = OpaqueField(
+                        field.get('name') or field['key'],
+                        field_type,
+                        field.get('description', ''),
+                        field.get('defaultValue'),
+                    )
+                    rule.request_fields[field['key']] = hydrated_field
                 if hydrated_field is not None:
                     hydrated_field.display_name = field.get('name')
+                    hydrated_field.raw_schema = deepcopy(field)
             except KeyError as e:
                 raise ValueError(f"Missing required field in requestSchema: {str(e)}")
 
@@ -699,8 +763,17 @@ class Rule:
                     hydrated_field = rule.add_list_response(
                         field['key'], field.get('description', ''), field.get('defaultValue', [])
                     )
+                elif field_type in (RuleType.OBJECT, RuleType.FUNCTION):
+                    hydrated_field = OpaqueField(
+                        field.get('name') or field['key'],
+                        field_type,
+                        field.get('description', ''),
+                        field.get('defaultValue'),
+                    )
+                    rule.response_fields[field['key']] = hydrated_field
                 if hydrated_field is not None:
                     hydrated_field.display_name = field.get('name')
+                    hydrated_field.raw_schema = deepcopy(field)
             except KeyError as e:
                 raise ValueError(f"Missing required field in responseSchema: {str(e)}")
 
@@ -801,7 +874,10 @@ class Rule:
         characters = string.ascii_letters + string.digits
         return ''.join(random.choice(characters) for _ in range(length))
 
-    def _get_field_type(self, field: Union[BooleanField, NumberField, StringField, DateField, ListField]) -> RuleType:
+    def _get_field_type(
+        self,
+        field: Union[BooleanField, NumberField, StringField, DateField, ListField, OpaqueField],
+    ) -> RuleType:
         """
         Get the RuleType enum value for a field.
 
@@ -812,6 +888,8 @@ class Rule:
         Returns:
             RuleType: The corresponding RuleType enum value.
         """
+        if isinstance(field, OpaqueField):
+            return field.field_type
         type_mapping = {
             BooleanField: RuleType.BOOLEAN,
             NumberField: RuleType.NUMBER,
@@ -1464,13 +1542,7 @@ class Rule:
                 if request["op"] != operator:
                     matches = False
                     break
-                # Compare args (ignoring Vocabulary)
-                if any(isinstance(a, VocabularyValue) for a in args):
-                    continue
-                # Convert both sets of args to strings for comparison
-                existing_args = [str(arg) for arg in request["args"]]
-                search_args = [str(arg) for arg in args]
-                if existing_args != search_args:
+                if canonical_condition_value(request["args"]) != canonical_condition_value(args):
                     matches = False
                     break
             if matches:
@@ -1498,23 +1570,27 @@ class Rule:
             >>> rule_dict = rule.to_dict()
             >>> print(rule_dict['name'], rule_dict['conditions'])
         """
-        # Use request fields and response fields to generate sampleRequest and sampleResponse json
-        sampleRequest = {}
-        sampleResponse = {}
+        # Preserve hydrated samples and fill only missing schema-backed paths.
+        sampleRequest = deepcopy(self.sample_request)
+        sampleResponse = deepcopy(self.sample_response)
 
         for name, field in self.request_fields.items():
-            parts = name.split('.')
-            current = sampleRequest
-            for part in parts[:-1]:
-                current = current.setdefault(part, {})
-            current[parts[-1]] = field.default
+            set_default_if_missing(sampleRequest, name, field.default)
 
         for name, field in self.response_fields.items():
-            parts = name.split('.')
-            current = sampleResponse
-            for part in parts[:-1]:
-                current = current.setdefault(part, {})
-            current[parts[-1]] = field.default
+            set_default_if_missing(sampleResponse, name, field.default)
+
+        def serialize_schema_field(name: str, field: Field) -> Dict[str, Any]:
+            schema = deepcopy(field.raw_schema) if field.raw_schema else {}
+            schema.update({
+                "key": name,
+                "name": field.display_name or field.name.replace('_', ' ').title(),
+                "type": self._get_field_type(field).value,
+                "description": field.description,
+                "defaultValue": field.default,
+                "show": schema.get("show", True),
+            })
+            return schema
 
         rule_dict = {
             "id": self.id,
@@ -1531,31 +1607,11 @@ class Rule:
             "sampleResponse": sampleResponse,
             "testRequest": self.test_request or sampleRequest,
             "requestSchema": [
-                {
-                    "key": name,
-                    "name": (
-                        getattr(field, "display_name", None)
-                        or field.name.replace('_', ' ').title()
-                    ),
-                    "type": self._get_field_type(field).value,
-                    "description": field.description,
-                    "defaultValue": field.default,
-                    "show": True
-                }
+                serialize_schema_field(name, field)
                 for name, field in self.request_fields.items()
             ],
             "responseSchema": [
-                {
-                    "key": name,
-                    "name": (
-                        getattr(field, "display_name", None)
-                        or field.name.replace('_', ' ').title()
-                    ),
-                    "type": self._get_field_type(field).value,
-                    "description": field.description,
-                    "defaultValue": field.default,
-                    "show": True
-                }
+                serialize_schema_field(name, field)
                 for name, field in self.response_fields.items()
             ],
             "conditions": self.conditions,
@@ -1567,6 +1623,14 @@ class Rule:
             "no_conditions": len(self.conditions),
             "accessGroups": self.access_groups
         }
+
+        for key, value in {
+            "stable_id": self.stable_id,
+            "labels": self.labels,
+            "metadata": self.metadata,
+        }.items():
+            if value is not None:
+                rule_dict[key] = deepcopy(value)
 
         published_snapshots = {
             "published_requestSchema": self.published_request_schema,

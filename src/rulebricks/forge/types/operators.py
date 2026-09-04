@@ -28,6 +28,8 @@ class Field:
     description: str = ""
     default: Any = None
     operators: Dict[str, OperatorDef] = field(default_factory=dict)
+    display_name: Optional[str] = None
+    raw_schema: Optional[Dict[str, Any]] = None
 
 class RuleType(Enum):
     """Supported rule types"""
@@ -36,4 +38,5 @@ class RuleType(Enum):
     STRING = "string"
     DATE = "date"
     LIST = "list"
+    OBJECT = "object"
     FUNCTION = "function"

@@ -197,6 +197,17 @@ class NumberField(Field):
                 ],
                 validate=lambda args: args[0] < args[1]
             ),
+            "is_included_in": OperatorDef(
+                "is included in",
+                [
+                    OperatorArg(
+                        "value",
+                        "list",
+                        "A list of values the number should be in",
+                        validate=lambda value: isinstance(value, list) and len(value) > 0,
+                    )
+                ],
+            ),
             "is_even": OperatorDef("is even", [], "Check if value is even"),
             "is_odd": OperatorDef("is odd", [], "Check if value is odd"),
             "is_positive": OperatorDef("is positive", [], "Check if value is greater than zero"),
@@ -247,6 +258,19 @@ class NumberField(Field):
             if op.validate and not op.validate([start, end]):
                 raise ValueError(f"Invalid range for not between: start ({start}) must be less than end ({end})")
         return ("not between", [start_arg, end_arg])
+
+    def is_included_in(
+        self,
+        values: Union[List[Union[int, float, VocabularyValue]], VocabularyValue],
+    ) -> tuple:
+        if isinstance(values, VocabularyValue):
+            return ("is included in", [Argument(values, VocabularyValueType.LIST)])
+        if not values:
+            raise ValueError("is_included_in requires at least one value")
+        serialized_values = [
+            Argument(value, VocabularyValueType.NUMBER) for value in values
+        ]
+        return ("is included in", [serialized_values])
 
     def is_even(self) -> tuple:
         return ("is even", [])

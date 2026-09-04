@@ -45,6 +45,7 @@ EXPECTED_OPERATOR_WIRE_NAMES = {
         "less than or equal to",
         "between",
         "not between",
+        "is included in",
         "is even",
         "is odd",
         "is positive",
@@ -231,7 +232,7 @@ EXPECTED_OPERATOR_WIRE_NAMES = {
 
 EXPECTED_OPERATOR_COUNTS = {
     BooleanField: 4,
-    NumberField: 19,
+    NumberField: 20,
     StringField: 59,
     DateField: 52,
     ListField: 54,
@@ -773,6 +774,152 @@ def test_response_date_and_list_fields_hydrate_under_schema_keys():
     assert missing_schemas.response_fields == {}
 
 
+def test_schema_metadata_opaque_fields_samples_and_top_level_metadata_round_trip():
+    hydrated = Rule.from_json(
+        {
+            "id": "rule-id",
+            "stable_id": "stable-rule-id",
+            "labels": {"team": "risk"},
+            "metadata": {"source": "migration"},
+            "publishedAt": "2026-09-03T12:00:00.000Z",
+            "requestSchema": [
+                {
+                    "key": "profile.score",
+                    "name": "Score",
+                    "type": "number",
+                    "defaultValue": 0,
+                    "show": False,
+                    "valuesOnly": True,
+                    "valuesPrefix": "Risk",
+                    "extension": "preserved",
+                },
+                {
+                    "key": "missing",
+                    "name": "Missing",
+                    "type": "number",
+                    "defaultValue": 7,
+                    "show": True,
+                },
+                {
+                    "key": "payload",
+                    "name": "Payload",
+                    "type": "object",
+                    "defaultValue": {},
+                    "show": False,
+                },
+                {
+                    "key": "formula",
+                    "name": "Formula",
+                    "type": "function",
+                    "defaultValue": None,
+                    "show": True,
+                },
+            ],
+            "responseSchema": [
+                {
+                    "key": "approved",
+                    "name": "Approved",
+                    "type": "boolean",
+                    "defaultValue": False,
+                    "show": False,
+                }
+            ],
+            "sampleRequest": {
+                "profile": {"score": 42},
+                "untouched": "value",
+            },
+            "sampleResponse": {"approved": True},
+        }
+    )
+
+    serialized = hydrated.to_dict()
+    assert serialized["stable_id"] == "stable-rule-id"
+    assert serialized["labels"] == {"team": "risk"}
+    assert serialized["metadata"] == {"source": "migration"}
+    assert serialized["publishedAt"] == "2026-09-03T12:00:00.000Z"
+    assert serialized["sampleRequest"] == {
+        "profile": {"score": 42},
+        "untouched": "value",
+        "missing": 7,
+        "payload": {},
+        "formula": None,
+    }
+    assert serialized["sampleResponse"] == {"approved": True}
+    score = next(
+        field
+        for field in serialized["requestSchema"]
+        if field["key"] == "profile.score"
+    )
+    assert score["show"] is False
+    assert score["valuesOnly"] is True
+    assert score["valuesPrefix"] == "Risk"
+    assert score["extension"] == "preserved"
+    assert [field["type"] for field in serialized["requestSchema"]] == [
+        "number",
+        "number",
+        "object",
+        "function",
+    ]
+    assert serialized["responseSchema"][0]["show"] is False
+
+
+def test_find_conditions_compares_values_structurally_and_vocabulary_by_id():
+    rule = Rule.from_json(
+        {
+            "requestSchema": [
+                {
+                    "key": "score",
+                    "name": "Score",
+                    "type": "number",
+                    "defaultValue": 0,
+                    "show": True,
+                }
+            ],
+            "responseSchema": [],
+            "conditions": [
+                {
+                    "request": {
+                        "score": {
+                            "op": "equals",
+                            "args": [
+                                {
+                                    "id": "value-id",
+                                    "$rb": "globalValue",
+                                    "name": "Old Name",
+                                }
+                            ],
+                        }
+                    },
+                    "response": {},
+                    "settings": {},
+                },
+                {
+                    "request": {
+                        "score": {
+                            "op": "equals",
+                            "args": [1],
+                        }
+                    },
+                    "response": {},
+                    "settings": {},
+                },
+            ],
+        }
+    )
+    renamed_reference = VocabularyValue(
+        "value-id",
+        "New Name",
+        VocabularyValueType.NUMBER,
+    )
+
+    assert len(
+        rule.find_conditions(
+            score=rule.get_number_field("score").equals(renamed_reference)
+        )
+    ) == 1
+    assert rule.find_conditions(score=("equals", ["1"])) == []
+
+
 def test_from_json_dumps_model_inputs_with_aliases():
     class ExportModel:
         def model_dump(self, *, by_alias=False):
@@ -980,7 +1127,7 @@ def test_boolean_equals_only_accepts_literal_bool():
     ("field_type", "expected_count"),
     [
         pytest.param(BooleanField, 4, id="boolean"),
-        pytest.param(NumberField, 19, id="number"),
+        pytest.param(NumberField, 20, id="number"),
         pytest.param(StringField, 59, id="string"),
         pytest.param(DateField, 52, id="date"),
         pytest.param(ListField, 54, id="list"),
@@ -1276,6 +1423,43 @@ def test_number_range_validation_is_retained(method_name):
         getattr(field, method_name)(2, 2)
     with pytest.raises(ValueError, match="start .* must be less than end"):
         getattr(field, method_name)(3, 2)
+
+
+def test_number_collection_membership_serializes_and_validates_entries():
+    field = NumberField("value")
+    number_reference = VocabularyValue(
+        "number-id",
+        "Allowed.Number",
+        VocabularyValueType.NUMBER,
+    )
+    list_reference = VocabularyValue(
+        "list-id",
+        "Allowed.Numbers",
+        VocabularyValueType.LIST,
+    )
+
+    assert serialize_operator_call(
+        field,
+        "is_included_in",
+        ([1, number_reference],),
+    ) == ("is included in", [[1, number_reference.to_dict()]])
+    assert serialize_operator_call(
+        field,
+        "is_included_in",
+        (list_reference,),
+    ) == ("is included in", [list_reference.to_dict()])
+    with pytest.raises(ValueError, match="at least one value"):
+        field.is_included_in([])
+    with pytest.raises(TypeMismatchError, match="number was expected"):
+        field.is_included_in(
+            [
+                VocabularyValue(
+                    "string-id",
+                    "Wrong",
+                    VocabularyValueType.STRING,
+                )
+            ]
+        )
 
 
 @pytest.mark.parametrize(
