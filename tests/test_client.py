@@ -1,3 +1,4 @@
+import ast
 import inspect
 from pathlib import Path
 
@@ -12,6 +13,45 @@ from rulebricks.users.client import AsyncUsersClient, UsersClient
 
 def test_package_declares_inline_types() -> None:
     assert Path(rulebricks.__file__).with_name("py.typed").is_file()
+
+
+def _type_checking_names() -> set:
+    """Names the package advertises to type checkers via `if TYPE_CHECKING:`."""
+    tree = ast.parse(Path(rulebricks.__file__).read_text())
+    names = set()
+    for node in tree.body:
+        if not isinstance(node, ast.If):
+            continue
+        test = node.test
+        is_type_checking = (isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING") or (
+            isinstance(test, ast.Name) and test.id == "TYPE_CHECKING"
+        )
+        if not is_type_checking:
+            continue
+        for statement in node.body:
+            assert isinstance(statement, ast.ImportFrom)
+            names.update(alias.asname or alias.name for alias in statement.names)
+    return names
+
+
+def test_type_checking_exports_match_runtime_exports() -> None:
+    # What Pylance/pyright autocompletes must be what `from rulebricks import X` returns at runtime.
+    type_checking_names = _type_checking_names()
+    assert type_checking_names
+    assert type_checking_names == set(rulebricks._dynamic_imports)
+    assert type_checking_names == set(rulebricks.__all__)
+    for name in sorted(type_checking_names):
+        assert getattr(rulebricks, name) is not None
+
+
+def test_forge_is_importable_from_package_root() -> None:
+    from rulebricks import Condition, Rule, Vocabulary, VocabularyValue
+    from rulebricks import forge
+
+    assert Rule is forge.Rule
+    assert Condition is forge.Condition
+    assert Vocabulary is forge.Vocabulary
+    assert VocabularyValue is forge.VocabularyValue
 
 
 def test_resource_properties_expose_return_types() -> None:
