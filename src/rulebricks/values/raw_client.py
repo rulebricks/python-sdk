@@ -172,7 +172,7 @@ class RawValuesClient:
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. This developer-facing sync contract preserves source names and nesting: nested objects are flattened using dot notation while every key segment stays exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
+            Values to create or update. Nested objects use dot-separated names and payloads may reference other values.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
@@ -269,7 +269,7 @@ class RawValuesClient:
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[DeleteValueResponse]:
         """
-        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
+        Deletes a value by ID. Rule and flow references block deletion; value references are replaced with the deleted value's content.
 
         Parameters
         ----------
@@ -656,7 +656,7 @@ class AsyncRawValuesClient:
         Parameters
         ----------
         values : typing.Dict[str, typing.Any]
-            A dictionary of keys and values to update or add. This developer-facing sync contract preserves source names and nesting: nested objects are flattened using dot notation while every key segment stays exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
+            Values to create or update. Nested objects use dot-separated names and payloads may reference other values.
 
         user_groups : typing.Optional[typing.Sequence[str]]
             Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
@@ -753,7 +753,7 @@ class AsyncRawValuesClient:
         self, *, id: str, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[DeleteValueResponse]:
         """
-        Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
+        Deletes a value by ID. Rule and flow references block deletion; value references are replaced with the deleted value's content.
 
         Parameters
         ----------

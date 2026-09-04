@@ -28,7 +28,7 @@ class RulebricksFlowNode(UniversalBaseModel):
     - **Rule** - `type: rule`. Input: per-key input (each connection sets `input`). requires a published rule; gateable by Continue If.
       - Config: `rule`, `version`, `name`
       - Example: `{"ref":"rule","type":"rule","rule":"risk-score","version":"2"}`
-    - **Run Flow** - `type: flow` (aliases: `subflow`, `run_flow`). Input: per-key input (each connection sets `input`). gateable by Continue If.
+    - **Run Flow** - `type: flow` (aliases: `subflow`, `run_flow`, `runflow`). Input: per-key input (each connection sets `input`). gateable by Continue If.
       - Config: `flow`, `version`, `name`, `outputs`, `useCache`, `cacheExpiration`, `cacheKey`
       - Example: `{"ref":"flow","type":"flow","flow":"credit-check","version":"2","outputs":[{"key":"data.approved","type":"boolean"}]}`
     - **Continue If** - `type: ifelse` (aliases: `continue_if`, `continueif`). Input: single input (key derived from the source output). emits control edges; gateable by Continue If.
@@ -64,7 +64,7 @@ class RulebricksFlowNode(UniversalBaseModel):
     - **Vault** - `type: vault`. Input: no data input.
       - Config: `provider`, `credentials`, `secrets`
       - Example: `{"ref":"vault","type":"vault","secrets":[{"name":"STRIPE_API_KEY"}]}`
-    - **Context Operation** - `type: entity` (aliases: `context_operation`). Input: per-key input (each connection sets `input`). gateable by Continue If.
+    - **Context Operation** - `type: entity` (aliases: `context_operation`, `entityoperation`). Input: per-key input (each connection sets `input`). gateable by Continue If.
       - Config: `operation`, `entitySlug`, `identityFieldKey`, `selectedUpdateFields`, `updateValues`, `includeRelations`, `outputs`
       - Example: `{"ref":"entity","type":"entity","operation":"read","entitySlug":"customer"}`
     - **Send Notification** - `type: notification` (aliases: `send_notification`). Input: single input (key derived from the source output). terminal; gateable by Continue If.

@@ -4,11 +4,13 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .run_tests_response_failures_item_policy import RunTestsResponseFailuresItemPolicy
 
 
 class RunTestsResponseFailuresItem(UniversalBaseModel):
     id: str
     name: str
+    policy: RunTestsResponseFailuresItemPolicy
     critical: bool
     expected: typing.Optional[typing.Any] = pydantic.Field(default=None)
     """

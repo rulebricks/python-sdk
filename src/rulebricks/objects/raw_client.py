@@ -98,7 +98,7 @@ class RawObjectsClient:
         self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[UpsertObjectResponse]:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
+        Creates or updates an object and syncs its generated enum values.
 
         Parameters
         ----------
@@ -428,7 +428,7 @@ class AsyncRawObjectsClient:
         self, *, request: UpsertObjectRequest, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[UpsertObjectResponse]:
         """
-        Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
+        Creates or updates an object and syncs its generated enum values.
 
         Parameters
         ----------

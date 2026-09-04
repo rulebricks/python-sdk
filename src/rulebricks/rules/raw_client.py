@@ -12,7 +12,9 @@ from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
+from ..errors.gateway_timeout_error import GatewayTimeoutError
 from ..errors.internal_server_error import InternalServerError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..types.bulk_rule_response_item import BulkRuleResponseItem
 from ..types.dynamic_request_payload import DynamicRequestPayload
 from ..types.dynamic_response_payload import DynamicResponsePayload
@@ -56,7 +58,7 @@ class RawRulesClient:
         Returns
         -------
         HttpResponse[DynamicResponsePayload]
-            Rule execution successful. The response structure depends on the rule configuration.
+            Rule execution successful. The response structure depends on the rule configuration. A Collect Matches rule returns a `{ "results": [...] }` envelope; zero matches returns HTTP 200 with `{ "results": [] }`.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"solve/{encode_path_param(slug)}/{encode_path_param(version)}",
@@ -100,6 +102,28 @@ class RawRulesClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -136,7 +160,7 @@ class RawRulesClient:
         Returns
         -------
         HttpResponse[typing.List[BulkRuleResponseItem]]
-            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
+            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration. For a Collect Matches rule, each array item is a `{ "results": [...] }` envelope; an input with zero matches returns `{ "results": [] }` without failing the bulk request.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"bulk-solve/{encode_path_param(slug)}/{encode_path_param(version)}",
@@ -176,6 +200,28 @@ class RawRulesClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -248,6 +294,28 @@ class RawRulesClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -289,7 +357,7 @@ class AsyncRawRulesClient:
         Returns
         -------
         AsyncHttpResponse[DynamicResponsePayload]
-            Rule execution successful. The response structure depends on the rule configuration.
+            Rule execution successful. The response structure depends on the rule configuration. A Collect Matches rule returns a `{ "results": [...] }` envelope; zero matches returns HTTP 200 with `{ "results": [] }`.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"solve/{encode_path_param(slug)}/{encode_path_param(version)}",
@@ -333,6 +401,28 @@ class AsyncRawRulesClient:
                         ),
                     ),
                 )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             _response_json = _response.json()
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
@@ -369,7 +459,7 @@ class AsyncRawRulesClient:
         Returns
         -------
         AsyncHttpResponse[typing.List[BulkRuleResponseItem]]
-            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
+            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration. For a Collect Matches rule, each array item is a `{ "results": [...] }` envelope; an input with zero matches returns `{ "results": [] }` without failing the bulk request.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"bulk-solve/{encode_path_param(slug)}/{encode_path_param(version)}",
@@ -409,6 +499,28 @@ class AsyncRawRulesClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -477,6 +589,28 @@ class AsyncRawRulesClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 504:
+                raise GatewayTimeoutError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),

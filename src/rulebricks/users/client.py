@@ -170,7 +170,7 @@ class UsersClient:
         return _response.data
 
     @property
-    def groups(self):
+    def groups(self) -> GroupsClient:
         if self._groups is None:
             from .groups.client import GroupsClient  # noqa: E402
 
@@ -354,7 +354,7 @@ class AsyncUsersClient:
         return _response.data
 
     @property
-    def groups(self):
+    def groups(self) -> AsyncGroupsClient:
         if self._groups is None:
             from .groups.client import AsyncGroupsClient  # noqa: E402
 

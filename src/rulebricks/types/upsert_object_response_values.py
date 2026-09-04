@@ -9,7 +9,7 @@ from .upsert_object_response_values_would_archive_item import UpsertObjectRespon
 
 class UpsertObjectResponseValues(UniversalBaseModel):
     """
-    Managed-value sync results (or would_sync / would_archive for dry runs).
+    Managed-value sync results.
     """
 
     synced: typing.Optional[int] = pydantic.Field(default=None)
@@ -19,7 +19,7 @@ class UpsertObjectResponseValues(UniversalBaseModel):
 
     archived: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Previously generated values archived because the schema no longer declares them.
+    Generated values removed from the schema.
     """
 
     would_sync: typing.Optional[int] = pydantic.Field(default=None)

@@ -3,8 +3,8 @@
 import typing
 
 import pydantic
-from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from ...types.manifest_labeled_asset import ManifestLabeledAsset
+from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .manifest_labeled_asset import ManifestLabeledAsset
 
 
 class ImportManifestRequestManifest(UniversalBaseModel):
@@ -12,9 +12,9 @@ class ImportManifestRequestManifest(UniversalBaseModel):
     The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
     """
 
-    version: typing.Optional[str] = pydantic.Field(default=None)
+    schema_version: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Manifest format version.
+    RBM schema version. Unknown fields from newer schemas are preserved with a warning.
     """
 
     rules: typing.Optional[typing.List[ManifestLabeledAsset]] = pydantic.Field(default=None)
@@ -29,12 +29,12 @@ class ImportManifestRequestManifest(UniversalBaseModel):
 
     entities: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Contexts to import.
+    Legacy alias for `contexts`; accepted and normalized by the RBM codec.
     """
 
     contexts: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Alias for `entities`, accepted so manifests produced by the export endpoint (which names this array `contexts`) can be imported without modification. Ignored when `entities` is present and non-empty.
+    Contexts to import.
     """
 
     values: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)

@@ -117,7 +117,7 @@ class Rulebricks:
         self._tests: typing.Optional[TestsClient] = None
 
     @property
-    def rules(self):
+    def rules(self) -> RulesClient:
         if self._rules is None:
             from .rules.client import RulesClient  # noqa: E402
 
@@ -125,7 +125,7 @@ class Rulebricks:
         return self._rules
 
     @property
-    def infra(self):
+    def infra(self) -> InfraClient:
         if self._infra is None:
             from .infra.client import InfraClient  # noqa: E402
 
@@ -133,7 +133,7 @@ class Rulebricks:
         return self._infra
 
     @property
-    def flows(self):
+    def flows(self) -> FlowsClient:
         if self._flows is None:
             from .flows.client import FlowsClient  # noqa: E402
 
@@ -141,7 +141,7 @@ class Rulebricks:
         return self._flows
 
     @property
-    def decisions(self):
+    def decisions(self) -> DecisionsClient:
         if self._decisions is None:
             from .decisions.client import DecisionsClient  # noqa: E402
 
@@ -149,7 +149,7 @@ class Rulebricks:
         return self._decisions
 
     @property
-    def users(self):
+    def users(self) -> UsersClient:
         if self._users is None:
             from .users.client import UsersClient  # noqa: E402
 
@@ -157,7 +157,7 @@ class Rulebricks:
         return self._users
 
     @property
-    def assets(self):
+    def assets(self) -> AssetsClient:
         if self._assets is None:
             from .assets.client import AssetsClient  # noqa: E402
 
@@ -165,7 +165,7 @@ class Rulebricks:
         return self._assets
 
     @property
-    def values(self):
+    def values(self) -> ValuesClient:
         if self._values is None:
             from .values.client import ValuesClient  # noqa: E402
 
@@ -173,7 +173,7 @@ class Rulebricks:
         return self._values
 
     @property
-    def objects(self):
+    def objects(self) -> ObjectsClient:
         if self._objects is None:
             from .objects.client import ObjectsClient  # noqa: E402
 
@@ -181,7 +181,7 @@ class Rulebricks:
         return self._objects
 
     @property
-    def contexts(self):
+    def contexts(self) -> ContextsClient:
         if self._contexts is None:
             from .contexts.client import ContextsClient  # noqa: E402
 
@@ -189,7 +189,7 @@ class Rulebricks:
         return self._contexts
 
     @property
-    def tests(self):
+    def tests(self) -> TestsClient:
         if self._tests is None:
             from .tests.client import TestsClient  # noqa: E402
 
@@ -308,7 +308,7 @@ class AsyncRulebricks:
         self._tests: typing.Optional[AsyncTestsClient] = None
 
     @property
-    def rules(self):
+    def rules(self) -> AsyncRulesClient:
         if self._rules is None:
             from .rules.client import AsyncRulesClient  # noqa: E402
 
@@ -316,7 +316,7 @@ class AsyncRulebricks:
         return self._rules
 
     @property
-    def infra(self):
+    def infra(self) -> AsyncInfraClient:
         if self._infra is None:
             from .infra.client import AsyncInfraClient  # noqa: E402
 
@@ -324,7 +324,7 @@ class AsyncRulebricks:
         return self._infra
 
     @property
-    def flows(self):
+    def flows(self) -> AsyncFlowsClient:
         if self._flows is None:
             from .flows.client import AsyncFlowsClient  # noqa: E402
 
@@ -332,7 +332,7 @@ class AsyncRulebricks:
         return self._flows
 
     @property
-    def decisions(self):
+    def decisions(self) -> AsyncDecisionsClient:
         if self._decisions is None:
             from .decisions.client import AsyncDecisionsClient  # noqa: E402
 
@@ -340,7 +340,7 @@ class AsyncRulebricks:
         return self._decisions
 
     @property
-    def users(self):
+    def users(self) -> AsyncUsersClient:
         if self._users is None:
             from .users.client import AsyncUsersClient  # noqa: E402
 
@@ -348,7 +348,7 @@ class AsyncRulebricks:
         return self._users
 
     @property
-    def assets(self):
+    def assets(self) -> AsyncAssetsClient:
         if self._assets is None:
             from .assets.client import AsyncAssetsClient  # noqa: E402
 
@@ -356,7 +356,7 @@ class AsyncRulebricks:
         return self._assets
 
     @property
-    def values(self):
+    def values(self) -> AsyncValuesClient:
         if self._values is None:
             from .values.client import AsyncValuesClient  # noqa: E402
 
@@ -364,7 +364,7 @@ class AsyncRulebricks:
         return self._values
 
     @property
-    def objects(self):
+    def objects(self) -> AsyncObjectsClient:
         if self._objects is None:
             from .objects.client import AsyncObjectsClient  # noqa: E402
 
@@ -372,7 +372,7 @@ class AsyncRulebricks:
         return self._objects
 
     @property
-    def contexts(self):
+    def contexts(self) -> AsyncContextsClient:
         if self._contexts is None:
             from .contexts.client import AsyncContextsClient  # noqa: E402
 
@@ -380,7 +380,7 @@ class AsyncRulebricks:
         return self._contexts
 
     @property
-    def tests(self):
+    def tests(self) -> AsyncTestsClient:
         if self._tests is None:
             from .tests.client import AsyncTestsClient  # noqa: E402
 

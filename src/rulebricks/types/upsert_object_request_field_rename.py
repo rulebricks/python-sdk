@@ -8,17 +8,17 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 
 class UpsertObjectRequestFieldRename(UniversalBaseModel):
     """
-    Optional single-field rename hint for an update. When `content` replaces an existing schema field key with a new key, this hint preserves matching managed enum value IDs instead of archiving and recreating them.
+    Renames a field while preserving generated value IDs.
     """
 
     from_key: str = pydantic.Field()
     """
-    Previous schema field key or schemaPath present on the stored object.
+    Existing field key or schema path.
     """
 
     to_key: str = pydantic.Field()
     """
-    Replacement schema field key or schemaPath present in the submitted content.
+    New field key or schema path.
     """
 
     if IS_PYDANTIC_V2:

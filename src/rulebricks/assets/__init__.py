@@ -9,21 +9,21 @@ if typing.TYPE_CHECKING:
     from .types import (
         ExportManifestRequestRootType,
         ExportRbmAssetsResponse,
-        ImportManifestRequestConflictStrategy,
-        ImportManifestRequestLegacyRuleMappingValue,
-        ImportManifestRequestLegacyRuleMappingValueAction,
-        ImportManifestRequestManifest,
+        ImportRbmAssetsRequestXRulebricksContentEncoding,
+        ImportRbmAssetsResponse,
     )
-    from . import flows, folders, rules
+    from . import contexts, flows, folders, rules
+    from .contexts import CreateContextRequestOnSchemaMismatch, UpdateContextRequestOnSchemaMismatch
     from .folders import UpsertFolderRequestType
 _dynamic_imports: typing.Dict[str, str] = {
+    "CreateContextRequestOnSchemaMismatch": ".contexts",
     "ExportManifestRequestRootType": ".types",
     "ExportRbmAssetsResponse": ".types",
-    "ImportManifestRequestConflictStrategy": ".types",
-    "ImportManifestRequestLegacyRuleMappingValue": ".types",
-    "ImportManifestRequestLegacyRuleMappingValueAction": ".types",
-    "ImportManifestRequestManifest": ".types",
+    "ImportRbmAssetsRequestXRulebricksContentEncoding": ".types",
+    "ImportRbmAssetsResponse": ".types",
+    "UpdateContextRequestOnSchemaMismatch": ".contexts",
     "UpsertFolderRequestType": ".folders",
+    "contexts": ".contexts",
     "flows": ".flows",
     "folders": ".folders",
     "rules": ".rules",
@@ -52,13 +52,14 @@ def __dir__():
 
 
 __all__ = [
+    "CreateContextRequestOnSchemaMismatch",
     "ExportManifestRequestRootType",
     "ExportRbmAssetsResponse",
-    "ImportManifestRequestConflictStrategy",
-    "ImportManifestRequestLegacyRuleMappingValue",
-    "ImportManifestRequestLegacyRuleMappingValueAction",
-    "ImportManifestRequestManifest",
+    "ImportRbmAssetsRequestXRulebricksContentEncoding",
+    "ImportRbmAssetsResponse",
+    "UpdateContextRequestOnSchemaMismatch",
     "UpsertFolderRequestType",
+    "contexts",
     "flows",
     "folders",
     "rules",

@@ -58,6 +58,7 @@ if typing.TYPE_CHECKING:
     from .create_context_response import CreateContextResponse
     from .create_relationship_response import CreateRelationshipResponse
     from .create_test_request import CreateTestRequest
+    from .create_test_request_policy import CreateTestRequestPolicy
     from .create_user_response import CreateUserResponse
     from .create_user_response_user import CreateUserResponseUser
     from .decision_log import DecisionLog
@@ -70,7 +71,6 @@ if typing.TYPE_CHECKING:
     from .delete_object_response_values import DeleteObjectResponseValues
     from .delete_relationship_response import DeleteRelationshipResponse
     from .delete_value_response import DeleteValueResponse
-    from .delete_value_response_cascade_deleted_item import DeleteValueResponseCascadeDeletedItem
     from .delete_value_response_updated_list_values_item import DeleteValueResponseUpdatedListValuesItem
     from .dynamic_request_payload import DynamicRequestPayload
     from .dynamic_response_payload import DynamicResponsePayload
@@ -108,10 +108,24 @@ if typing.TYPE_CHECKING:
     from .folder import Folder
     from .folder_list_response import FolderListResponse
     from .folder_type import FolderType
+    from .import_manifest_preview_response import ImportManifestPreviewResponse
+    from .import_manifest_preview_response_preview import ImportManifestPreviewResponsePreview
+    from .import_manifest_preview_response_preview_items_item import ImportManifestPreviewResponsePreviewItemsItem
+    from .import_manifest_preview_response_preview_items_item_operation import (
+        ImportManifestPreviewResponsePreviewItemsItemOperation,
+    )
+    from .import_manifest_preview_response_preview_items_item_type import (
+        ImportManifestPreviewResponsePreviewItemsItemType,
+    )
+    from .import_manifest_preview_response_preview_policy import ImportManifestPreviewResponsePreviewPolicy
+    from .import_manifest_request import ImportManifestRequest
+    from .import_manifest_request_conflict_strategy import ImportManifestRequestConflictStrategy
+    from .import_manifest_request_manifest import ImportManifestRequestManifest
     from .import_manifest_response import ImportManifestResponse
     from .import_manifest_response_created_item import ImportManifestResponseCreatedItem
     from .import_manifest_response_errors_item import ImportManifestResponseErrorsItem
     from .import_manifest_response_organization_created import ImportManifestResponseOrganizationCreated
+    from .import_manifest_response_outcome import ImportManifestResponseOutcome
     from .import_manifest_response_skipped_item import ImportManifestResponseSkippedItem
     from .import_manifest_response_updated_item import ImportManifestResponseUpdatedItem
     from .manifest_labeled_asset import ManifestLabeledAsset
@@ -156,7 +170,9 @@ if typing.TYPE_CHECKING:
     from .run_tests_request import RunTestsRequest
     from .run_tests_response import RunTestsResponse
     from .run_tests_response_failures_item import RunTestsResponseFailuresItem
+    from .run_tests_response_failures_item_policy import RunTestsResponseFailuresItemPolicy
     from .run_tests_response_results_item import RunTestsResponseResultsItem
+    from .run_tests_response_results_item_policy import RunTestsResponseResultsItemPolicy
     from .scale_status_response import ScaleStatusResponse
     from .scale_status_response_status import ScaleStatusResponseStatus
     from .schema_field import SchemaField
@@ -179,11 +195,13 @@ if typing.TYPE_CHECKING:
     from .sync_values_response_errors_item import SyncValuesResponseErrorsItem
     from .test import Test
     from .test_list_response import TestListResponse
+    from .test_policy import TestPolicy
     from .test_test_state import TestTestState
     from .test_test_state_evaluation_error import TestTestStateEvaluationError
     from .update_context_response import UpdateContextResponse
     from .update_values_summary_response import UpdateValuesSummaryResponse
     from .upsert_object_request import UpsertObjectRequest
+    from .upsert_object_request_content import UpsertObjectRequestContent
     from .upsert_object_request_field_rename import UpsertObjectRequestFieldRename
     from .upsert_object_response import UpsertObjectResponse
     from .upsert_object_response_values import UpsertObjectResponseValues
@@ -251,6 +269,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "CreateContextResponse": ".create_context_response",
     "CreateRelationshipResponse": ".create_relationship_response",
     "CreateTestRequest": ".create_test_request",
+    "CreateTestRequestPolicy": ".create_test_request_policy",
     "CreateUserResponse": ".create_user_response",
     "CreateUserResponseUser": ".create_user_response_user",
     "DecisionLog": ".decision_log",
@@ -263,7 +282,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "DeleteObjectResponseValues": ".delete_object_response_values",
     "DeleteRelationshipResponse": ".delete_relationship_response",
     "DeleteValueResponse": ".delete_value_response",
-    "DeleteValueResponseCascadeDeletedItem": ".delete_value_response_cascade_deleted_item",
     "DeleteValueResponseUpdatedListValuesItem": ".delete_value_response_updated_list_values_item",
     "DynamicRequestPayload": ".dynamic_request_payload",
     "DynamicResponsePayload": ".dynamic_response_payload",
@@ -293,10 +311,20 @@ _dynamic_imports: typing.Dict[str, str] = {
     "Folder": ".folder",
     "FolderListResponse": ".folder_list_response",
     "FolderType": ".folder_type",
+    "ImportManifestPreviewResponse": ".import_manifest_preview_response",
+    "ImportManifestPreviewResponsePreview": ".import_manifest_preview_response_preview",
+    "ImportManifestPreviewResponsePreviewItemsItem": ".import_manifest_preview_response_preview_items_item",
+    "ImportManifestPreviewResponsePreviewItemsItemOperation": ".import_manifest_preview_response_preview_items_item_operation",
+    "ImportManifestPreviewResponsePreviewItemsItemType": ".import_manifest_preview_response_preview_items_item_type",
+    "ImportManifestPreviewResponsePreviewPolicy": ".import_manifest_preview_response_preview_policy",
+    "ImportManifestRequest": ".import_manifest_request",
+    "ImportManifestRequestConflictStrategy": ".import_manifest_request_conflict_strategy",
+    "ImportManifestRequestManifest": ".import_manifest_request_manifest",
     "ImportManifestResponse": ".import_manifest_response",
     "ImportManifestResponseCreatedItem": ".import_manifest_response_created_item",
     "ImportManifestResponseErrorsItem": ".import_manifest_response_errors_item",
     "ImportManifestResponseOrganizationCreated": ".import_manifest_response_organization_created",
+    "ImportManifestResponseOutcome": ".import_manifest_response_outcome",
     "ImportManifestResponseSkippedItem": ".import_manifest_response_skipped_item",
     "ImportManifestResponseUpdatedItem": ".import_manifest_response_updated_item",
     "ManifestLabeledAsset": ".manifest_labeled_asset",
@@ -341,7 +369,9 @@ _dynamic_imports: typing.Dict[str, str] = {
     "RunTestsRequest": ".run_tests_request",
     "RunTestsResponse": ".run_tests_response",
     "RunTestsResponseFailuresItem": ".run_tests_response_failures_item",
+    "RunTestsResponseFailuresItemPolicy": ".run_tests_response_failures_item_policy",
     "RunTestsResponseResultsItem": ".run_tests_response_results_item",
+    "RunTestsResponseResultsItemPolicy": ".run_tests_response_results_item_policy",
     "ScaleStatusResponse": ".scale_status_response",
     "ScaleStatusResponseStatus": ".scale_status_response_status",
     "SchemaField": ".schema_field",
@@ -364,11 +394,13 @@ _dynamic_imports: typing.Dict[str, str] = {
     "SyncValuesResponseErrorsItem": ".sync_values_response_errors_item",
     "Test": ".test",
     "TestListResponse": ".test_list_response",
+    "TestPolicy": ".test_policy",
     "TestTestState": ".test_test_state",
     "TestTestStateEvaluationError": ".test_test_state_evaluation_error",
     "UpdateContextResponse": ".update_context_response",
     "UpdateValuesSummaryResponse": ".update_values_summary_response",
     "UpsertObjectRequest": ".upsert_object_request",
+    "UpsertObjectRequestContent": ".upsert_object_request_content",
     "UpsertObjectRequestFieldRename": ".upsert_object_request_field_rename",
     "UpsertObjectResponse": ".upsert_object_response",
     "UpsertObjectResponseValues": ".upsert_object_response_values",
@@ -460,6 +492,7 @@ __all__ = [
     "CreateContextResponse",
     "CreateRelationshipResponse",
     "CreateTestRequest",
+    "CreateTestRequestPolicy",
     "CreateUserResponse",
     "CreateUserResponseUser",
     "DecisionLog",
@@ -472,7 +505,6 @@ __all__ = [
     "DeleteObjectResponseValues",
     "DeleteRelationshipResponse",
     "DeleteValueResponse",
-    "DeleteValueResponseCascadeDeletedItem",
     "DeleteValueResponseUpdatedListValuesItem",
     "DynamicRequestPayload",
     "DynamicResponsePayload",
@@ -502,10 +534,20 @@ __all__ = [
     "Folder",
     "FolderListResponse",
     "FolderType",
+    "ImportManifestPreviewResponse",
+    "ImportManifestPreviewResponsePreview",
+    "ImportManifestPreviewResponsePreviewItemsItem",
+    "ImportManifestPreviewResponsePreviewItemsItemOperation",
+    "ImportManifestPreviewResponsePreviewItemsItemType",
+    "ImportManifestPreviewResponsePreviewPolicy",
+    "ImportManifestRequest",
+    "ImportManifestRequestConflictStrategy",
+    "ImportManifestRequestManifest",
     "ImportManifestResponse",
     "ImportManifestResponseCreatedItem",
     "ImportManifestResponseErrorsItem",
     "ImportManifestResponseOrganizationCreated",
+    "ImportManifestResponseOutcome",
     "ImportManifestResponseSkippedItem",
     "ImportManifestResponseUpdatedItem",
     "ManifestLabeledAsset",
@@ -550,7 +592,9 @@ __all__ = [
     "RunTestsRequest",
     "RunTestsResponse",
     "RunTestsResponseFailuresItem",
+    "RunTestsResponseFailuresItemPolicy",
     "RunTestsResponseResultsItem",
+    "RunTestsResponseResultsItemPolicy",
     "ScaleStatusResponse",
     "ScaleStatusResponseStatus",
     "SchemaField",
@@ -573,11 +617,13 @@ __all__ = [
     "SyncValuesResponseErrorsItem",
     "Test",
     "TestListResponse",
+    "TestPolicy",
     "TestTestState",
     "TestTestStateEvaluationError",
     "UpdateContextResponse",
     "UpdateValuesSummaryResponse",
     "UpsertObjectRequest",
+    "UpsertObjectRequestContent",
     "UpsertObjectRequestFieldRename",
     "UpsertObjectResponse",
     "UpsertObjectResponseValues",

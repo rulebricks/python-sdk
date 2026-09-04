@@ -13,9 +13,9 @@ class ExportManifestResponseManifest(UniversalBaseModel):
     The exported manifest data. The wrapper uses snake_case, while asset objects inside `contexts`, `values`, `rules`, and `flows` intentionally preserve `.rbm`/database casing for round-trip compatibility. When the request sets `compress: true`, this field is instead the compress-json array encoding of the same manifest (a JSON array, not the object described below).
     """
 
-    version: typing.Optional[str] = pydantic.Field(default=None)
+    schema_version: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Manifest format version.
+    RBM schema version.
     """
 
     name: typing.Optional[str] = pydantic.Field(default=None)
@@ -29,6 +29,11 @@ class ExportManifestResponseManifest(UniversalBaseModel):
     """
 
     exported_at: typing.Optional[dt.datetime] = None
+    exported_from: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Source workspace identifier.
+    """
+
     contexts: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
     Exported contexts.

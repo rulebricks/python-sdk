@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .test_policy import TestPolicy
 from .test_test_state import TestTestState
 
 
@@ -27,6 +28,11 @@ class Test(UniversalBaseModel):
     response: typing.Dict[str, typing.Any] = pydantic.Field()
     """
     The expected response object for the test.
+    """
+
+    policy: TestPolicy = pydantic.Field()
+    """
+    How the expected response is compared with the actual response. Contains Data searches at any nesting depth, Matches Exactly compares the complete response, and Excludes Data requires the expected fragment to be absent.
     """
 
     critical: bool = pydantic.Field()

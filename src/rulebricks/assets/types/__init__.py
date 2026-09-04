@@ -8,19 +8,15 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .export_manifest_request_root_type import ExportManifestRequestRootType
     from .export_rbm_assets_response import ExportRbmAssetsResponse
-    from .import_manifest_request_conflict_strategy import ImportManifestRequestConflictStrategy
-    from .import_manifest_request_legacy_rule_mapping_value import ImportManifestRequestLegacyRuleMappingValue
-    from .import_manifest_request_legacy_rule_mapping_value_action import (
-        ImportManifestRequestLegacyRuleMappingValueAction,
+    from .import_rbm_assets_request_x_rulebricks_content_encoding import (
+        ImportRbmAssetsRequestXRulebricksContentEncoding,
     )
-    from .import_manifest_request_manifest import ImportManifestRequestManifest
+    from .import_rbm_assets_response import ImportRbmAssetsResponse
 _dynamic_imports: typing.Dict[str, str] = {
     "ExportManifestRequestRootType": ".export_manifest_request_root_type",
     "ExportRbmAssetsResponse": ".export_rbm_assets_response",
-    "ImportManifestRequestConflictStrategy": ".import_manifest_request_conflict_strategy",
-    "ImportManifestRequestLegacyRuleMappingValue": ".import_manifest_request_legacy_rule_mapping_value",
-    "ImportManifestRequestLegacyRuleMappingValueAction": ".import_manifest_request_legacy_rule_mapping_value_action",
-    "ImportManifestRequestManifest": ".import_manifest_request_manifest",
+    "ImportRbmAssetsRequestXRulebricksContentEncoding": ".import_rbm_assets_request_x_rulebricks_content_encoding",
+    "ImportRbmAssetsResponse": ".import_rbm_assets_response",
 }
 
 
@@ -48,8 +44,6 @@ def __dir__():
 __all__ = [
     "ExportManifestRequestRootType",
     "ExportRbmAssetsResponse",
-    "ImportManifestRequestConflictStrategy",
-    "ImportManifestRequestLegacyRuleMappingValue",
-    "ImportManifestRequestLegacyRuleMappingValueAction",
-    "ImportManifestRequestManifest",
+    "ImportRbmAssetsRequestXRulebricksContentEncoding",
+    "ImportRbmAssetsResponse",
 ]

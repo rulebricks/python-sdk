@@ -31,7 +31,7 @@ class TestsClient:
         return self._raw_client
 
     @property
-    def rules(self):
+    def rules(self) -> RulesClient:
         if self._rules is None:
             from .rules.client import RulesClient  # noqa: E402
 
@@ -39,7 +39,7 @@ class TestsClient:
         return self._rules
 
     @property
-    def flows(self):
+    def flows(self) -> FlowsClient:
         if self._flows is None:
             from .flows.client import FlowsClient  # noqa: E402
 
@@ -66,7 +66,7 @@ class AsyncTestsClient:
         return self._raw_client
 
     @property
-    def rules(self):
+    def rules(self) -> AsyncRulesClient:
         if self._rules is None:
             from .rules.client import AsyncRulesClient  # noqa: E402
 
@@ -74,7 +74,7 @@ class AsyncTestsClient:
         return self._rules
 
     @property
-    def flows(self):
+    def flows(self) -> AsyncFlowsClient:
         if self._flows is None:
             from .flows.client import AsyncFlowsClient  # noqa: E402
 

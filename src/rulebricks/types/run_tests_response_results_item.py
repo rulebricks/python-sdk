@@ -4,11 +4,13 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .run_tests_response_results_item_policy import RunTestsResponseResultsItemPolicy
 
 
 class RunTestsResponseResultsItem(UniversalBaseModel):
     id: str
     name: str
+    policy: RunTestsResponseResultsItemPolicy
     critical: bool
     success: bool
     error: bool

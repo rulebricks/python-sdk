@@ -13,6 +13,7 @@ from ...core.request_options import RequestOptions
 from ...errors.bad_request_error import BadRequestError
 from ...errors.internal_server_error import InternalServerError
 from ...errors.not_found_error import NotFoundError
+from ...types.create_test_request_policy import CreateTestRequestPolicy
 from ...types.error import Error
 from ...types.run_tests_response import RunTestsResponse
 from ...types.test import Test
@@ -100,10 +101,11 @@ class RawRulesClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
+        policy: typing.Optional[CreateTestRequestPolicy] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[Test]:
         """
-        Adds a new test to the test suite of a rule identified by the slug.
+        Adds a new test to the rule. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 
         Parameters
         ----------
@@ -122,6 +124,9 @@ class RawRulesClient:
         critical : bool
             Indicates whether the test is critical.
 
+        policy : typing.Optional[CreateTestRequestPolicy]
+            Optional comparison policy. Missing or null values default to contains for rules and flows.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -137,6 +142,7 @@ class RawRulesClient:
                 "name": name,
                 "request": request,
                 "response": response,
+                "policy": policy,
                 "critical": critical,
             },
             headers={
@@ -422,10 +428,11 @@ class AsyncRawRulesClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
+        policy: typing.Optional[CreateTestRequestPolicy] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[Test]:
         """
-        Adds a new test to the test suite of a rule identified by the slug.
+        Adds a new test to the rule. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 
         Parameters
         ----------
@@ -444,6 +451,9 @@ class AsyncRawRulesClient:
         critical : bool
             Indicates whether the test is critical.
 
+        policy : typing.Optional[CreateTestRequestPolicy]
+            Optional comparison policy. Missing or null values default to contains for rules and flows.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -459,6 +469,7 @@ class AsyncRawRulesClient:
                 "name": name,
                 "request": request,
                 "response": response,
+                "policy": policy,
                 "critical": critical,
             },
             headers={

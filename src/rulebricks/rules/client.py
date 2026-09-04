@@ -57,7 +57,7 @@ class RulesClient:
         Returns
         -------
         DynamicResponsePayload
-            Rule execution successful. The response structure depends on the rule configuration.
+            Rule execution successful. The response structure depends on the rule configuration. A Collect Matches rule returns a `{ "results": [...] }` envelope; zero matches returns HTTP 200 with `{ "results": [] }`.
 
         Examples
         --------
@@ -102,7 +102,7 @@ class RulesClient:
         Returns
         -------
         typing.List[BulkRuleResponseItem]
-            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
+            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration. For a Collect Matches rule, each array item is a `{ "results": [...] }` envelope; an input with zero matches returns `{ "results": [] }` without failing the bulk request.
 
         Examples
         --------
@@ -205,7 +205,7 @@ class AsyncRulesClient:
         Returns
         -------
         DynamicResponsePayload
-            Rule execution successful. The response structure depends on the rule configuration.
+            Rule execution successful. The response structure depends on the rule configuration. A Collect Matches rule returns a `{ "results": [...] }` envelope; zero matches returns HTTP 200 with `{ "results": [] }`.
 
         Examples
         --------
@@ -260,7 +260,7 @@ class AsyncRulesClient:
         Returns
         -------
         typing.List[BulkRuleResponseItem]
-            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration.
+            Bulk rule execution successful. The response is an array of results, each dependent on the rule configuration. For a Collect Matches rule, each array item is a `{ "results": [...] }` envelope; an input with zero matches returns `{ "results": [] }` without failing the bulk request.
 
         Examples
         --------

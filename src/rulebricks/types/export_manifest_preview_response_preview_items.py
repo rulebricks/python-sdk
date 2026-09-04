@@ -3,7 +3,9 @@
 import typing
 
 import pydantic
+import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ..core.serialization import FieldMetadata
 from .export_manifest_preview_response_preview_items_contexts_item import (
     ExportManifestPreviewResponsePreviewItemsContextsItem,
 )
@@ -23,6 +25,11 @@ class ExportManifestPreviewResponsePreviewItems(UniversalBaseModel):
     flows: typing.Optional[typing.List[ExportManifestPreviewResponsePreviewItemsFlowsItem]] = None
     contexts: typing.Optional[typing.List[ExportManifestPreviewResponsePreviewItemsContextsItem]] = None
     values: typing.Optional[typing.List[ExportManifestPreviewResponsePreviewItemsValuesItem]] = None
+    entity_relationships: typing_extensions.Annotated[
+        typing.Optional[typing.List[typing.Dict[str, typing.Any]]],
+        FieldMetadata(alias="entityRelationships"),
+        pydantic.Field(alias="entityRelationships"),
+    ] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

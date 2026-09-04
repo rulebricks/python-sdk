@@ -11,6 +11,15 @@ class ImportManifestResponseErrorsItem(UniversalBaseModel):
     stable_id: typing.Optional[str] = None
     status: typing.Optional[str] = None
     reason: typing.Optional[str] = None
+    code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Machine-readable reason for a planning error, e.g. 'stable_id_conflict' when the asset already exists and conflict_strategy is 'block', 'context_name_conflict', or 'access_denied'.
+    """
+
+    issue_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Identifier of the underlying plan issue.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

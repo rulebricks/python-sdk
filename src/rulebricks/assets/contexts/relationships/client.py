@@ -2,11 +2,11 @@
 
 import typing
 
-from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
-from ...core.request_options import RequestOptions
-from ...types.context_relationships_response import ContextRelationshipsResponse
-from ...types.create_relationship_response import CreateRelationshipResponse
-from ...types.delete_relationship_response import DeleteRelationshipResponse
+from ....core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
+from ....core.request_options import RequestOptions
+from ....types.context_relationships_response import ContextRelationshipsResponse
+from ....types.create_relationship_response import CreateRelationshipResponse
+from ....types.delete_relationship_response import DeleteRelationshipResponse
 from .raw_client import AsyncRawRelationshipsClient, RawRelationshipsClient
 from .types.create_relationship_request_relation_type import CreateRelationshipRequestRelationType
 
@@ -53,7 +53,7 @@ class RelationshipsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.relationships.list(
+        client.assets.contexts.relationships.list(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         )
         """
@@ -109,7 +109,7 @@ class RelationshipsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.relationships.create(
+        client.assets.contexts.relationships.create(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
             relation_type="has_many",
@@ -157,7 +157,7 @@ class RelationshipsClient:
         client = Rulebricks(
             api_key="YOUR_API_KEY",
         )
-        client.contexts.relationships.delete(
+        client.assets.contexts.relationships.delete(
             id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             relationship="c3d4e5f6-a7b8-9012-cdef-123456789012",
         )
@@ -212,7 +212,7 @@ class AsyncRelationshipsClient:
 
 
         async def main() -> None:
-            await client.contexts.relationships.list(
+            await client.assets.contexts.relationships.list(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             )
 
@@ -276,7 +276,7 @@ class AsyncRelationshipsClient:
 
 
         async def main() -> None:
-            await client.contexts.relationships.create(
+            await client.assets.contexts.relationships.create(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
                 relation_type="has_many",
@@ -332,7 +332,7 @@ class AsyncRelationshipsClient:
 
 
         async def main() -> None:
-            await client.contexts.relationships.delete(
+            await client.assets.contexts.relationships.delete(
                 id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 relationship="c3d4e5f6-a7b8-9012-cdef-123456789012",
             )

@@ -11,7 +11,7 @@ from .value_reference_rb import ValueReferenceRb
 
 class ValueReference(UniversalBaseModel):
     """
-    A value-to-value reference marker. On writes, reference a value by name with { "$ref": "<value name>" } or by ID with { "$rb": "globalValue", "id": "<value id>" }. Name references are resolved and stored as ID references, so renames never break them. A scalar payload may be a single reference; list payloads may mix literal items and references. Reads with resolve=false return the stored id-based markers.
+    References another value by name (`$ref`) or ID (`$rb`).
     """
 
     ref: typing_extensions.Annotated[

@@ -3,13 +3,22 @@
 import typing
 
 import pydantic
+import typing_extensions
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from ..core.serialization import FieldMetadata
 
 
 class ExportManifestPreviewResponsePreviewItemsContextsItem(UniversalBaseModel):
     id: typing.Optional[str] = None
+    stable_id: typing_extensions.Annotated[
+        typing.Optional[str], FieldMetadata(alias="stableId"), pydantic.Field(alias="stableId")
+    ] = None
     name: typing.Optional[str] = None
     slug: typing.Optional[str] = None
+    field_count: typing_extensions.Annotated[
+        typing.Optional[int], FieldMetadata(alias="fieldCount"), pydantic.Field(alias="fieldCount")
+    ] = None
+    identity_field: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

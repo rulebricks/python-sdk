@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .create_test_request_policy import CreateTestRequestPolicy
 
 
 class CreateTestRequest(UniversalBaseModel):
@@ -20,6 +21,11 @@ class CreateTestRequest(UniversalBaseModel):
     response: typing.Dict[str, typing.Any] = pydantic.Field()
     """
     The expected response object for the test.
+    """
+
+    policy: typing.Optional[CreateTestRequestPolicy] = pydantic.Field(default=None)
+    """
+    Optional comparison policy. Missing or null values default to contains for rules and flows.
     """
 
     critical: bool = pydantic.Field()

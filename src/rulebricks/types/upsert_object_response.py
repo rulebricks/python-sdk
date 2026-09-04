@@ -11,7 +11,7 @@ from .workspace_object import WorkspaceObject
 class UpsertObjectResponse(UniversalBaseModel):
     dry_run: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Present and true for a dry-run response; no object or managed values were written.
+    True when no changes were written.
     """
 
     created: typing.Optional[bool] = pydantic.Field(default=None)
@@ -22,7 +22,7 @@ class UpsertObjectResponse(UniversalBaseModel):
     object: typing.Optional[WorkspaceObject] = None
     values: typing.Optional[UpsertObjectResponseValues] = pydantic.Field(default=None)
     """
-    Managed-value sync results (or would_sync / would_archive for dry runs).
+    Managed-value sync results.
     """
 
     if IS_PYDANTIC_V2:

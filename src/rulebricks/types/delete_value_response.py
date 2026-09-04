@@ -4,30 +4,24 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .delete_value_response_cascade_deleted_item import DeleteValueResponseCascadeDeletedItem
 from .delete_value_response_updated_list_values_item import DeleteValueResponseUpdatedListValuesItem
 
 
 class DeleteValueResponse(UniversalBaseModel):
     """
-    Result of deleting a vocabulary value, including value-to-value reference effects.
+    Result of deleting a vocabulary value.
     """
 
     message: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Human-readable confirmation.
-    """
-
-    cascade_deleted: typing.Optional[typing.List[DeleteValueResponseCascadeDeletedItem]] = pydantic.Field(default=None)
-    """
-    Values that were deleted with the target because their entire payload referenced it.
+    Confirmation message.
     """
 
     updated_list_values: typing.Optional[typing.List[DeleteValueResponseUpdatedListValuesItem]] = pydantic.Field(
         default=None
     )
     """
-    List values that lost item(s) referencing the deleted value but were otherwise kept.
+    Values updated to replace references to the deleted value.
     """
 
     if IS_PYDANTIC_V2:

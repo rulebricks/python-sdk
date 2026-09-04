@@ -36,6 +36,14 @@ class ValueLimits(UniversalBaseModel):
             description="Maximum length of a value name in characters, including collection prefixes",
         ),
     ] = None
+    max_key_bytes: typing_extensions.Annotated[
+        typing.Optional[int],
+        FieldMetadata(alias="MAX_KEY_BYTES"),
+        pydantic.Field(
+            alias="MAX_KEY_BYTES",
+            description="Maximum UTF-8 encoded byte length of a value name, including collection prefixes",
+        ),
+    ] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

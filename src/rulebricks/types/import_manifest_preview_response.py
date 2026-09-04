@@ -3,13 +3,13 @@
 import typing
 
 import pydantic
-from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .import_manifest_request_legacy_rule_mapping_value_action import ImportManifestRequestLegacyRuleMappingValueAction
+from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .import_manifest_preview_response_preview import ImportManifestPreviewResponsePreview
 
 
-class ImportManifestRequestLegacyRuleMappingValue(UniversalBaseModel):
-    action: typing.Optional[ImportManifestRequestLegacyRuleMappingValueAction] = None
-    rule_id: typing.Optional[str] = None
+class ImportManifestPreviewResponse(UniversalBaseModel):
+    success: bool
+    preview: ImportManifestPreviewResponsePreview
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

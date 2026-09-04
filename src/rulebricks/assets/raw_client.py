@@ -9,17 +9,14 @@ from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
-from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.internal_server_error import InternalServerError
+from ..errors.service_unavailable_error import ServiceUnavailableError
 from ..types.error import Error
-from ..types.import_manifest_response import ImportManifestResponse
 from ..types.usage_statistics import UsageStatistics
 from .types.export_manifest_request_root_type import ExportManifestRequestRootType
 from .types.export_rbm_assets_response import ExportRbmAssetsResponse
-from .types.import_manifest_request_conflict_strategy import ImportManifestRequestConflictStrategy
-from .types.import_manifest_request_legacy_rule_mapping_value import ImportManifestRequestLegacyRuleMappingValue
-from .types.import_manifest_request_manifest import ImportManifestRequestManifest
+from .types.import_rbm_assets_response import ImportRbmAssetsResponse
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -71,54 +68,30 @@ class RawAssetsClient:
     def import_rbm(
         self,
         *,
-        manifest: ImportManifestRequestManifest,
-        conflict_strategy: typing.Optional[ImportManifestRequestConflictStrategy] = OMIT,
-        target_folder_name: typing.Optional[str] = OMIT,
-        legacy_rule_mapping: typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]] = OMIT,
+        request: typing.Union[bytes, typing.Iterator[bytes], typing.AsyncIterator[bytes]],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ImportManifestResponse]:
+    ) -> HttpResponse[ImportRbmAssetsResponse]:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
+        Import rules, flows, contexts, and values from a Rulebricks manifest file (*.rbm). Plain JSON remains supported, and clients may send the same JSON envelope gzip-compressed with `Content-Type: application/octet-stream` and `X-Rulebricks-Content-Encoding: gzip`.
 
         Parameters
         ----------
-        manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
-
-        conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
-            How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
-
-        target_folder_name : typing.Optional[str]
-            Optional folder name to place imported assets into. Created if it doesn't exist.
-
-        legacy_rule_mapping : typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]]
-            Optional mapping for legacy flow imports to reuse existing rules.
+        request : typing.Union[bytes, typing.Iterator[bytes], typing.AsyncIterator[bytes]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[ImportManifestResponse]
-            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
+        HttpResponse[ImportRbmAssetsResponse]
+            Import completed, or a write-free import plan was returned when `preview_only` is true.
         """
         _response = self._client_wrapper.httpx_client.request(
             "admin/import",
             method="POST",
-            json={
-                "manifest": convert_and_respect_annotation_metadata(
-                    object_=manifest, annotation=ImportManifestRequestManifest, direction="write"
-                ),
-                "conflict_strategy": conflict_strategy,
-                "target_folder_name": target_folder_name,
-                "legacy_rule_mapping": convert_and_respect_annotation_metadata(
-                    object_=legacy_rule_mapping,
-                    annotation=typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue],
-                    direction="write",
-                ),
-            },
+            content=request,
             headers={
-                "content-type": "application/json",
+                "content-type": "application/octet-stream",
             },
             request_options=request_options,
             omit=OMIT,
@@ -126,9 +99,9 @@ class RawAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ImportManifestResponse,
+                    ImportRbmAssetsResponse,
                     parse_obj_as(
-                        type_=ImportManifestResponse,  # type: ignore
+                        type_=ImportRbmAssetsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -174,10 +147,11 @@ class RawAssetsClient:
         manifest_description: typing.Optional[str] = OMIT,
         preview_only: typing.Optional[bool] = OMIT,
         compress: typing.Optional[bool] = OMIT,
+        download: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ExportRbmAssetsResponse]:
         """
-        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array), which is much smaller and can be saved directly as a .rbm file; the import endpoint accepts both forms.
+        Export selected rules, flows, contexts, and values to a Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array). Set `download: true` to receive that manifest directly as a streamed attachment instead of inside the `{ success, manifest }` envelope.
 
         Parameters
         ----------
@@ -202,13 +176,16 @@ class RawAssetsClient:
         compress : typing.Optional[bool]
             If true, the manifest in the response is returned in compressed form: the JSON array produced by the compress-json library instead of a plain object. Compressed manifests are substantially smaller, can be saved directly as a .rbm file, and are accepted by the import endpoint as-is. Intended for raw HTTP usage and file tooling; typed SDK clients should omit this flag, since the generated response type models the manifest as an object.
 
+        download : typing.Optional[bool]
+            If true, returns the manifest itself as a streamed application/json attachment with Content-Disposition, rather than the normal `{ success, manifest }` response envelope. Combine with `compress: true` for large .rbm downloads.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         HttpResponse[ExportRbmAssetsResponse]
-            Export completed successfully
+            Export completed successfully. With `download: true`, the response body is the raw manifest (or compress-json array) and `Content-Disposition` names the `.rbm` attachment; otherwise the documented JSON envelope is returned.
         """
         _response = self._client_wrapper.httpx_client.request(
             "admin/export",
@@ -221,6 +198,7 @@ class RawAssetsClient:
                 "manifest_description": manifest_description,
                 "preview_only": preview_only,
                 "compress": compress,
+                "download": download,
             },
             headers={
                 "content-type": "application/json",
@@ -256,6 +234,17 @@ class RawAssetsClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),
@@ -317,54 +306,30 @@ class AsyncRawAssetsClient:
     async def import_rbm(
         self,
         *,
-        manifest: ImportManifestRequestManifest,
-        conflict_strategy: typing.Optional[ImportManifestRequestConflictStrategy] = OMIT,
-        target_folder_name: typing.Optional[str] = OMIT,
-        legacy_rule_mapping: typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]] = OMIT,
+        request: typing.Union[bytes, typing.Iterator[bytes], typing.AsyncIterator[bytes]],
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ImportManifestResponse]:
+    ) -> AsyncHttpResponse[ImportRbmAssetsResponse]:
         """
-        Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
+        Import rules, flows, contexts, and values from a Rulebricks manifest file (*.rbm). Plain JSON remains supported, and clients may send the same JSON envelope gzip-compressed with `Content-Type: application/octet-stream` and `X-Rulebricks-Content-Encoding: gzip`.
 
         Parameters
         ----------
-        manifest : ImportManifestRequestManifest
-            The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
-
-        conflict_strategy : typing.Optional[ImportManifestRequestConflictStrategy]
-            How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
-
-        target_folder_name : typing.Optional[str]
-            Optional folder name to place imported assets into. Created if it doesn't exist.
-
-        legacy_rule_mapping : typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]]
-            Optional mapping for legacy flow imports to reuse existing rules.
+        request : typing.Union[bytes, typing.Iterator[bytes], typing.AsyncIterator[bytes]]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[ImportManifestResponse]
-            Import completed. Object-managed values, if present, are reported in `skipped`; they do not fail the whole import.
+        AsyncHttpResponse[ImportRbmAssetsResponse]
+            Import completed, or a write-free import plan was returned when `preview_only` is true.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "admin/import",
             method="POST",
-            json={
-                "manifest": convert_and_respect_annotation_metadata(
-                    object_=manifest, annotation=ImportManifestRequestManifest, direction="write"
-                ),
-                "conflict_strategy": conflict_strategy,
-                "target_folder_name": target_folder_name,
-                "legacy_rule_mapping": convert_and_respect_annotation_metadata(
-                    object_=legacy_rule_mapping,
-                    annotation=typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue],
-                    direction="write",
-                ),
-            },
+            content=request,
             headers={
-                "content-type": "application/json",
+                "content-type": "application/octet-stream",
             },
             request_options=request_options,
             omit=OMIT,
@@ -372,9 +337,9 @@ class AsyncRawAssetsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    ImportManifestResponse,
+                    ImportRbmAssetsResponse,
                     parse_obj_as(
-                        type_=ImportManifestResponse,  # type: ignore
+                        type_=ImportRbmAssetsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -420,10 +385,11 @@ class AsyncRawAssetsClient:
         manifest_description: typing.Optional[str] = OMIT,
         preview_only: typing.Optional[bool] = OMIT,
         compress: typing.Optional[bool] = OMIT,
+        download: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ExportRbmAssetsResponse]:
         """
-        Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array), which is much smaller and can be saved directly as a .rbm file; the import endpoint accepts both forms.
+        Export selected rules, flows, contexts, and values to a Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array). Set `download: true` to receive that manifest directly as a streamed attachment instead of inside the `{ success, manifest }` envelope.
 
         Parameters
         ----------
@@ -448,13 +414,16 @@ class AsyncRawAssetsClient:
         compress : typing.Optional[bool]
             If true, the manifest in the response is returned in compressed form: the JSON array produced by the compress-json library instead of a plain object. Compressed manifests are substantially smaller, can be saved directly as a .rbm file, and are accepted by the import endpoint as-is. Intended for raw HTTP usage and file tooling; typed SDK clients should omit this flag, since the generated response type models the manifest as an object.
 
+        download : typing.Optional[bool]
+            If true, returns the manifest itself as a streamed application/json attachment with Content-Disposition, rather than the normal `{ success, manifest }` response envelope. Combine with `compress: true` for large .rbm downloads.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
         AsyncHttpResponse[ExportRbmAssetsResponse]
-            Export completed successfully
+            Export completed successfully. With `download: true`, the response body is the raw manifest (or compress-json array) and `Content-Disposition` names the `.rbm` attachment; otherwise the documented JSON envelope is returned.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "admin/export",
@@ -467,6 +436,7 @@ class AsyncRawAssetsClient:
                 "manifest_description": manifest_description,
                 "preview_only": preview_only,
                 "compress": compress,
+                "download": download,
             },
             headers={
                 "content-type": "application/json",
@@ -502,6 +472,17 @@ class AsyncRawAssetsClient:
                         Error,
                         parse_obj_as(
                             type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
                             object_=_response.json(),
                         ),
                     ),

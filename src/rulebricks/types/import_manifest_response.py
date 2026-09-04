@@ -7,6 +7,7 @@ from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .import_manifest_response_created_item import ImportManifestResponseCreatedItem
 from .import_manifest_response_errors_item import ImportManifestResponseErrorsItem
 from .import_manifest_response_organization_created import ImportManifestResponseOrganizationCreated
+from .import_manifest_response_outcome import ImportManifestResponseOutcome
 from .import_manifest_response_skipped_item import ImportManifestResponseSkippedItem
 from .import_manifest_response_updated_item import ImportManifestResponseUpdatedItem
 
@@ -17,6 +18,11 @@ class ImportManifestResponse(UniversalBaseModel):
     Whether the import completed successfully.
     """
 
+    outcome: typing.Optional[ImportManifestResponseOutcome] = pydantic.Field(default=None)
+    """
+    'rejected' means the plan was refused before any write (for example a 'block' conflict); 'partial' means some assets were written and others failed.
+    """
+
     created: typing.Optional[typing.List[ImportManifestResponseCreatedItem]] = pydantic.Field(default=None)
     """
     Assets that were created during import.
@@ -24,12 +30,12 @@ class ImportManifestResponse(UniversalBaseModel):
 
     updated: typing.Optional[typing.List[ImportManifestResponseUpdatedItem]] = pydantic.Field(default=None)
     """
-    Assets that were updated during import.
+    Assets that already existed and were replaced by the manifest's version (conflict_strategy 'override').
     """
 
     skipped: typing.Optional[typing.List[ImportManifestResponseSkippedItem]] = pydantic.Field(default=None)
     """
-    Assets that were skipped during import. Object-managed values are listed here with a reason such as 'Collection is managed by a workspace object' or 'Value is managed by a workspace object'; they do not cause a whole-import 409.
+    Assets skipped during import, including object-managed values.
     """
 
     errors: typing.Optional[typing.List[ImportManifestResponseErrorsItem]] = pydantic.Field(default=None)

@@ -4,6 +4,7 @@ import typing
 
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.request_options import RequestOptions
+from ...types.create_test_request_policy import CreateTestRequestPolicy
 from ...types.run_tests_response import RunTestsResponse
 from ...types.test import Test
 from ...types.test_list_response import TestListResponse
@@ -67,10 +68,11 @@ class FlowsClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
+        policy: typing.Optional[CreateTestRequestPolicy] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Test:
         """
-        Adds a new test to the test suite of a flow identified by the slug.
+        Adds a new test to the flow. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 
         Parameters
         ----------
@@ -88,6 +90,9 @@ class FlowsClient:
 
         critical : bool
             Indicates whether the test is critical.
+
+        policy : typing.Optional[CreateTestRequestPolicy]
+            Optional comparison policy. Missing or null values default to contains for rules and flows.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -109,11 +114,18 @@ class FlowsClient:
             name="Test 3",
             request={"param1": "value1"},
             response={"status": "success"},
+            policy="contains",
             critical=True,
         )
         """
         _response = self._raw_client.create(
-            slug, name=name, request=request, response=response, critical=critical, request_options=request_options
+            slug,
+            name=name,
+            request=request,
+            response=response,
+            critical=critical,
+            policy=policy,
+            request_options=request_options,
         )
         return _response.data
 
@@ -256,10 +268,11 @@ class AsyncFlowsClient:
         request: typing.Dict[str, typing.Any],
         response: typing.Dict[str, typing.Any],
         critical: bool,
+        policy: typing.Optional[CreateTestRequestPolicy] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> Test:
         """
-        Adds a new test to the test suite of a flow identified by the slug.
+        Adds a new test to the flow. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 
         Parameters
         ----------
@@ -277,6 +290,9 @@ class AsyncFlowsClient:
 
         critical : bool
             Indicates whether the test is critical.
+
+        policy : typing.Optional[CreateTestRequestPolicy]
+            Optional comparison policy. Missing or null values default to contains for rules and flows.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -303,6 +319,7 @@ class AsyncFlowsClient:
                 name="Test 3",
                 request={"param1": "value1"},
                 response={"status": "success"},
+                policy="contains",
                 critical=True,
             )
 
@@ -310,7 +327,13 @@ class AsyncFlowsClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create(
-            slug, name=name, request=request, response=response, critical=critical, request_options=request_options
+            slug,
+            name=name,
+            request=request,
+            response=response,
+            critical=critical,
+            policy=policy,
+            request_options=request_options,
         )
         return _response.data
 

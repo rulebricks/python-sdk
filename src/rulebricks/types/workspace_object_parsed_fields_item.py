@@ -11,7 +11,7 @@ from ..core.serialization import FieldMetadata
 class WorkspaceObjectParsedFieldsItem(UniversalBaseModel):
     key: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Rule-facing field key. Array-item fields use a key relative to their scope and never include [] notation.
+    Rule-facing field key.
     """
 
     scope: typing.Optional[str] = pydantic.Field(default=None)
@@ -22,18 +22,12 @@ class WorkspaceObjectParsedFieldsItem(UniversalBaseModel):
     schema_path: typing_extensions.Annotated[
         typing.Optional[str],
         FieldMetadata(alias="schemaPath"),
-        pydantic.Field(
-            alias="schemaPath",
-            description="Source-schema path used for editing and enum collection derivation; may include [] markers.",
-        ),
+        pydantic.Field(alias="schemaPath", description="Path in the source schema."),
     ] = None
     derived_object_name: typing_extensions.Annotated[
         typing.Optional[str],
         FieldMetadata(alias="derivedObjectName"),
-        pydantic.Field(
-            alias="derivedObjectName",
-            description="Display-only, fully qualified label for an array-item scope, including the stored object name and every nesting level (for example, 'Inventory Warehouses Cars'). It does not identify a stored object or control managed collection paths; those derive from schema field keys/schemaPath.",
-        ),
+        pydantic.Field(alias="derivedObjectName", description="Display label for an array-item field."),
     ] = None
 
     if IS_PYDANTIC_V2:

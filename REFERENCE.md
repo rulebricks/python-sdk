@@ -60,7 +60,7 @@ client.rules.solve(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -68,15 +68,15 @@ client.rules.solve(
 <dd>
 
 **version:** `str` — The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `DynamicRequestPayload` 
-    
+**request:** `DynamicRequestPayload`
+
 </dd>
 </dl>
 
@@ -84,7 +84,7 @@ client.rules.solve(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -162,7 +162,7 @@ client.rules.bulk_solve(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -170,15 +170,15 @@ client.rules.bulk_solve(
 <dd>
 
 **version:** `str` — The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `typing.List[DynamicRequestPayload]` 
-    
+**request:** `typing.List[DynamicRequestPayload]`
+
 </dd>
 </dl>
 
@@ -186,7 +186,7 @@ client.rules.bulk_solve(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -257,8 +257,8 @@ client.rules.parallel_solve(
 <dl>
 <dd>
 
-**request:** `ParallelSolveRequest` 
-    
+**request:** `ParallelSolveRequest`
+
 </dd>
 </dl>
 
@@ -266,7 +266,7 @@ client.rules.parallel_solve(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -330,7 +330,7 @@ client.infra.status()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -393,7 +393,7 @@ client.infra.scale()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -417,7 +417,7 @@ client.infra.scale()
 <dl>
 <dd>
 
-Execute a flow by its slug. Optionally target a specific published version (e.g. `3`) or a release environment (e.g. `production`) via the `version` path segment; `latest` (the default) executes the current published version.
+Execute a flow by slug and optional version. Policy failures return `{ error }` with status 200, including per-item errors for bulk requests. Errors: 400 invalid input, 500 unhandled execution failure, 503 unavailable, 504 timeout.
 </dd>
 </dl>
 </dd>
@@ -465,7 +465,7 @@ client.flows.execute(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -473,15 +473,15 @@ client.flows.execute(
 <dd>
 
 **version:** `str` — The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `DynamicRequestPayload` 
-    
+**request:** `DynamicRequestPayload`
+
 </dd>
 </dl>
 
@@ -489,7 +489,7 @@ client.flows.execute(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -561,7 +561,7 @@ client.decisions.query(
 <dd>
 
 **search:** `typing.Optional[str]` — Decision data query language expression to filter logs by request/response data. Supports field comparisons (`field=value`, `field>10`), contains (`field:text`), not-contains (`field!:text`), boolean operators (`AND`, `OR`), and parentheses. A bare UUID or 32-hex term resolves as an execution/correlation-id lookup automatically.
-    
+
 </dd>
 </dl>
 
@@ -569,7 +569,7 @@ client.decisions.query(
 <dd>
 
 **rules:** `typing.Optional[str]` — Comma-separated list of rule names, IDs, or slugs to filter logs by. Names match partially; IDs and slugs match exactly.
-    
+
 </dd>
 </dl>
 
@@ -577,7 +577,7 @@ client.decisions.query(
 <dd>
 
 **flows:** `typing.Optional[str]` — Comma-separated list of flow names, IDs, or slugs to filter logs by. Matches only flow-level execution logs; the rule executions that ran inside a flow are separate records and are not included.
-    
+
 </dd>
 </dl>
 
@@ -585,7 +585,7 @@ client.decisions.query(
 <dd>
 
 **contexts:** `typing.Optional[str]` — Comma-separated list of context names or slugs to filter logs by. Matches the rule and flow executions that were triggered by those contexts (batch and interactive updates).
-    
+
 </dd>
 </dl>
 
@@ -593,7 +593,7 @@ client.decisions.query(
 <dd>
 
 **trace:** `typing.Optional[str]` — Execution-trace correlation id. Returns every decision log from one execution tree: pass a log's `decision.root_flow_execution_id` (or any `flow_execution_id` / `parallel_execution_id`, including a bulk run's per-item `item_execution_ids` entries) to retrieve the flow-level record plus all subflow and rule records from that run. On self-hosted deployments, a log's observability `trace_id` is also accepted. Combine with `rules` or `search` to narrow to a specific rule or payload within the run.
-    
+
 </dd>
 </dl>
 
@@ -601,7 +601,7 @@ client.decisions.query(
 <dd>
 
 **statuses:** `typing.Optional[str]` — Comma-separated list of HTTP status codes to filter logs by.
-    
+
 </dd>
 </dl>
 
@@ -609,15 +609,15 @@ client.decisions.query(
 <dd>
 
 **include_traces:** `typing.Optional[QueryDecisionsRequestIncludeTraces]` — When `true`, each flow record in the response includes a decompressed `path_trace` field: the run's executed steps with their full inputs and outputs (an object for single runs, a null-aligned array matching the request array for bulk runs). Off by default - traces are stored compressed and can be large, so only enable this when you need them. Ignored in count mode.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**item_filter:** `typing.Optional[str]` — Bulk payload filter in the form `path=value`. For each bulk record in the results (array-shaped request/response), keeps only the items whose payload value at `path` equals `value`, slicing the `request` and `response` arrays and every index-aligned field (`decision.item_execution_ids`, `decision.item_indexes`, `decision.success_idxs`, and `path_trace` when `include_traces=true`) in lockstep so input/output alignment is preserved. Filtered records gain a `matched_items` array with the surviving items' original zero-based positions. Paths use dot notation into each item (`customer.id`, `lines.0.sku`); prefix with `request.` or `response.` to match only that side (unprefixed paths match either side). Values compare as exact scalar strings (`status=200`, `approved=true`). Non-bulk records are returned unchanged; bulk records with no matching items are returned with empty item arrays. Typical use: combine with `search`, `flows`, or `trace` to locate a bulk run, then isolate one item's payloads and its `item_execution_ids` entry without tracking indexes. Ignored in count mode.
-    
+**item_filter:** `typing.Optional[str]` — Bulk payload filter in the form `path=value`. For each bulk record in the results (array-shaped request/response), keeps only the items whose payload value at `path` equals `value`, slicing the `request` and `response` arrays and every index-aligned field (`decision.item_execution_ids`, `decision.item_indexes`, `decision.success_idxs`, and `path_trace` when `include_traces=true`) in lockstep so input/output alignment is preserved. Filtered records gain a `matched_items` array with the surviving items' original zero-based positions. Paths use dot notation into each item (`customer.id`, `lines.0.sku`); prefix with `request.` or `response.` to match only that side (unprefixed paths match either side). Values compare as exact scalar strings (`status=200`, `approved=true`). Non-bulk records are returned unchanged; bulk records with no matching items are returned with empty item arrays. For a bulk solve of a Collect Matches rule, each response item is itself a `{ results: [...] }` envelope, so use a positional path such as `response.results.0.status`. Wildcards are available in `search`, not `item_filter`. Typical use: combine with `search`, `flows`, or `trace` to locate a bulk run, then isolate one item's payloads and its `item_execution_ids` entry without tracking indexes. Ignored in count mode.
+
 </dd>
 </dl>
 
@@ -625,7 +625,7 @@ client.decisions.query(
 <dd>
 
 **start:** `typing.Optional[datetime.datetime]` — Start date for the query range (ISO8601 format). Hosted queries may span at most 90 days. Persistent self-hosted queries may use any range within local ClickHouse retention; PVC-less archive mode is limited to 7 days. Defaults to the applicable maximum before `end` (or before now).
-    
+
 </dd>
 </dl>
 
@@ -633,7 +633,7 @@ client.decisions.query(
 <dd>
 
 **end:** `typing.Optional[datetime.datetime]` — End date for the query range (ISO8601 format). Defaults to now. When supplied without `start`, the query covers the preceding 90 days on hosted/table mode or 7 days in PVC-less archive mode.
-    
+
 </dd>
 </dl>
 
@@ -641,7 +641,7 @@ client.decisions.query(
 <dd>
 
 **sort:** `typing.Optional[QueryDecisionsRequestSort]` — Column to sort results by. `time` orders by execution timestamp, `name` by rule/flow name, `status` by HTTP status code, and `type` by operation (solve, bulk-solve, flows, etc.). Defaults to `time`.
-    
+
 </dd>
 </dl>
 
@@ -649,7 +649,7 @@ client.decisions.query(
 <dd>
 
 **order:** `typing.Optional[QueryDecisionsRequestOrder]` — Sort direction. Defaults to `desc`.
-    
+
 </dd>
 </dl>
 
@@ -657,7 +657,7 @@ client.decisions.query(
 <dd>
 
 **cursor:** `typing.Optional[str]` — Opaque pagination token returned by the previous response. Pass it back verbatim to fetch the next page; do not construct or modify cursor values.
-    
+
 </dd>
 </dl>
 
@@ -665,7 +665,7 @@ client.decisions.query(
 <dd>
 
 **limit:** `typing.Optional[int]` — Number of results to return per page (default: 100, maximum: 1000). Logs carry full request/response payloads, so use smaller limits when querying workspaces with large bulk operations. Time-sorted pagination uses a keyset cursor, so its scan cost does not grow with page depth.
-    
+
 </dd>
 </dl>
 
@@ -673,7 +673,7 @@ client.decisions.query(
 <dd>
 
 **count:** `typing.Optional[QueryDecisionsRequestCount]` — If set to 'true', returns only the count of matching logs instead of the log data.
-    
+
 </dd>
 </dl>
 
@@ -681,7 +681,7 @@ client.decisions.query(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -752,7 +752,7 @@ client.users.invite(
 <dd>
 
 **email:** `str` — Email of the user to invite.
-    
+
 </dd>
 </dl>
 
@@ -760,7 +760,7 @@ client.users.invite(
 <dd>
 
 **role:** `typing.Optional[UserInviteRequestRole]` — System or custom role ID to assign to the user. Available system roles include 'admin', 'editor', and 'developer'.
-    
+
 </dd>
 </dl>
 
@@ -768,7 +768,7 @@ client.users.invite(
 <dd>
 
 **user_groups:** `typing.Optional[typing.List[str]]` — List of user group names or IDs to assign to the user. All specified groups must exist in your organization.
-    
+
 </dd>
 </dl>
 
@@ -776,7 +776,7 @@ client.users.invite(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -839,7 +839,7 @@ client.users.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -905,7 +905,7 @@ client.users.create(
 <dd>
 
 **email:** `str` — Email address for the new user.
-    
+
 </dd>
 </dl>
 
@@ -913,7 +913,7 @@ client.users.create(
 <dd>
 
 **password:** `str` — Password for the new user (minimum 8 characters). The user can log in immediately with this password.
-    
+
 </dd>
 </dl>
 
@@ -921,7 +921,7 @@ client.users.create(
 <dd>
 
 **name:** `typing.Optional[str]` — Display name for the user.
-    
+
 </dd>
 </dl>
 
@@ -929,7 +929,7 @@ client.users.create(
 <dd>
 
 **role:** `typing.Optional[str]` — Role to assign to the user. Defaults to 'developer' if not specified.
-    
+
 </dd>
 </dl>
 
@@ -937,7 +937,7 @@ client.users.create(
 <dd>
 
 **user_groups:** `typing.Optional[typing.List[str]]` — List of user group names or IDs to assign to the user.
-    
+
 </dd>
 </dl>
 
@@ -945,7 +945,7 @@ client.users.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1009,7 +1009,7 @@ client.assets.get_usage()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1020,7 +1020,7 @@ client.assets.get_usage()
 </dl>
 </details>
 
-<details><summary><code>client.assets.<a href="src/rulebricks/assets/client.py">import_rbm</a>(...) -> ImportManifestResponse</code></summary>
+<details><summary><code>client.assets.<a href="src/rulebricks/assets/client.py">import_rbm</a>(...) -> ImportRbmAssetsResponse</code></summary>
 <dl>
 <dd>
 
@@ -1032,7 +1032,7 @@ client.assets.get_usage()
 <dl>
 <dd>
 
-Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rbm).
+Import rules, flows, contexts, and values from a Rulebricks manifest file (*.rbm). Plain JSON remains supported, and clients may send the same JSON envelope gzip-compressed with `Content-Type: application/octet-stream` and `X-Rulebricks-Content-Encoding: gzip`.
 </dd>
 </dl>
 </dd>
@@ -1047,39 +1047,15 @@ Import rules, flows, contexts, and values from an Rulebricks manifest file (*.rb
 <dd>
 
 ```python
-from rulebricks import Rulebricks, ManifestLabeledAsset
+from rulebricks import Rulebricks
 from rulebricks.environment import RulebricksEnvironment
-from rulebricks.assets import ImportManifestRequestManifest
 
 client = Rulebricks(
     api_key="<value>",
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.assets.import_rbm(
-    manifest=ImportManifestRequestManifest(
-        version="1.0",
-        rules=[
-            ManifestLabeledAsset()
-        ],
-        flows=[
-            ManifestLabeledAsset()
-        ],
-        entities=[
-            {
-                "name": "Customer",
-                "slug": "customer"
-            }
-        ],
-        values=[
-            {
-                "name": "tax_rate",
-                "value": 0.08
-            }
-        ],
-    ),
-    conflict_strategy="update",
-)
+client.assets.import_rbm()
 
 ```
 </dd>
@@ -1095,32 +1071,8 @@ client.assets.import_rbm(
 <dl>
 <dd>
 
-**manifest:** `ImportManifestRequestManifest` — The RBM manifest object containing assets to import. Asset objects inside the manifest intentionally preserve `.rbm`/database casing so exported manifests can be imported without rewriting asset payloads. A compressed manifest is also accepted: the JSON array produced by the compress-json library (for example, the contents of a compressed .rbm file exported with `compress: true`); it is detected and decompressed automatically.
-    
-</dd>
-</dl>
+**request:** `typing.Union[bytes, typing.Iterator[bytes], typing.AsyncIterator[bytes]]`
 
-<dl>
-<dd>
-
-**conflict_strategy:** `typing.Optional[ImportManifestRequestConflictStrategy]` — How to handle conflicts with existing assets. 'update' overwrites, 'skip' ignores, 'error' fails.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**target_folder_name:** `typing.Optional[str]` — Optional folder name to place imported assets into. Created if it doesn't exist.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**legacy_rule_mapping:** `typing.Optional[typing.Dict[str, ImportManifestRequestLegacyRuleMappingValue]]` — Optional mapping for legacy flow imports to reuse existing rules.
-    
 </dd>
 </dl>
 
@@ -1128,7 +1080,7 @@ client.assets.import_rbm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1151,7 +1103,7 @@ client.assets.import_rbm(
 <dl>
 <dd>
 
-Export selected rules, flows, contexts, and values to an Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array), which is much smaller and can be saved directly as a .rbm file; the import endpoint accepts both forms.
+Export selected rules, flows, contexts, and values to a Rulebricks manifest file (*.rbm). Dependencies are resolved automatically: exporting a flow includes its rules, contexts, vocabulary values, and any flows referenced by Run Flow nodes (recursively). Set `compress: true` to receive the manifest in compressed form (a compress-json array). Set `download: true` to receive that manifest directly as a streamed attachment instead of inside the `{ success, manifest }` envelope.
 </dd>
 </dl>
 </dd>
@@ -1198,7 +1150,7 @@ client.assets.export_rbm(
 <dd>
 
 **root_type:** `ExportManifestRequestRootType` — The type of root asset to export. All dependencies will be included.
-    
+
 </dd>
 </dl>
 
@@ -1206,7 +1158,7 @@ client.assets.export_rbm(
 <dd>
 
 **root_ids:** `typing.List[str]` — Array of IDs for the root assets to export. Dependencies are automatically resolved.
-    
+
 </dd>
 </dl>
 
@@ -1214,7 +1166,7 @@ client.assets.export_rbm(
 <dd>
 
 **include_downstream:** `typing.Optional[bool]` — For context exports, whether to include rules and flows bound to the context.
-    
+
 </dd>
 </dl>
 
@@ -1222,7 +1174,7 @@ client.assets.export_rbm(
 <dd>
 
 **manifest_name:** `typing.Optional[str]` — Optional name for the exported manifest.
-    
+
 </dd>
 </dl>
 
@@ -1230,7 +1182,7 @@ client.assets.export_rbm(
 <dd>
 
 **manifest_description:** `typing.Optional[str]` — Optional description for the exported manifest.
-    
+
 </dd>
 </dl>
 
@@ -1238,7 +1190,7 @@ client.assets.export_rbm(
 <dd>
 
 **preview_only:** `typing.Optional[bool]` — If true, returns a preview of what would be exported without the full data.
-    
+
 </dd>
 </dl>
 
@@ -1246,7 +1198,15 @@ client.assets.export_rbm(
 <dd>
 
 **compress:** `typing.Optional[bool]` — If true, the manifest in the response is returned in compressed form: the JSON array produced by the compress-json library instead of a plain object. Compressed manifests are substantially smaller, can be saved directly as a .rbm file, and are accepted by the import endpoint as-is. Intended for raw HTTP usage and file tooling; typed SDK clients should omit this flag, since the generated response type models the manifest as an object.
-    
+
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**download:** `typing.Optional[bool]` — If true, returns the manifest itself as a streamed application/json attachment with Content-Disposition, rather than the normal `{ success, manifest }` response envelope. Combine with `compress: true` for large .rbm downloads.
+
 </dd>
 </dl>
 
@@ -1254,7 +1214,7 @@ client.assets.export_rbm(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1320,7 +1280,7 @@ client.values.list(
 <dd>
 
 **name:** `typing.Optional[str]` — Query all vocabulary values containing a specific name
-    
+
 </dd>
 </dl>
 
@@ -1328,7 +1288,7 @@ client.values.list(
 <dd>
 
 **prefix:** `typing.Optional[str]` — Only return values whose name starts with this collection prefix (e.g. 'Countries.').
-    
+
 </dd>
 </dl>
 
@@ -1336,7 +1296,7 @@ client.values.list(
 <dd>
 
 **type:** `typing.Optional[str]` — Only return values of this type (string, number, boolean, list, date, function).
-    
+
 </dd>
 </dl>
 
@@ -1344,7 +1304,7 @@ client.values.list(
 <dd>
 
 **limit:** `typing.Optional[int]` — Page size (default 100, max 1000). Providing limit or cursor switches the response to the paginated { data, next_cursor } envelope.
-    
+
 </dd>
 </dl>
 
@@ -1352,7 +1312,7 @@ client.values.list(
 <dd>
 
 **cursor:** `typing.Optional[str]` — Opaque pagination cursor from a previous page's next_cursor.
-    
+
 </dd>
 </dl>
 
@@ -1360,7 +1320,7 @@ client.values.list(
 <dd>
 
 **user_group:** `typing.Optional[str]` — Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
-    
+
 </dd>
 </dl>
 
@@ -1368,7 +1328,7 @@ client.values.list(
 <dd>
 
 **include:** `typing.Optional[str]` — Comma-separated list of additional data to include. Use 'usage' to include which rules reference each value.
-    
+
 </dd>
 </dl>
 
@@ -1376,7 +1336,7 @@ client.values.list(
 <dd>
 
 **resolve:** `typing.Optional[bool]` — By default, payloads containing value-to-value references are returned materialized (references replaced with their resolved values). Pass 'false' to return stored payloads as-is, with { "$rb": "globalValue", "id": "..." } reference markers intact, so the reference graph round-trips.
-    
+
 </dd>
 </dl>
 
@@ -1384,7 +1344,7 @@ client.values.list(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1457,8 +1417,8 @@ client.values.update(
 <dl>
 <dd>
 
-**values:** `typing.Dict[str, typing.Any]` — A dictionary of keys and values to update or add. This developer-facing sync contract preserves source names and nesting: nested objects are flattened using dot notation while every key segment stays exactly as sent (e.g. 'user.contact_info.email' stays 'user.contact_info.email'). Individual payloads may be value-to-value references (see ValueReference): a scalar payload may be a single { "$ref": "<value name>" } marker, and list payloads may mix literal items with reference markers.
-    
+**values:** `typing.Dict[str, typing.Any]` — Values to create or update. Nested objects use dot-separated names and payloads may reference other values.
+
 </dd>
 </dl>
 
@@ -1466,7 +1426,7 @@ client.values.update(
 <dd>
 
 **user_groups:** `typing.Optional[typing.List[str]]` — Optional array of user group names or IDs. If omitted and user belongs to user groups, values will be assigned to all user's user groups. Required if values should be restricted to specific user groups.
-    
+
 </dd>
 </dl>
 
@@ -1474,7 +1434,7 @@ client.values.update(
 <dd>
 
 **metadata_by_name:** `typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]` — Optional metadata keyed by vocabulary value name. This is the canonical snake_case field; legacy clients may still send `metadataByName`. System-owned keys (managedBy, source, lockedReason, previousTokens, and archive/tombstone fields) are stripped from user payloads - managed provenance and archive state cannot be forged.
-    
+
 </dd>
 </dl>
 
@@ -1482,7 +1442,7 @@ client.values.update(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1505,7 +1465,7 @@ client.values.update(
 <dl>
 <dd>
 
-Delete a specific vocabulary value for the authenticated user by its ID. Deletion is blocked while the value is referenced by any rule or flow. Values whose entire payload references the deleted value are deleted with it (cascade), and list values referencing it lose the referencing items; both effects are reported in the response.
+Deletes a value by ID. Rule and flow references block deletion; value references are replaced with the deleted value's content.
 </dd>
 </dl>
 </dd>
@@ -1547,7 +1507,7 @@ client.values.delete(
 <dd>
 
 **id:** `str` — ID of the vocabulary value to delete
-    
+
 </dd>
 </dl>
 
@@ -1555,7 +1515,7 @@ client.values.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1625,7 +1585,7 @@ client.values.sync(
 <dd>
 
 **collection:** `str` — Collection path to sync (e.g. 'Medical Codes'). Only values under this path are affected.
-    
+
 </dd>
 </dl>
 
@@ -1633,7 +1593,7 @@ client.values.sync(
 <dd>
 
 **values:** `typing.Optional[typing.Dict[str, typing.Any]]` — Desired members of the collection, keyed relative to the collection path ('A123' becomes 'Medical Codes.A123'). Nested objects flatten with dot notation, and payloads may use ValueReference markers. An empty object empties the collection. May be omitted on a pure finalize call (sync_id + complete).
-    
+
 </dd>
 </dl>
 
@@ -1641,7 +1601,7 @@ client.values.sync(
 <dd>
 
 **sync_id:** `typing.Optional[str]` — Identifier for a chunked run. Repeat the call with the same sync_id for each chunk of the desired state; nothing is removed until a call with complete: true. Abandoned runs are purged after 24 hours without removing anything.
-    
+
 </dd>
 </dl>
 
@@ -1649,7 +1609,7 @@ client.values.sync(
 <dd>
 
 **complete:** `typing.Optional[bool]` — Marks the run as complete, triggering the removal sweep. Implicitly true when sync_id is omitted (single-request syncs), false otherwise.
-    
+
 </dd>
 </dl>
 
@@ -1657,7 +1617,7 @@ client.values.sync(
 <dd>
 
 **permanently_delete:** `typing.Optional[bool]` — Hard-delete removed values instead of archiving them. Removals still referenced by a rule, flow, or surviving value are archived instead and reported in 'blocked'. Self-hosted deployments retain tombstones regardless.
-    
+
 </dd>
 </dl>
 
@@ -1665,7 +1625,7 @@ client.values.sync(
 <dd>
 
 **dry_run:** `typing.Optional[bool]` — Compute and return the full diff without writing anything. Only supported for single-request syncs (omit sync_id).
-    
+
 </dd>
 </dl>
 
@@ -1673,7 +1633,7 @@ client.values.sync(
 <dd>
 
 **user_groups:** `typing.Optional[typing.List[str]]` — Optional array of user group names to assign to written values, matching POST /values.
-    
+
 </dd>
 </dl>
 
@@ -1681,7 +1641,7 @@ client.values.sync(
 <dd>
 
 **metadata_by_name:** `typing.Optional[typing.Dict[str, typing.Dict[str, typing.Any]]]` — Optional metadata keyed by FULL value name (including the collection prefix).
-    
+
 </dd>
 </dl>
 
@@ -1689,7 +1649,7 @@ client.values.sync(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1753,7 +1713,7 @@ client.objects.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1776,7 +1736,7 @@ client.objects.list()
 <dl>
 <dd>
 
-Creates or updates an object by ID or name and syncs enum values it generates. `content` and at least one of `id` or `name` are required. Objects help workspace admins programmatically determine multiple collections of values based on Rulebricks' contracts with external systems from a single JSON Schema source. Renaming the object's display name does not move its managed collection paths: those paths derive from schema field keys. When a schema field key itself is renamed, `field_rename` can preserve the generated values' identities.
+Creates or updates an object and syncs its generated enum values.
 </dd>
 </dl>
 </dd>
@@ -1800,7 +1760,7 @@ client = Rulebricks(
 )
 
 client.objects.upsert(
-    request={"name": "Claim", "content": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"countryCode\": { \"type\": \"string\", \"title\": \"Country Code\", \"enum\": [\"US\", \"CA\", \"GB\"] }\n  }\n}", "user_groups": ["underwriting"]},
+    request={"name": "Claim", "content": {"type": "object", "properties": {"countryCode": {"type": "string", "title": "Country Code", "enum": ["US", "CA", "GB"]}}}, "user_groups": ["underwriting"]},
 )
 
 ```
@@ -1826,7 +1786,7 @@ client.objects.upsert(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1891,7 +1851,7 @@ client.objects.get(
 <dd>
 
 **object_id:** `str` — Object ID or exact name
-    
+
 </dd>
 </dl>
 
@@ -1899,7 +1859,7 @@ client.objects.get(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -1964,7 +1924,7 @@ client.objects.delete(
 <dd>
 
 **object_id:** `str` — Object ID or exact name
-    
+
 </dd>
 </dl>
 
@@ -1972,7 +1932,7 @@ client.objects.delete(
 <dd>
 
 **values:** `typing.Optional[DeleteObjectsRequestValues]` — What happens to generated values: 'archive' (default) permanently deletes unused values and archives referenced values; 'detach' retains all values as active ordinary values.
-    
+
 </dd>
 </dl>
 
@@ -1980,7 +1940,7 @@ client.objects.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2047,7 +2007,7 @@ client.contexts.get(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2055,7 +2015,7 @@ client.contexts.get(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
@@ -2063,7 +2023,7 @@ client.contexts.get(
 <dd>
 
 **include_relations:** `typing.Optional[str]` — Comma-separated relationship names to include in the response under a 'relations' key (has_many relations return a list of related instance states; has_one/belongs_to return a single state or null). Use '*' for all relationships. Omitted by default - related instances are never fetched into the payload unrequested.
-    
+
 </dd>
 </dl>
 
@@ -2071,7 +2031,7 @@ client.contexts.get(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2141,7 +2101,7 @@ client.contexts.submit(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2149,15 +2109,15 @@ client.contexts.submit(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `SubmitContextDataRequest` 
-    
+**request:** `SubmitContextDataRequest`
+
 </dd>
 </dl>
 
@@ -2165,7 +2125,7 @@ client.contexts.submit(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2231,7 +2191,7 @@ client.contexts.delete(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2239,7 +2199,7 @@ client.contexts.delete(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
@@ -2247,7 +2207,7 @@ client.contexts.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2313,7 +2273,7 @@ client.contexts.get_history(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2321,7 +2281,7 @@ client.contexts.get_history(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
@@ -2329,7 +2289,7 @@ client.contexts.get_history(
 <dd>
 
 **field:** `typing.Optional[str]` — Filter history to a specific field.
-    
+
 </dd>
 </dl>
 
@@ -2337,7 +2297,7 @@ client.contexts.get_history(
 <dd>
 
 **limit:** `typing.Optional[int]` — Maximum number of history entries to return.
-    
+
 </dd>
 </dl>
 
@@ -2345,7 +2305,7 @@ client.contexts.get_history(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2411,7 +2371,7 @@ client.contexts.get_pending(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2419,7 +2379,7 @@ client.contexts.get_pending(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
@@ -2427,7 +2387,7 @@ client.contexts.get_pending(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2494,7 +2454,7 @@ client.contexts.cascade(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
@@ -2502,15 +2462,15 @@ client.contexts.cascade(
 <dd>
 
 **instance:** `str` — The unique identifier for the context instance.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `CascadeContextRequest` 
-    
+**request:** `CascadeContextRequest`
+
 </dd>
 </dl>
 
@@ -2518,7 +2478,7 @@ client.contexts.cascade(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2593,15 +2553,15 @@ client.contexts.bulk_ingest(
 <dd>
 
 **slug:** `str` — The unique slug for the context.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `typing.List[DynamicRequestPayload]` 
-    
+**request:** `typing.List[DynamicRequestPayload]`
+
 </dd>
 </dl>
 
@@ -2609,7 +2569,7 @@ client.contexts.bulk_ingest(
 <dd>
 
 **include:** `typing.Optional[str]` — Comma-separated list of per-instance fields to include in results (instance_id is always present). Omit to include everything. Valid fields: positions, is_new, status, have, need, state, expires_at, executions, executed, triggered, reason. Useful for keeping response size proportional to outcomes rather than data volume, e.g. include=status,executed.
-    
+
 </dd>
 </dl>
 
@@ -2617,7 +2577,7 @@ client.contexts.bulk_ingest(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2683,7 +2643,7 @@ client.assets.rules.delete(
 <dd>
 
 **id:** `str` — The ID of the rule to delete.
-    
+
 </dd>
 </dl>
 
@@ -2691,7 +2651,7 @@ client.assets.rules.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2756,7 +2716,7 @@ client.assets.rules.pull(
 <dd>
 
 **id:** `str` — The ID of the rule to export.
-    
+
 </dd>
 </dl>
 
@@ -2764,7 +2724,7 @@ client.assets.rules.pull(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -2951,8 +2911,8 @@ client.assets.rules.push(
 <dl>
 <dd>
 
-**rule:** `RuleImportPayload` 
-    
+**rule:** `RuleImportPayload`
+
 </dd>
 </dl>
 
@@ -2960,7 +2920,7 @@ client.assets.rules.push(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3025,7 +2985,7 @@ client.assets.rules.list(
 <dd>
 
 **folder:** `typing.Optional[str]` — Filter results by folder name or folder ID.
-    
+
 </dd>
 </dl>
 
@@ -3041,7 +3001,7 @@ client.assets.rules.list(
 <dd>
 
 **user_group:** `typing.Optional[str]` — Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
-    
+
 </dd>
 </dl>
 
@@ -3049,7 +3009,7 @@ client.assets.rules.list(
 <dd>
 
 **name:** `typing.Optional[str]` — Filter results by name using a case-insensitive substring match.
-    
+
 </dd>
 </dl>
 
@@ -3057,7 +3017,7 @@ client.assets.rules.list(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3121,7 +3081,7 @@ client.assets.flows.list()
 <dd>
 
 **folder:** `typing.Optional[str]` — Filter results by folder name or folder ID.
-    
+
 </dd>
 </dl>
 
@@ -3137,7 +3097,7 @@ client.assets.flows.list()
 <dd>
 
 **user_group:** `typing.Optional[str]` — Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
-    
+
 </dd>
 </dl>
 
@@ -3145,7 +3105,7 @@ client.assets.flows.list()
 <dd>
 
 **name:** `typing.Optional[str]` — Filter results by name using a case-insensitive substring match.
-    
+
 </dd>
 </dl>
 
@@ -3153,7 +3113,7 @@ client.assets.flows.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3277,8 +3237,8 @@ client.assets.flows.push(
 <dl>
 <dd>
 
-**flow:** `FlowImportPayload` 
-    
+**flow:** `FlowImportPayload`
+
 </dd>
 </dl>
 
@@ -3286,7 +3246,7 @@ client.assets.flows.push(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3349,7 +3309,7 @@ client.assets.flows.pull()
 <dd>
 
 **id:** `typing.Optional[str]` — The ID of the flow to export (provide `id` or `slug`).
-    
+
 </dd>
 </dl>
 
@@ -3357,7 +3317,7 @@ client.assets.flows.pull()
 <dd>
 
 **slug:** `typing.Optional[str]` — The slug of the flow to export (provide `id` or `slug`).
-    
+
 </dd>
 </dl>
 
@@ -3365,7 +3325,7 @@ client.assets.flows.pull()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3430,7 +3390,7 @@ client.assets.flows.delete(
 <dd>
 
 **id:** `str` — The ID of the flow to delete.
-    
+
 </dd>
 </dl>
 
@@ -3438,7 +3398,7 @@ client.assets.flows.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3502,7 +3462,7 @@ client.assets.folders.list()
 <dd>
 
 **user_group:** `typing.Optional[str]` — Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
-    
+
 </dd>
 </dl>
 
@@ -3510,7 +3470,7 @@ client.assets.folders.list()
 <dd>
 
 **name:** `typing.Optional[str]` — Filter results by name using a case-insensitive substring match.
-    
+
 </dd>
 </dl>
 
@@ -3518,7 +3478,7 @@ client.assets.folders.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3584,7 +3544,7 @@ client.assets.folders.upsert(
 <dd>
 
 **name:** `str` — Name of the folder
-    
+
 </dd>
 </dl>
 
@@ -3592,7 +3552,7 @@ client.assets.folders.upsert(
 <dd>
 
 **id:** `typing.Optional[str]` — Folder ID (required for updates, omit for creation)
-    
+
 </dd>
 </dl>
 
@@ -3600,7 +3560,7 @@ client.assets.folders.upsert(
 <dd>
 
 **description:** `typing.Optional[str]` — Description of the folder
-    
+
 </dd>
 </dl>
 
@@ -3608,7 +3568,7 @@ client.assets.folders.upsert(
 <dd>
 
 **type:** `typing.Optional[UpsertFolderRequestType]` — The type of assets the folder organizes. Applies on creation; ignored when updating an existing folder.
-    
+
 </dd>
 </dl>
 
@@ -3616,7 +3576,7 @@ client.assets.folders.upsert(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3681,7 +3641,7 @@ client.assets.folders.delete(
 <dd>
 
 **id:** `str` — ID of the folder to delete
-    
+
 </dd>
 </dl>
 
@@ -3689,7 +3649,7 @@ client.assets.folders.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3700,8 +3660,8 @@ client.assets.folders.delete(
 </dl>
 </details>
 
-## Contexts Objects
-<details><summary><code>client.contexts.objects.<a href="src/rulebricks/contexts/objects/client.py">list</a>(...) -> ContextListResponse</code></summary>
+## Assets Contexts
+<details><summary><code>client.assets.contexts.<a href="src/rulebricks/assets/contexts/client.py">list</a>(...) -> ContextListResponse</code></summary>
 <dl>
 <dd>
 
@@ -3736,7 +3696,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.objects.list()
+client.assets.contexts.list()
 
 ```
 </dd>
@@ -3753,7 +3713,7 @@ client.contexts.objects.list()
 <dd>
 
 **folder:** `typing.Optional[str]` — Filter results by folder name or folder ID.
-    
+
 </dd>
 </dl>
 
@@ -3761,7 +3721,7 @@ client.contexts.objects.list()
 <dd>
 
 **user_group:** `typing.Optional[str]` — Filter results by user group name or ID. The value is validated against workspace groups. Admin/unrestricted API keys can request any group-specific view; restricted API keys may only filter to one of their assigned groups and receive a 403 when filtering outside those groups.
-    
+
 </dd>
 </dl>
 
@@ -3769,7 +3729,7 @@ client.contexts.objects.list()
 <dd>
 
 **name:** `typing.Optional[str]` — Filter results by name using a case-insensitive substring match.
-    
+
 </dd>
 </dl>
 
@@ -3777,7 +3737,7 @@ client.contexts.objects.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3788,7 +3748,7 @@ client.contexts.objects.list()
 </dl>
 </details>
 
-<details><summary><code>client.contexts.objects.<a href="src/rulebricks/contexts/objects/client.py">create</a>(...) -> CreateContextResponse</code></summary>
+<details><summary><code>client.assets.contexts.<a href="src/rulebricks/assets/contexts/client.py">create</a>(...) -> CreateContextResponse</code></summary>
 <dl>
 <dd>
 
@@ -3823,7 +3783,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.objects.create(
+client.assets.contexts.create(
     name="Customer",
     description="Represents a customer in the system",
     schema=ContextSchema(
@@ -3860,7 +3820,7 @@ client.contexts.objects.create(
 <dd>
 
 **name:** `str` — The name of the context. The context's slug is generated from it (suffixed on collision).
-    
+
 </dd>
 </dl>
 
@@ -3868,7 +3828,7 @@ client.contexts.objects.create(
 <dd>
 
 **schema:** `ContextSchema` — The context's schema: an object with `base` (stored facts; at least one required) and optional `derived` (expression-computed facts) field arrays.
-    
+
 </dd>
 </dl>
 
@@ -3876,7 +3836,7 @@ client.contexts.objects.create(
 <dd>
 
 **identity_fact:** `str` — The fact key to use as the unique identifier for instances. Must be a key from schema.base.
-    
+
 </dd>
 </dl>
 
@@ -3884,7 +3844,7 @@ client.contexts.objects.create(
 <dd>
 
 **description:** `typing.Optional[str]` — The description of the context.
-    
+
 </dd>
 </dl>
 
@@ -3892,7 +3852,7 @@ client.contexts.objects.create(
 <dd>
 
 **auto_execute_decisions:** `typing.Optional[bool]` — When true (default), bound rules and flows automatically execute when their inputs are satisfied.
-    
+
 </dd>
 </dl>
 
@@ -3900,7 +3860,7 @@ client.contexts.objects.create(
 <dd>
 
 **ttl_seconds:** `typing.Optional[int]` — Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration; each write extends the expiry.
-    
+
 </dd>
 </dl>
 
@@ -3908,7 +3868,7 @@ client.contexts.objects.create(
 <dd>
 
 **history_limit:** `typing.Optional[int]` — Maximum number of history entries to retain per field.
-    
+
 </dd>
 </dl>
 
@@ -3916,7 +3876,7 @@ client.contexts.objects.create(
 <dd>
 
 **on_schema_mismatch:** `typing.Optional[CreateContextRequestOnSchemaMismatch]` — How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
-    
+
 </dd>
 </dl>
 
@@ -3924,7 +3884,7 @@ client.contexts.objects.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -3935,7 +3895,7 @@ client.contexts.objects.create(
 </dl>
 </details>
 
-<details><summary><code>client.contexts.objects.<a href="src/rulebricks/contexts/objects/client.py">get</a>(...) -> ContextDetail</code></summary>
+<details><summary><code>client.assets.contexts.<a href="src/rulebricks/assets/contexts/client.py">get</a>(...) -> ContextDetail</code></summary>
 <dl>
 <dd>
 
@@ -3970,7 +3930,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.objects.get(
+client.assets.contexts.get(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 )
 
@@ -3989,7 +3949,7 @@ client.contexts.objects.get(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -3997,7 +3957,7 @@ client.contexts.objects.get(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4008,7 +3968,7 @@ client.contexts.objects.get(
 </dl>
 </details>
 
-<details><summary><code>client.contexts.objects.<a href="src/rulebricks/contexts/objects/client.py">update</a>(...) -> UpdateContextResponse</code></summary>
+<details><summary><code>client.assets.contexts.<a href="src/rulebricks/assets/contexts/client.py">update</a>(...) -> UpdateContextResponse</code></summary>
 <dl>
 <dd>
 
@@ -4043,7 +4003,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.objects.update(
+client.assets.contexts.update(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     name="Updated Customer",
     description="Updated description for premium customers",
@@ -4064,7 +4024,7 @@ client.contexts.objects.update(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -4072,7 +4032,7 @@ client.contexts.objects.update(
 <dd>
 
 **name:** `typing.Optional[str]` — The name of the context. Changing it regenerates the context's slug.
-    
+
 </dd>
 </dl>
 
@@ -4080,7 +4040,7 @@ client.contexts.objects.update(
 <dd>
 
 **description:** `typing.Optional[str]` — The description of the context.
-    
+
 </dd>
 </dl>
 
@@ -4088,7 +4048,7 @@ client.contexts.objects.update(
 <dd>
 
 **schema:** `typing.Optional[ContextSchema]` — Updated schema for the context: an object with `base` and optional `derived` field arrays.
-    
+
 </dd>
 </dl>
 
@@ -4096,7 +4056,7 @@ client.contexts.objects.update(
 <dd>
 
 **identity_fact:** `typing.Optional[str]` — The fact key to use as the unique identifier for instances. Must be a key from schema.base. Caution: changing this on a context with live instances changes how future writes resolve instances.
-    
+
 </dd>
 </dl>
 
@@ -4104,7 +4064,7 @@ client.contexts.objects.update(
 <dd>
 
 **auto_execute_decisions:** `typing.Optional[bool]` — When true, bound rules and flows automatically execute when their inputs are satisfied.
-    
+
 </dd>
 </dl>
 
@@ -4112,7 +4072,7 @@ client.contexts.objects.update(
 <dd>
 
 **ttl_seconds:** `typing.Optional[int]` — Time-to-live in seconds for live context instances (60 seconds to 30 days). Instances expire after this duration.
-    
+
 </dd>
 </dl>
 
@@ -4120,7 +4080,7 @@ client.contexts.objects.update(
 <dd>
 
 **history_limit:** `typing.Optional[int]` — Maximum number of history entries to retain per field.
-    
+
 </dd>
 </dl>
 
@@ -4128,7 +4088,7 @@ client.contexts.objects.update(
 <dd>
 
 **on_schema_mismatch:** `typing.Optional[UpdateContextRequestOnSchemaMismatch]` — How to handle submitted fields that don't match the schema: `ignore` drops them, `reject` fails the request (or the batch item), `store` persists them alongside declared facts.
-    
+
 </dd>
 </dl>
 
@@ -4136,7 +4096,7 @@ client.contexts.objects.update(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4147,7 +4107,7 @@ client.contexts.objects.update(
 </dl>
 </details>
 
-<details><summary><code>client.contexts.objects.<a href="src/rulebricks/contexts/objects/client.py">delete</a>(...) -> DeleteContextResponse</code></summary>
+<details><summary><code>client.assets.contexts.<a href="src/rulebricks/assets/contexts/client.py">delete</a>(...) -> DeleteContextResponse</code></summary>
 <dl>
 <dd>
 
@@ -4182,7 +4142,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.objects.delete(
+client.assets.contexts.delete(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 )
 
@@ -4201,7 +4161,7 @@ client.contexts.objects.delete(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -4209,7 +4169,7 @@ client.contexts.objects.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4220,8 +4180,8 @@ client.contexts.objects.delete(
 </dl>
 </details>
 
-## Contexts Relationships
-<details><summary><code>client.contexts.relationships.<a href="src/rulebricks/contexts/relationships/client.py">list</a>(...) -> ContextRelationshipsResponse</code></summary>
+## Assets Contexts Relationships
+<details><summary><code>client.assets.contexts.relationships.<a href="src/rulebricks/assets/contexts/relationships/client.py">list</a>(...) -> ContextRelationshipsResponse</code></summary>
 <dl>
 <dd>
 
@@ -4256,7 +4216,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.relationships.list(
+client.assets.contexts.relationships.list(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 )
 
@@ -4275,7 +4235,7 @@ client.contexts.relationships.list(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -4283,7 +4243,7 @@ client.contexts.relationships.list(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4294,7 +4254,7 @@ client.contexts.relationships.list(
 </dl>
 </details>
 
-<details><summary><code>client.contexts.relationships.<a href="src/rulebricks/contexts/relationships/client.py">create</a>(...) -> CreateRelationshipResponse</code></summary>
+<details><summary><code>client.assets.contexts.relationships.<a href="src/rulebricks/assets/contexts/relationships/client.py">create</a>(...) -> CreateRelationshipResponse</code></summary>
 <dl>
 <dd>
 
@@ -4329,7 +4289,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.relationships.create(
+client.assets.contexts.relationships.create(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     to_context_id="b2c3d4e5-f6a7-8901-bcde-f12345678901",
     relation_type="has_many",
@@ -4352,7 +4312,7 @@ client.contexts.relationships.create(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -4360,7 +4320,7 @@ client.contexts.relationships.create(
 <dd>
 
 **to_context_id:** `str` — The ID of the target context.
-    
+
 </dd>
 </dl>
 
@@ -4368,7 +4328,7 @@ client.contexts.relationships.create(
 <dd>
 
 **relation_type:** `CreateRelationshipRequestRelationType` — The type of relationship.
-    
+
 </dd>
 </dl>
 
@@ -4376,7 +4336,7 @@ client.contexts.relationships.create(
 <dd>
 
 **foreign_key_fact:** `str` — The field key to use as the foreign key.
-    
+
 </dd>
 </dl>
 
@@ -4384,7 +4344,7 @@ client.contexts.relationships.create(
 <dd>
 
 **name:** `typing.Optional[str]` — Optional runtime relationship key. It is normalized to lowercase snake_case; the target context slug is used when omitted.
-    
+
 </dd>
 </dl>
 
@@ -4392,7 +4352,7 @@ client.contexts.relationships.create(
 <dd>
 
 **description:** `typing.Optional[str]` — Description of the relationship.
-    
+
 </dd>
 </dl>
 
@@ -4400,7 +4360,7 @@ client.contexts.relationships.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4411,7 +4371,7 @@ client.contexts.relationships.create(
 </dl>
 </details>
 
-<details><summary><code>client.contexts.relationships.<a href="src/rulebricks/contexts/relationships/client.py">delete</a>(...) -> DeleteRelationshipResponse</code></summary>
+<details><summary><code>client.assets.contexts.relationships.<a href="src/rulebricks/assets/contexts/relationships/client.py">delete</a>(...) -> DeleteRelationshipResponse</code></summary>
 <dl>
 <dd>
 
@@ -4446,7 +4406,7 @@ client = Rulebricks(
     environment=RulebricksEnvironment.DEFAULT,
 )
 
-client.contexts.relationships.delete(
+client.assets.contexts.relationships.delete(
     id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     relationship="c3d4e5f6-a7b8-9012-cdef-123456789012",
 )
@@ -4466,7 +4426,7 @@ client.contexts.relationships.delete(
 <dd>
 
 **id:** `str` — The unique identifier for the context.
-    
+
 </dd>
 </dl>
 
@@ -4474,7 +4434,7 @@ client.contexts.relationships.delete(
 <dd>
 
 **relationship:** `str` — The unique identifier for the relationship.
-    
+
 </dd>
 </dl>
 
@@ -4482,7 +4442,7 @@ client.contexts.relationships.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4548,7 +4508,7 @@ client.tests.rules.list(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -4556,7 +4516,7 @@ client.tests.rules.list(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4579,7 +4539,7 @@ client.tests.rules.list(
 <dl>
 <dd>
 
-Adds a new test to the test suite of a rule identified by the slug.
+Adds a new test to the rule. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 </dd>
 </dl>
 </dd>
@@ -4611,6 +4571,7 @@ client.tests.rules.create(
     response={
         "status": "success"
     },
+    policy="contains",
     critical=True,
 )
 
@@ -4629,15 +4590,15 @@ client.tests.rules.create(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `CreateTestRequest` 
-    
+**request:** `CreateTestRequest`
+
 </dd>
 </dl>
 
@@ -4645,7 +4606,7 @@ client.tests.rules.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4711,7 +4672,7 @@ client.tests.rules.delete(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -4719,7 +4680,7 @@ client.tests.rules.delete(
 <dd>
 
 **test_id:** `str` — The ID of the test.
-    
+
 </dd>
 </dl>
 
@@ -4727,7 +4688,7 @@ client.tests.rules.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4793,15 +4754,15 @@ client.tests.rules.run(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `RunTestsRequest` 
-    
+**request:** `RunTestsRequest`
+
 </dd>
 </dl>
 
@@ -4809,7 +4770,7 @@ client.tests.rules.run(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4875,7 +4836,7 @@ client.tests.flows.list(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -4883,7 +4844,7 @@ client.tests.flows.list(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -4906,7 +4867,7 @@ client.tests.flows.list(
 <dl>
 <dd>
 
-Adds a new test to the test suite of a flow identified by the slug.
+Adds a new test to the flow. `contains` (Contains Data, the default) finds the expected fragment anywhere in the output, `matches` (Matches Exactly) requires complete equality, and `excludes` (Excludes Data) requires the fragment to be absent.
 </dd>
 </dl>
 </dd>
@@ -4938,6 +4899,7 @@ client.tests.flows.create(
     response={
         "status": "success"
     },
+    policy="contains",
     critical=True,
 )
 
@@ -4956,15 +4918,15 @@ client.tests.flows.create(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `CreateTestRequest` 
-    
+**request:** `CreateTestRequest`
+
 </dd>
 </dl>
 
@@ -4972,7 +4934,7 @@ client.tests.flows.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -5038,7 +5000,7 @@ client.tests.flows.delete(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
@@ -5046,7 +5008,7 @@ client.tests.flows.delete(
 <dd>
 
 **test_id:** `str` — The ID of the test.
-    
+
 </dd>
 </dl>
 
@@ -5054,7 +5016,7 @@ client.tests.flows.delete(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -5120,15 +5082,15 @@ client.tests.flows.run(
 <dd>
 
 **slug:** `str` — The unique identifier for the resource.
-    
+
 </dd>
 </dl>
 
 <dl>
 <dd>
 
-**request:** `RunTestsRequest` 
-    
+**request:** `RunTestsRequest`
+
 </dd>
 </dl>
 
@@ -5136,7 +5098,7 @@ client.tests.flows.run(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -5200,7 +5162,7 @@ client.users.groups.list()
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
@@ -5266,7 +5228,7 @@ client.users.groups.create(
 <dd>
 
 **name:** `str` — Unique name of the user group.
-    
+
 </dd>
 </dl>
 
@@ -5274,7 +5236,7 @@ client.users.groups.create(
 <dd>
 
 **description:** `typing.Optional[str]` — Description of the user group.
-    
+
 </dd>
 </dl>
 
@@ -5282,7 +5244,7 @@ client.users.groups.create(
 <dd>
 
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
+
 </dd>
 </dl>
 </dd>
