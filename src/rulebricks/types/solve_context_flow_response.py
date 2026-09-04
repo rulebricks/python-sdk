@@ -27,6 +27,11 @@ class SolveContextFlowResponse(UniversalBaseModel):
     The slug of the flow that was executed.
     """
 
+    execution_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The flow run's execution ID, accepted by `/decisions/query` `trace`.
+    """
+
     result: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
     The flow execution output.

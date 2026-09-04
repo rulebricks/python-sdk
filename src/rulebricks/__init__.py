@@ -93,6 +93,8 @@ if typing.TYPE_CHECKING:
         FlowDetailContext,
         FlowDetailOriginRule,
         FlowExecutionError,
+        FlowExecutionRequestPayload,
+        FlowExecutionResponsePayload,
         FlowImportPayload,
         FlowImportResponse,
         FlowListResponse,
@@ -234,10 +236,10 @@ if typing.TYPE_CHECKING:
         QueryDecisionsRequestSort,
     )
     from .environment import RulebricksEnvironment
+    from .forge import Condition, Rule, Vocabulary, VocabularyValue
     from .objects import DeleteObjectsRequestValues
     from .users import UserInviteRequestRole
     from .values import ListValuesResponse, UpdateValuesResponse
-    from .forge import Rule, Condition, Vocabulary, VocabularyValue
 _dynamic_imports: typing.Dict[str, str] = {
     "AssetLabels": ".types",
     "AsyncRulebricks": ".client",
@@ -335,6 +337,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FlowDetailContext": ".types",
     "FlowDetailOriginRule": ".types",
     "FlowExecutionError": ".types",
+    "FlowExecutionRequestPayload": ".types",
+    "FlowExecutionResponsePayload": ".types",
     "FlowImportPayload": ".types",
     "FlowImportResponse": ".types",
     "FlowListResponse": ".types",
@@ -599,6 +603,8 @@ __all__ = [
     "FlowDetailContext",
     "FlowDetailOriginRule",
     "FlowExecutionError",
+    "FlowExecutionRequestPayload",
+    "FlowExecutionResponsePayload",
     "FlowImportPayload",
     "FlowImportResponse",
     "FlowListResponse",

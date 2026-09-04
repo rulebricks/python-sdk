@@ -405,7 +405,7 @@ client.infra.scale()
 </details>
 
 ## Flows
-<details><summary><code>client.flows.<a href="src/rulebricks/flows/client.py">execute</a>(...) -> DynamicResponsePayload</code></summary>
+<details><summary><code>client.flows.<a href="src/rulebricks/flows/client.py">execute</a>(...) -> FlowExecutionResponsePayload</code></summary>
 <dl>
 <dd>
 
@@ -480,7 +480,7 @@ client.flows.execute(
 <dl>
 <dd>
 
-**request:** `DynamicRequestPayload`
+**request:** `FlowExecutionRequestPayload`
 
 </dd>
 </dl>

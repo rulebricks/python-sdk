@@ -4,8 +4,8 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
-from ..types.dynamic_request_payload import DynamicRequestPayload
-from ..types.dynamic_response_payload import DynamicResponsePayload
+from ..types.flow_execution_request_payload import FlowExecutionRequestPayload
+from ..types.flow_execution_response_payload import FlowExecutionResponsePayload
 from .raw_client import AsyncRawFlowsClient, RawFlowsClient
 
 # this is used as the default value for optional parameters
@@ -32,9 +32,9 @@ class FlowsClient:
         slug: str,
         *,
         version: str = "latest",
-        request: DynamicRequestPayload,
+        request: FlowExecutionRequestPayload,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicResponsePayload:
+    ) -> FlowExecutionResponsePayload:
         """
         Execute a flow by slug and optional version. Policy failures return `{ error }` with status 200, including per-item errors for bulk requests. Errors: 400 invalid input, 500 unhandled execution failure, 503 unavailable, 504 timeout.
 
@@ -46,15 +46,15 @@ class FlowsClient:
         version : str
             The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
-        request : DynamicRequestPayload
+        request : FlowExecutionRequestPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicResponsePayload
-            Flow execution successful.
+        FlowExecutionResponsePayload
+            Flow execution successful. Returns one object for a single request or an array for a bulk request.
 
         Examples
         --------
@@ -93,9 +93,9 @@ class AsyncFlowsClient:
         slug: str,
         *,
         version: str = "latest",
-        request: DynamicRequestPayload,
+        request: FlowExecutionRequestPayload,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> DynamicResponsePayload:
+    ) -> FlowExecutionResponsePayload:
         """
         Execute a flow by slug and optional version. Policy failures return `{ error }` with status 200, including per-item errors for bulk requests. Errors: 400 invalid input, 500 unhandled execution failure, 503 unavailable, 504 timeout.
 
@@ -107,15 +107,15 @@ class AsyncFlowsClient:
         version : str
             The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
-        request : DynamicRequestPayload
+        request : FlowExecutionRequestPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        DynamicResponsePayload
-            Flow execution successful.
+        FlowExecutionResponsePayload
+            Flow execution successful. Returns one object for a single request or an array for a bulk request.
 
         Examples
         --------

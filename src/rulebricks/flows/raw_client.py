@@ -10,13 +10,14 @@ from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.bad_request_error import BadRequestError
 from ..errors.gateway_timeout_error import GatewayTimeoutError
 from ..errors.internal_server_error import InternalServerError
 from ..errors.service_unavailable_error import ServiceUnavailableError
-from ..types.dynamic_request_payload import DynamicRequestPayload
-from ..types.dynamic_response_payload import DynamicResponsePayload
 from ..types.error import Error
+from ..types.flow_execution_request_payload import FlowExecutionRequestPayload
+from ..types.flow_execution_response_payload import FlowExecutionResponsePayload
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -32,9 +33,9 @@ class RawFlowsClient:
         slug: str,
         *,
         version: str = "latest",
-        request: DynamicRequestPayload,
+        request: FlowExecutionRequestPayload,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[DynamicResponsePayload]:
+    ) -> HttpResponse[FlowExecutionResponsePayload]:
         """
         Execute a flow by slug and optional version. Policy failures return `{ error }` with status 200, including per-item errors for bulk requests. Errors: 400 invalid input, 500 unhandled execution failure, 503 unavailable, 504 timeout.
 
@@ -46,20 +47,22 @@ class RawFlowsClient:
         version : str
             The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
-        request : DynamicRequestPayload
+        request : FlowExecutionRequestPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[DynamicResponsePayload]
-            Flow execution successful.
+        HttpResponse[FlowExecutionResponsePayload]
+            Flow execution successful. Returns one object for a single request or an array for a bulk request.
         """
         _response = self._client_wrapper.httpx_client.request(
             f"flows/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
-            json=request,
+            json=convert_and_respect_annotation_metadata(
+                object_=request, annotation=FlowExecutionRequestPayload, direction="write"
+            ),
             headers={
                 "content-type": "application/json",
             },
@@ -69,9 +72,9 @@ class RawFlowsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicResponsePayload,
+                    FlowExecutionResponsePayload,
                     parse_obj_as(
-                        type_=DynamicResponsePayload,  # type: ignore
+                        type_=FlowExecutionResponsePayload,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -139,9 +142,9 @@ class AsyncRawFlowsClient:
         slug: str,
         *,
         version: str = "latest",
-        request: DynamicRequestPayload,
+        request: FlowExecutionRequestPayload,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[DynamicResponsePayload]:
+    ) -> AsyncHttpResponse[FlowExecutionResponsePayload]:
         """
         Execute a flow by slug and optional version. Policy failures return `{ error }` with status 200, including per-item errors for bulk requests. Errors: 400 invalid input, 500 unhandled execution failure, 503 unavailable, 504 timeout.
 
@@ -153,20 +156,22 @@ class AsyncRawFlowsClient:
         version : str
             The version of the resource to target: a published version number (e.g. `3`), a release environment slug (e.g. `production`, always lowercase), or `latest` (default) to use the current published version.
 
-        request : DynamicRequestPayload
+        request : FlowExecutionRequestPayload
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[DynamicResponsePayload]
-            Flow execution successful.
+        AsyncHttpResponse[FlowExecutionResponsePayload]
+            Flow execution successful. Returns one object for a single request or an array for a bulk request.
         """
         _response = await self._client_wrapper.httpx_client.request(
             f"flows/{encode_path_param(slug)}/{encode_path_param(version)}",
             method="POST",
-            json=request,
+            json=convert_and_respect_annotation_metadata(
+                object_=request, annotation=FlowExecutionRequestPayload, direction="write"
+            ),
             headers={
                 "content-type": "application/json",
             },
@@ -176,9 +181,9 @@ class AsyncRawFlowsClient:
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    DynamicResponsePayload,
+                    FlowExecutionResponsePayload,
                     parse_obj_as(
-                        type_=DynamicResponsePayload,  # type: ignore
+                        type_=FlowExecutionResponsePayload,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

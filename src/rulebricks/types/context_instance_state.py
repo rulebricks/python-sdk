@@ -50,7 +50,7 @@ class ContextInstanceState(UniversalBaseModel):
 
     executions: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    Per-asset execution metadata, present after a bound rule or flow has run for this instance.
+    Per-asset execution metadata, including `execution_id` for flow runs, present after a bound rule or flow has run for this instance.
     """
 
     created_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)

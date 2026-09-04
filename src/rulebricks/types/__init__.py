@@ -102,6 +102,8 @@ if typing.TYPE_CHECKING:
     from .flow_detail_context import FlowDetailContext
     from .flow_detail_origin_rule import FlowDetailOriginRule
     from .flow_execution_error import FlowExecutionError
+    from .flow_execution_request_payload import FlowExecutionRequestPayload
+    from .flow_execution_response_payload import FlowExecutionResponsePayload
     from .flow_import_payload import FlowImportPayload
     from .flow_import_response import FlowImportResponse
     from .flow_list_response import FlowListResponse
@@ -305,6 +307,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FlowDetailContext": ".flow_detail_context",
     "FlowDetailOriginRule": ".flow_detail_origin_rule",
     "FlowExecutionError": ".flow_execution_error",
+    "FlowExecutionRequestPayload": ".flow_execution_request_payload",
+    "FlowExecutionResponsePayload": ".flow_execution_response_payload",
     "FlowImportPayload": ".flow_import_payload",
     "FlowImportResponse": ".flow_import_response",
     "FlowListResponse": ".flow_list_response",
@@ -528,6 +532,8 @@ __all__ = [
     "FlowDetailContext",
     "FlowDetailOriginRule",
     "FlowExecutionError",
+    "FlowExecutionRequestPayload",
+    "FlowExecutionResponsePayload",
     "FlowImportPayload",
     "FlowImportResponse",
     "FlowListResponse",

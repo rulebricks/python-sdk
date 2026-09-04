@@ -29,7 +29,7 @@ class ContextBatchResponseResultsItem(UniversalBaseModel):
     expires_at: typing.Optional[dt.datetime] = None
     executions: typing.Optional[typing.Dict[str, typing.Any]] = pydantic.Field(default=None)
     """
-    Per-asset record of the last run: input hash, status, timestamp, trace IDs, error.
+    Per-asset record of the last run: input hash, status, timestamp, trace IDs, `execution_id` for flows, error.
     """
 
     executed: typing.Optional[typing.List[ContextBatchResponseResultsItemExecutedItem]] = pydantic.Field(default=None)

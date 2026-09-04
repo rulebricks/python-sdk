@@ -985,7 +985,7 @@ class Rule:
             raise ValueError("Alias must be at least 3 characters long")
         if '/' in alias or '\\' in alias or ' ' in alias:
             raise ValueError("Alias cannot contain slashes or spaces")
-        if not all(c in string.ascii_letters + string.digits + '-' for c in alias):
+        if not all(c in string.ascii_letters + string.digits + '-_' for c in alias):
             raise ValueError("Alias cannot contain special characters")
 
         rules = self.workspace.assets.rules.list()
@@ -1738,7 +1738,7 @@ class Rule:
         """
         base_name = re.sub(r'[^\w\-_\. ]', '_', self.name)
         base_name = base_name.replace(' ', '_')
-        filename = f"{base_name}-Generated.rbx"
+        filename = f"{base_name}-Generated.rbm"
 
         if directory:
             os.makedirs(directory, exist_ok=True)
@@ -1748,7 +1748,7 @@ class Rule:
         counter = 1
         while os.path.exists(filename):
             name_parts = filename.rsplit('-Generated', 1)
-            filename = f"{name_parts[0]}-Generated_{counter}.rbx"
+            filename = f"{name_parts[0]}-Generated_{counter}.rbm"
             counter += 1
 
         with open(filename, 'w') as f:

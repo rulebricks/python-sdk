@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
@@ -686,6 +688,25 @@ def make_workspace(rule_payload=None):
         values=SimpleNamespace(list=MagicMock(), update=MagicMock()),
     )
     return workspace, rules
+
+
+def test_set_alias_allows_app_supported_underscores():
+    workspace, rules = make_workspace()
+    rules.list.return_value = []
+    rule = Rule()
+    rule.set_workspace(workspace)
+
+    assert rule.set_alias("health_plan") is rule
+    assert rule.slug == "health_plan"
+
+
+def test_export_uses_dashboard_supported_rbm_extension(tmp_path):
+    rule = Rule().set_name("Example Rule")
+
+    exported_path = Path(rule.export(str(tmp_path)))
+
+    assert exported_path.suffix == ".rbm"
+    assert json.loads(exported_path.read_text()) == rule.to_dict()
 
 
 def test_published_snapshots_round_trip_and_are_omitted_when_absent():

@@ -29,6 +29,11 @@ class CascadeResult(UniversalBaseModel):
     The flow slug (if this was a flow evaluation).
     """
 
+    execution_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Flow entries only: the run's execution ID, accepted by `/decisions/query` `trace`.
+    """
+
     status: typing.Optional[CascadeResultStatus] = pydantic.Field(default=None)
     """
     Whether the evaluation succeeded, failed, remains pending, or was skipped because the same inputs already completed successfully.

@@ -12,6 +12,11 @@ class ContextBatchResponseResultsItemExecutedItem(UniversalBaseModel):
     type: typing.Optional[ContextBatchResponseResultsItemExecutedItemType] = None
     slug: typing.Optional[str] = None
     status: typing.Optional[ContextBatchResponseResultsItemExecutedItemStatus] = None
+    execution_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Flow entries only: the run's execution ID, accepted by `/decisions/query` `trace`.
+    """
+
     error: typing.Optional[str] = None
     written_to_context: typing.Optional[typing.List[str]] = None
 
